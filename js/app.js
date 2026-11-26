@@ -1,0 +1,461 @@
+// UI del cancionero. Solo usa `ds` (DataSource) para leer y guardar.
+import { LocalDataSource, ClaveError } from './datasource.js';
+import { demoSeed } from './demo.js';
+import { KEYS, keyAt, shiftTo, keyOption, showKey, transposer } from './music.js';
+import { prepare, blocksOf, defArr, isDefArr, arrLines, blockText, base, rOf, summary, search, fmt, isoOf } from './songs.js';
+
+const ds = new LocalDataSource({ seedFn: demoSeed });
+
+// ---------- Estado ----------
+const prefs = (() => { try { return JSON.parse(localStorage.getItem('cancionero:prefs') || '{}'); } catch (e) { return {}; } })();
+const P = { not: prefs.not || 0, adj: prefs.adj || 0, sadj: prefs.sadj || 0, modos: prefs.modos || {} };
+const savePrefs = () => { try { localStorage.setItem('cancionero:prefs', JSON.stringify(P)); } catch (e) {} };
+
+let SONGS = [], REG = [], SES = [], PERS = [];
+const unlocked = {};             // id de reunión → clave verificada (solo en memoria)
+let view = { shift: 0 };          // estado de la hoja abierta
+let lastQ = '';
+
+const app = document.getElementById('app');
+const tabsEl = document.getElementById('tabs');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = s => app.querySelector(s), $$ = s => [...app.querySelectorAll(s)];
+const songBy = id => SONGS.find(s => s.id === id);
+const sesBy = id => SES.find(r => r.id === id);
+const perOf = id => summary(id, REG, SES).per;
+const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const interp = s => s.interprete && s.interprete !== '-' ? s.interprete : '';
+
+// ---------- Navegación ----------
+const go = (hash, dir) => { NAVDIR = dir || 'fwd'; if (location.hash === hash) render(); else location.hash = hash; };
+let NAVDIR = 'fwd';
+
+function transition(fn) {
+  document.documentElement.dataset.dir = NAVDIR; NAVDIR = 'fwd';
+  if (!document.startViewTransition || reduced() || document.hidden) { fn(); return; }
+  document.startViewTransition(fn);
+}
+
+addEventListener('hashchange', () => render());
+
+function render() {
+  const h = decodeURIComponent(location.hash.slice(1) || '/');
+  const p = h.split('/').filter(Boolean);
+  transition(() => {
+    scrollTo(0, 0);
+    if (!p.length || p[0] === 'canciones') return songList();
+    if (p[0] === 'reuniones') return p[1] === 'nueva' ? newSes() : sesList();
+    if (p[0] === 'cancion') { const s = songBy(p[1]); if (!s) return songList(); return p[2] ? openSheet(s, p[2], null) : pickMode(s); }
+    if (p[0] === 'reunion') {
+      const r = sesBy(p[1]); if (!r) return sesList();
+      if (p[2] === 'editar') { if (!unlocked[r.id]) return go('#/reunion/' + r.id); return p[3] != null ? parts(r, +p[3]) : editSes(r); }
+      if (p[2] != null) return openSesSong(r, +p[2]);
+      return openSes(r);
+    }
+    songList();
+  });
+}
+
+function setTabs(w) {
+  tabsEl.hidden = !w;
+  tabsEl.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === w));
+  document.body.dataset.screen = w || 'detail';
+}
+tabsEl.addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.t === 'c' ? '#/canciones' : '#/reuniones'); });
+
+// ---------- Estado de conexión ----------
+const statusEl = document.getElementById('status');
+function paintStatus() {
+  const s = ds.status(), d = s.updatedAt ? new Date(s.updatedAt) : null;
+  const hm = d ? String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') : '';
+  const isToday = d && isoOf(d) === isoOf(new Date());
+  const when = d ? (isToday ? 'hoy ' + hm : fmt(isoOf(d)).slice(0, 5)) : '';
+  statusEl.dataset.online = s.online;
+  statusEl.innerHTML = `<span class="dot" aria-hidden="true"></span><span>${s.online
+    ? (d ? 'Actualizado ' + esc(when) : 'Conectado')
+    : 'Sin conexión' + (d ? ' · datos del ' + esc(isToday ? 'hoy' : fmt(isoOf(d)).slice(0, 5)) : '')}</span>
+    ${s.online ? '<button type="button" id="refresh">Actualizar</button>' : ''}${s.source === 'demo' ? '<span class="demo">Modo demo</span>' : ''}`;
+  const b = document.getElementById('refresh');
+  if (b) b.onclick = async () => { b.disabled = true; b.textContent = 'Actualizando…'; try { await load(true); } finally { paintStatus(); render(); } };
+}
+addEventListener('online', paintStatus); addEventListener('offline', paintStatus);
+
+// ---------- Componentes ----------
+const songItem = ({ s, snip, who }, attr) => `<li><button type="button" ${attr}="${esc(s.id)}" class="row">
+  <span class="row-main"><b>${esc(s.titulo)}</b><small>${who ? esc(who) : snip ? '“' + esc(snip) + '”' : esc(interp(s) || 'Intérprete sin confirmar')}</small></span>
+  <span class="key">${esc(s.tono)}</span></button></li>`;
+
+const back = (label, hash) => `<a class="back" href="${hash}" data-back>← ${esc(label)}</a>`;
+app.addEventListener('click', e => { const a = e.target.closest('[data-back]'); if (a) { e.preventDefault(); go(a.getAttribute('href'), 'back'); } });
+
+function personSelect(attr, val) {
+  return `<select ${attr}>${PERS.map(p => `<option${p === val ? ' selected' : ''}>${esc(p)}</option>`).join('')}<option value="__new">+ Agregar otro nombre…</option></select>`;
+}
+function wirePerson(sel, onSet) {
+  let prev = sel.value;
+  sel.addEventListener('change', () => {
+    if (sel.value !== '__new') { prev = sel.value; onSet(sel.value); return; }
+    const box = document.createElement('span'); box.className = 'newp';
+    box.innerHTML = '<input placeholder="Nombre" autocomplete="off" aria-label="Nombre nuevo"><button type="button">OK</button><button type="button" aria-label="Cancelar">✕</button>';
+    sel.replaceWith(box); const [inp, ok, cx] = box.children; inp.focus();
+    const done = v => {
+      if (v) {
+        if (!PERS.includes(v)) PERS.push(v);
+        if (![...sel.options].some(o => o.value === v)) { const o = document.createElement('option'); o.textContent = v; sel.insertBefore(o, sel.lastElementChild); }
+        sel.value = v; prev = v; onSet(v);
+      } else sel.value = prev;
+      box.replaceWith(sel);
+    };
+    ok.onclick = async () => done(await ds.addPersona(inp.value)); cx.onclick = () => done('');
+    inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); ok.click(); } if (e.key === 'Escape') cx.click(); };
+  });
+}
+const modeChooser = () => `<div class="mode">
+  <button type="button" data-mode="c"><span class="mode-t">Cantante</span><small>Solo la letra, grande</small></button>
+  <button type="button" data-mode="m"><span class="mode-t">Músico</span><small>Letra con acordes y controles</small></button></div>`;
+
+// ---------- Canciones ----------
+function songList() {
+  setTabs('c');
+  app.innerHTML = `<div class="searchbox"><input type="search" id="q" placeholder="Buscar canción, frase o director" value="${esc(lastQ)}" aria-label="Buscar canciones" autocomplete="off"></div>
+  <ul class="list" id="res"></ul>`;
+  const q = $('#q'), res = $('#res');
+  const paint = () => {
+    lastQ = q.value;
+    const f = search(SONGS, q.value, perOf);
+    res.innerHTML = f.map(x => songItem(x, 'data-id')).join('') || '<li class="empty">No hay canciones con ese nombre, frase ni director. Probá con otra palabra.</li>';
+    if (!reduced()) res.animate([{ opacity: .35 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' });
+  };
+  q.oninput = paint; paint();
+  res.onclick = e => { const b = e.target.closest('[data-id]'); if (b) go('#/cancion/' + b.dataset.id); };
+}
+
+function pickMode(s) {
+  setTabs(null);
+  const { last, per } = summary(s.id, REG, SES), names = Object.keys(per);
+  const hist = !last && !names.length ? '<div class="hist empty">Sin registros todavía.</div>'
+    : `<div class="hist">${last ? `<div class="hist-row"><span>Última vez</span><b>${esc(fmt(last.f))}</b> · ${last.q ? esc(last.q) : '<i>sin registrar quién</i>'}</div>
+       <div class="hist-row"><span>Tono última vez</span><b class="kc">${esc(last.t)}</b></div>` : ''}
+       ${names.length ? `<div class="hist-row pp"><label><span>Tono por persona</span> <select id="pp"><option value="">Elegir…</option>${names.map(p => `<option>${esc(p)}</option>`).join('')}</select></label><span id="ppo" aria-live="polite"></span></div>` : ''}</div>`;
+  app.innerHTML = `${back('Canciones', '#/canciones')}
+  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${esc(interp(s))}</p></div>${stamp(s.tono, 'Tono original')}</header>
+  <p class="ask">¿Cómo la vas a usar?</p>${modeChooser()}${hist}`;
+  $$('[data-mode]').forEach(b => b.onclick = () => go(`#/cancion/${s.id}/${b.dataset.mode}`));
+  const pp = $('#pp');
+  if (pp) pp.onchange = () => {
+    const x = per[pp.value];
+    $('#ppo').innerHTML = x ? `<b class="kc">${esc(x.t)}</b> <span class="sub">${x.f ? '· ' + esc(fmt(x.f)) : '· sin fecha'}${x.n > 1 ? ' · ' + x.n + ' veces' : ''}</span>` : '';
+  };
+}
+
+const stamp = (k, label) => `<div class="stamp" title="${esc(label)}"><span class="stamp-k">${esc(k)}</span><span class="stamp-l">${esc(label)}</span></div>`;
+
+// ---------- Hoja (músico / cantante) ----------
+function openSheet(s, mode, ctx) {
+  setTabs(null);
+  view = { song: s, mode: mode === 'c' ? 'c' : 'm', shift: ctx ? ctx.shift : (view.song === s ? view.shift : 0), ctx };
+  drawSheet();
+}
+
+function drawSheet(anim) {
+  const { song: s, mode, shift, ctx } = view, mus = mode === 'm';
+  const T = transposer(s, shift, P.not), k = T.key, kd = showKey(k, P.not);
+  const src = arrLines(s, ctx ? ctx.arr : defArr(s), mus)
+    .filter(l => mus || (l.t !== 'ch' && l.t !== 'mix'))
+    .filter((l, i, a) => l.t !== 'blank' || (i > 0 && a[i - 1].t !== 'blank' && a[i - 1].t !== 'sec' && a[i + 1] && a[i + 1].t !== 'sec'));
+  const rows = src.map(l => {
+    if (l.t === 'blank') return '<div class="gap"></div>';
+    if (l.t === 'sec') return `<div class="sec">${esc(l.v)}</div>`;
+    if (l.t === 'pair') {
+      if (!mus) return `<div>${esc(l.segs.map(x => x[1]).join('').trim())}</div>`;
+      const it = []; l.segs.forEach(([c, t]) => t.split(/(\s+)/).forEach((x, j) => { if (j === 0 || x) it.push({ c: j === 0 ? c : '', t: x }); }));
+      const words = []; let cur = [];
+      it.forEach(o => { if (/^\s+$/.test(o.t) && !o.c) { if (cur.length) words.push(cur); words.push([o]); cur = []; } else cur.push(o); });
+      if (cur.length) words.push(cur);
+      const sg = o => `<span class="sg"><b>${esc(o.c ? T.chord(o.c) : '')}</b><span>${esc(o.t)}</span></span>`;
+      return `<div class="pair">${words.map(w => `<span class="w">${w.map(sg).join('')}</span>`).join('')}</div>`;
+    }
+    if (l.t === 'ch') return `<div class="ch">${esc(T.line(l.v, false))}</div>`;
+    if (l.t === 'mix') return `<div class="mix${l.at != null ? ' at' : ''}"${l.at != null ? ` data-anchor="${esc(l.at)}"` : ''}>${esc(T.line(l.v, true))}</div>`;
+    return `<div>${esc(mus ? l.v : l.v.replace(/\s{2,}/g, ' ').trim())}</div>`;
+  }).join('');
+
+  const ctl = (mus ? `<button type="button" id="dn" aria-label="Bajar medio tono">−½</button>
+      <span class="now" id="now" title="Tono actual" aria-live="polite">${esc(kd)}</span>
+      <button type="button" id="up" aria-label="Subir medio tono">+½</button>
+      <button type="button" id="orig" title="Volver al tono original"${shift ? '' : ' disabled'}>Orig.</button>
+      <button type="button" id="not" title="Cambiar cifrado: C / Do / grados">${['C', 'Do', 'I'][P.not]}</button><span class="sp"></span>` : '<span class="sp"></span>')
+    + `<button type="button" id="sm" aria-label="Achicar letra">A−</button><button type="button" id="bg" aria-label="Agrandar letra">A+</button>
+       <button type="button" id="sw">${mus ? 'Cantante' : 'Músico'}</button>`;
+
+  const r = ctx && ctx.ses, i = ctx && ctx.i;
+  let nav = '';
+  if (r && i != null) {
+    const Pv = r.canciones[i - 1], Nx = r.canciones[i + 1], t = c => esc((songBy(c.id) || {}).titulo || '');
+    nav = `<nav class="snav" aria-label="Canciones de la reunión">${Pv ? `<button type="button" id="pv"><small>← Anterior</small><b>${t(Pv)}</b></button>` : '<span></span>'}
+      ${Nx ? `<button type="button" id="nx" class="nx"><small>Siguiente →</small><b>${t(Nx)}</b></button>`
+           : `<button type="button" id="fin" class="nx"><small>Fin de la reunión</small><b>Volver a la lista</b></button>`}</nav>`;
+  }
+  const meta = [ctx ? `<b>Dirige ${esc(ctx.quien)}</b>` : '', esc(interp(s)), `Tono original ${esc(s.tono)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ');
+  app.innerHTML = `${r ? back(r.nombre, '#/reunion/' + r.id) : back('Canciones', '#/canciones')}
+  <article class="sheet">
+    <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${meta}</p></div>
+      ${mus ? stamp(kd, shift ? 'Ahora' : 'Tono') : ''}</header>
+    <div class="ctl" role="toolbar" aria-label="Controles">${ctl}</div>
+    <div class="lines ${mus ? '' : 'singer'}">${rows}</div>
+  </article>${nav}`;
+
+  if (mus) fitSheet(); else fitSinger();
+  anchorMixes();
+  if (anim && !reduced()) {
+    $('.stamp')?.animate([{ transform: `translateY(${anim > 0 ? 8 : -8}px)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 220, easing: 'cubic-bezier(.2,.7,.2,1)' });
+    $$('.sg>b:not(:empty),.ch,.mix').forEach(el => el.animate([{ opacity: .2 }, { opacity: 1 }], { duration: 260, easing: 'ease-out' }));
+  }
+
+  const keep = f => () => { const y = scrollY; f(); scrollTo(0, y); };
+  if (mus) {
+    $('#dn').onclick = keep(() => { view.shift--; drawSheet(-1); });
+    $('#up').onclick = keep(() => { view.shift++; drawSheet(1); });
+    $('#orig').onclick = keep(() => { view.shift = 0; drawSheet(1); });
+    $('#not').onclick = keep(() => { P.not = (P.not + 1) % 3; savePrefs(); drawSheet(); });
+  }
+  $('#sm').onclick = keep(() => { mus ? P.adj-- : P.sadj--; savePrefs(); drawSheet(); });
+  $('#bg').onclick = keep(() => { mus ? P.adj++ : P.sadj++; savePrefs(); drawSheet(); });
+  $('#sw').onclick = () => {
+    view.mode = mus ? 'c' : 'm';
+    if (r) { P.modos[r.id] = view.mode; savePrefs(); drawSheet(); }
+    else history.replaceState(null, '', `#/cancion/${s.id}/${view.mode}`), transition(() => drawSheet());
+  };
+  if (r) {
+    $('#pv') && ($('#pv').onclick = () => go(`#/reunion/${r.id}/${i - 1}`, 'back'));
+    $('#nx') && ($('#nx').onclick = () => go(`#/reunion/${r.id}/${i + 1}`));
+    $('#fin') && ($('#fin').onclick = () => go(`#/reunion/${r.id}`, 'back'));
+  }
+}
+
+function anchorMixes() {
+  $$('.mix[data-anchor]').forEach(m => {
+    const p = m.previousElementSibling; if (!p) return;
+    const w = document.createTreeWalker(p, NodeFilter.SHOW_TEXT); let n;
+    while ((n = w.nextNode())) {
+      const i = n.textContent.indexOf(m.dataset.anchor.slice(0, 3));
+      if (i >= 0) { const rg = document.createRange(); rg.setStart(n, i); rg.setEnd(n, i + 1);
+        m.style.paddingLeft = (rg.getBoundingClientRect().left - p.getBoundingClientRect().left) + 'px'; break; }
+    }
+  });
+}
+
+// Separa acordes que chocan (sin empujar la letra salvo que sea necesario).
+function fixChords(box) {
+  box.querySelectorAll('.pair').forEach(p => {
+    let prev = null;
+    p.querySelectorAll('.sg>b').forEach(b => {
+      if (!b.textContent) return;
+      if (prev) {
+        const a = prev.getBoundingClientRect(), c = b.getBoundingClientRect();
+        const need = a.left + prev.scrollWidth + 6 - c.left;
+        if (Math.abs(a.top - c.top) < 4 && need > 0) { const s = b.parentElement; s.style.marginLeft = (parseFloat(s.style.marginLeft || 0) + need) + 'px'; }
+      }
+      prev = b;
+    });
+  });
+}
+// Ajuste automático: achica hasta que entre la línea más larga (mín. 11 px); si no entra, corta entre palabras.
+function fitSheet() {
+  const box = $('.lines'); if (!box) return; box.classList.remove('wrap');
+  const avail = box.clientWidth, clear = () => box.querySelectorAll('.sg').forEach(s => s.style.marginLeft = '');
+  const widest = () => { let w = 0; box.querySelectorAll('.pair,.ch,.mix').forEach(r => { w = Math.max(w, r.scrollWidth); }); return w; };
+  const set = f => { box.style.setProperty('--fs', f + 'px'); clear(); fixChords(box); };
+  let fs = 17;
+  for (let k = 0; k < 12; k++) { set(fs); const w = widest(); if (w <= avail + 1 || fs <= 11) break; fs = Math.max(11, Math.floor(fs * Math.min(.97, avail / w) * 10) / 10); }
+  set(Math.max(9, Math.min(40, fs + P.adj)));
+  if (widest() > avail + 1) { box.classList.add('wrap'); clear(); fixChords(box); }
+}
+function fitSinger() {
+  const box = $('.lines.singer'); if (!box) return; box.classList.add('measure');
+  const avail = box.clientWidth, widest = () => { let w = 0; box.querySelectorAll('div').forEach(r => { w = Math.max(w, r.scrollWidth); }); return w; };
+  let fs = 26;
+  for (let k = 0; k < 14; k++) { box.style.setProperty('--fs', fs + 'px'); const w = widest(); if (w <= avail + 1 || fs <= 12) break; fs = Math.max(12, Math.floor(fs * Math.min(.97, avail / w) * 10) / 10); }
+  box.style.setProperty('--fs', Math.max(10, Math.min(44, fs + P.sadj)) + 'px'); box.classList.remove('measure');
+}
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (view.song && $('.lines')) { view.mode === 'm' ? fitSheet() : fitSinger(); anchorMixes(); } }, 150); });
+
+// ---------- Reuniones ----------
+function sesList() {
+  setTabs('r');
+  const list = [...SES].sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+  app.innerHTML = `<button type="button" class="primary" id="nw">+ Nueva reunión</button>
+  <ul class="list">${list.map(r => `<li><button type="button" class="row" data-r="${esc(r.id)}"><span class="row-main"><b>${esc(r.nombre)}</b>
+    <small>Dirige ${esc(r.director)} · ${r.canciones.length} ${r.canciones.length === 1 ? 'canción' : 'canciones'}</small></span><span class="key date">${esc(fmt(r.fecha))}</span></button></li>`).join('')
+    || '<li class="empty">Todavía no hay reuniones. Creá la primera con “Nueva reunión”.</li>'}</ul>
+  <p class="note">Modo demo: las reuniones se guardan solo en este dispositivo. La clave de las reuniones de ejemplo es 1234.</p>`;
+  $('#nw').onclick = () => go('#/reuniones/nueva');
+  $$('[data-r]').forEach(b => b.onclick = () => go('#/reunion/' + b.dataset.r));
+}
+
+const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+function newSes() {
+  setTabs(null);
+  app.innerHTML = `${back('Reuniones', '#/reuniones')}<h2 class="title">Nueva reunión</h2>
+  <form id="f" class="form" novalidate>
+    <label>Fecha<input name="d" id="fd" type="date" required></label>
+    <label>Nombre<input name="n" id="fn" required autocomplete="off"></label>
+    <label>Dirige${personSelect('name="p" id="fp"', '')}</label>
+    <label>Clave del director<input name="k" id="fk" type="password" required inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="new-password" placeholder="4 números"></label>
+    <p class="hint">Se pide para editar o borrar la reunión y no se puede recuperar.</p>
+    <p class="err" id="er" role="alert"></p>
+    <button class="primary">Crear reunión</button></form>`;
+  const fd = $('#fd'), fn = $('#fn'), fk = $('#fk'), f = $('#f'); let touched = false;
+  const auto = () => { if (touched || !fd.value) return; const [y, m, d] = fd.value.split('-').map(Number);
+    fn.value = DIAS[new Date(y, m - 1, d).getDay()] + ' ' + String(d).padStart(2, '0') + '-' + String(m).padStart(2, '0') + '-' + y; };
+  const t = new Date(); t.setDate(t.getDate() + ((7 - t.getDay()) % 7)); fd.value = isoOf(t); auto();
+  wirePerson($('#fp'), () => {}); fd.oninput = auto;
+  fn.oninput = () => { touched = fn.value.trim() !== ''; };
+  fk.oninput = () => { fk.value = fk.value.replace(/\D/g, '').slice(0, 4); };
+  f.onsubmit = async e => {
+    e.preventDefault(); const er = $('#er');
+    if (!fd.value) return er.textContent = 'Elegí una fecha.';
+    if (!fn.value.trim()) return er.textContent = 'Escribí un nombre para la reunión.';
+    if (!/^\d{4}$/.test(fk.value)) return er.textContent = 'La clave tiene que ser de 4 números.';
+    try {
+      const r = await ds.createReunion({ nombre: fn.value.trim(), fecha: fd.value, director: $('[name=p]').value, clave: fk.value });
+      SES.unshift(r); unlocked[r.id] = fk.value; P.modos[r.id] = P.modos[r.id] || 'm'; savePrefs();
+      history.replaceState(null, '', '#/reuniones'); go('#/reunion/' + r.id + '/editar');
+    } catch (x) { er.textContent = x.message; }
+  };
+}
+
+function openSes(r) {
+  setTabs(null);
+  const head = `${back('Reuniones', '#/reuniones')}<h2 class="title">${esc(r.nombre)}</h2><p class="meta">${esc(fmt(r.fecha))} · Dirige ${esc(r.director)}</p>`;
+  if (!P.modos[r.id]) {
+    app.innerHTML = `${head}<p class="ask">¿Cómo vas a estar en esta reunión?</p>${modeChooser()}
+      <p class="hint">Se aplica a todas las canciones de la reunión. Lo podés cambiar después.</p>`;
+    $$('[data-mode]').forEach(b => b.onclick = () => { P.modos[r.id] = b.dataset.mode; savePrefs(); transition(() => openSes(r)); });
+    return;
+  }
+  const rows = r.canciones.map((c, i) => { const s = songBy(c.id); if (!s) return '';
+    return `<li><button type="button" class="row" data-o="${i}"><span class="num">${i + 1}</span><span class="row-main"><b>${esc(s.titulo)}</b>
+      <small>Dirige ${esc(c.quien)}${isDefArr(s, c.arr) ? '' : ' · orden modificado'}</small></span><span class="key">${esc(c.tono)}</span></button></li>`; }).join('');
+  app.innerHTML = `${head}
+  <div class="ctl"><button type="button" id="sm2" title="Cambiar modo">Modo: ${P.modos[r.id] === 'm' ? 'Músico' : 'Cantante'} ⇄</button><span class="sp"></span>
+    <button type="button" id="ed">Editar</button><button type="button" id="del">Borrar</button></div>
+  <div id="ask" class="askwrap"></div>
+  <ol class="list setlist">${rows || '<li class="empty">Sin canciones todavía. Tocá “Editar” para agregarlas.</li>'}</ol>`;
+  $$('[data-o]').forEach(b => b.onclick = () => go(`#/reunion/${r.id}/${b.dataset.o}`));
+  $('#sm2').onclick = () => { P.modos[r.id] = P.modos[r.id] === 'm' ? 'c' : 'm'; savePrefs(); openSes(r); };
+  const ask = (what, run) => {
+    if (!navigator.onLine) { $('#ask').innerHTML = '<p class="err">Para editar o borrar hace falta conexión.</p>'; return; }
+    if (unlocked[r.id]) return run(unlocked[r.id]);
+    const a = $('#ask');
+    a.innerHTML = `<form class="askf" id="af"><input id="kk" type="password" inputmode="numeric" maxlength="4" placeholder="Clave (4 números)" aria-label="Clave del director" autocomplete="off">
+      <button class="primary">${what}</button><button type="button" id="cx">Cancelar</button><span id="er" class="err" role="alert"></span></form>`;
+    openAnim(a);
+    const kk = $('#kk'); kk.focus(); kk.oninput = () => { kk.value = kk.value.replace(/\D/g, '').slice(0, 4); };
+    $('#cx').onclick = () => a.innerHTML = '';
+    $('#af').onsubmit = async e => { e.preventDefault();
+      try { await ds.checkClave(r.id, kk.value); unlocked[r.id] = kk.value; run(kk.value); }
+      catch (x) { $('#er').textContent = x instanceof ClaveError ? x.message : 'No se pudo verificar la clave.'; kk.select(); } };
+  };
+  $('#ed').onclick = () => ask('Editar', () => go(`#/reunion/${r.id}/editar`));
+  $('#del').onclick = () => ask('Borrar', clave => {
+    const a = $('#ask');
+    a.innerHTML = `<div class="askf confirm"><span>¿Borrar “${esc(r.nombre)}”?</span><button type="button" class="danger" id="y">Sí, borrar</button><button type="button" id="n">No</button></div>`;
+    openAnim(a);
+    $('#y').onclick = async () => { try { await ds.deleteReunion(r.id, clave); SES = SES.filter(x => x !== r); go('#/reuniones', 'back'); } catch (x) { a.innerHTML = `<p class="err">${esc(x.message)}</p>`; } };
+    $('#n').onclick = () => a.innerHTML = '';
+  });
+}
+const openAnim = el => { if (!reduced()) el.animate([{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'none' }], { duration: 180, easing: 'ease-out' }); };
+
+function openSesSong(r, i) {
+  const c = r.canciones[i], s = c && songBy(c.id);
+  if (!s) return openSes(r);
+  if (!P.modos[r.id]) { P.modos[r.id] = 'm'; savePrefs(); }
+  openSheet(s, P.modos[r.id], { ses: r, i, arr: c.arr, quien: c.quien, shift: shiftTo(s, c.tono) });
+}
+
+// ---------- Editar reunión ----------
+async function persist(r) {
+  try { const saved = await ds.updateReunion(r.id, { canciones: r.canciones }, unlocked[r.id]); Object.assign(r, saved); }
+  catch (x) { toast(x.message || 'No se pudo guardar.'); }
+}
+let toastT; function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 3500); }
+
+function editSes(r) {
+  setTabs(null);
+  const rows = r.canciones.map((c, i) => { const s = songBy(c.id); if (!s) return '';
+    return `<li class="ed"><div class="edh"><b><span class="num">${i + 1}</span>${esc(s.titulo)}</b><span class="tools">
+      <button type="button" data-up="${i}" aria-label="Subir"${i ? '' : ' disabled'}>▲</button><button type="button" data-dn="${i}" aria-label="Bajar"${i < r.canciones.length - 1 ? '' : ' disabled'}>▼</button><button type="button" data-rm="${i}" aria-label="Quitar">✕</button></span></div>
+      <div class="edr"><label>Tono<select data-k="${i}">${KEYS.map(k => `<option${k === c.tono ? ' selected' : ''}>${k}</option>`).join('')}</select></label>
+      <label>Dirige${personSelect(`data-q="${i}"`, c.quien)}</label>
+      <button type="button" data-pa="${i}">Partes (${c.arr.length})</button></div></li>`; }).join('');
+  app.innerHTML = `${back(r.nombre, '#/reunion/' + r.id)}<h2 class="title">Editar reunión</h2><p class="meta">${esc(r.nombre)} · Dirige ${esc(r.director)}</p>
+  <ol class="list">${rows || '<li class="empty">Agregá la primera canción con el buscador.</li>'}</ol>
+  <div class="form"><label>Agregar canción<input id="ad" type="search" autocomplete="off" placeholder="Buscar por nombre, frase o director"></label>
+    <ul class="list sugg" id="sg"></ul><button type="button" class="primary" id="ok">Listo</button></div>`;
+  const re = async () => { await persist(r); const y = scrollY; editSes(r); scrollTo(0, y); };
+  const swap = (a, b) => { [r.canciones[a], r.canciones[b]] = [r.canciones[b], r.canciones[a]]; re(); };
+  $$('[data-up]').forEach(b => b.onclick = () => swap(+b.dataset.up - 1, +b.dataset.up));
+  $$('[data-dn]').forEach(b => b.onclick = () => swap(+b.dataset.dn, +b.dataset.dn + 1));
+  $$('[data-rm]').forEach(b => b.onclick = () => { r.canciones.splice(+b.dataset.rm, 1); re(); });
+  $$('[data-k]').forEach(x => x.onchange = () => { r.canciones[+x.dataset.k].tono = x.value; persist(r); });
+  $$('[data-q]').forEach(x => wirePerson(x, v => { r.canciones[+x.dataset.q].quien = v; persist(r); }));
+  $$('[data-pa]').forEach(b => b.onclick = () => go(`#/reunion/${r.id}/editar/${b.dataset.pa}`));
+  const ad = $('#ad'), sg = $('#sg');
+  ad.oninput = () => {
+    const q = ad.value.trim(); if (!q) { sg.innerHTML = ''; return; }
+    sg.innerHTML = search(SONGS, q, perOf).slice(0, 8).map(x => songItem(x, 'data-a')).join('') || '<li class="empty">Sin resultados.</li>';
+  };
+  sg.onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; const s = songBy(b.dataset.a);
+    r.canciones.push({ id: s.id, tono: keyOption(s), quien: r.director, arr: defArr(s) }); re().then(() => $('#ad')?.focus()); };
+  $('#ok').onclick = async () => { await persist(r); go('#/reunion/' + r.id, 'back'); };
+}
+
+// ---------- Partes ----------
+function parts(r, i) {
+  const c = r.canciones[i], s = c && songBy(c.id); if (!s) return editSes(r);
+  setTabs(null);
+  const AB = blocksOf(s), B = AB.filter(b => b.has);
+  app.innerHTML = `${back('Editar reunión', '#/reunion/' + r.id + '/editar')}<h2 class="title">${esc(s.titulo)}</h2><p class="meta">Orden de las partes · tono ${esc(c.tono)}</p>
+  <ol class="list parts">${c.arr.map((e, j) => `<li class="ed"><div class="edh">
+    <button type="button" class="pv" data-v="${j}" aria-expanded="false"><b>${esc(base(e.label || '') || '(inicio)')}</b><small>${esc(blockText(AB[e.src])[0] || 'Sin letra (instrumental)')}</small></button>
+    <span class="tools"><span class="repc"><button type="button" data-m="${j}" aria-label="Menos repeticiones"${rOf(e) > 1 ? '' : ' disabled'}>−</button><span class="rep">x${rOf(e)}</span><button type="button" data-p="${j}" aria-label="Más repeticiones"${rOf(e) < 9 ? '' : ' disabled'}>+</button></span>
+    <button type="button" data-u="${j}" aria-label="Subir"${j ? '' : ' disabled'}>▲</button><button type="button" data-d="${j}" aria-label="Bajar"${j < c.arr.length - 1 ? '' : ' disabled'}>▼</button><button type="button" data-c="${j}" aria-label="Duplicar">⧉</button><button type="button" data-x="${j}" aria-label="Quitar">✕</button></span></div>
+    <div class="pvb" hidden><div class="pvb-in">${blockText(AB[e.src]).map(t => `<div>${esc(t)}</div>`).join('') || '<div>Sin letra (instrumental)</div>'}</div></div></li>`).join('')}</ol>
+  <div class="form"><label>Agregar parte<select id="ap"><option value="">Elegir…</option>${B.map(b => `<option value="${b.id}">${esc((b.label || '(inicio)') + ' — ' + (blockText(b)[0] || 'instrumental'))}</option>`).join('')}</select></label>
+    <button type="button" id="rs">Volver al orden original</button><button type="button" class="primary" id="ok">Listo</button></div>`;
+  const re = async () => { await persist(r); const y = scrollY; parts(r, i); scrollTo(0, y); };
+  const sw = (a, b) => { [c.arr[a], c.arr[b]] = [c.arr[b], c.arr[a]]; re(); };
+  $('#rs').onclick = () => { c.arr = defArr(s); re(); };
+  $('#ok').onclick = async () => { await persist(r); go('#/reunion/' + r.id + '/editar', 'back'); };
+  $$('[data-u]').forEach(b => b.onclick = () => sw(+b.dataset.u - 1, +b.dataset.u));
+  $$('[data-d]').forEach(b => b.onclick = () => sw(+b.dataset.d, +b.dataset.d + 1));
+  $$('[data-c]').forEach(b => b.onclick = () => { const j = +b.dataset.c; c.arr.splice(j + 1, 0, { ...c.arr[j] }); re(); });
+  $$('[data-v]').forEach(b => b.onclick = () => {
+    const li = b.closest('li'), box = li.querySelector('.pvb'), open = li.classList.toggle('open');
+    b.setAttribute('aria-expanded', String(open));
+    if (reduced()) { box.hidden = !open; return; }
+    box.hidden = false; const h = box.scrollHeight;
+    const a = box.animate(open ? [{ height: 0, opacity: 0 }, { height: h + 'px', opacity: 1 }] : [{ height: h + 'px', opacity: 1 }, { height: 0, opacity: 0 }], { duration: 220, easing: 'cubic-bezier(.2,.7,.2,1)' });
+    a.onfinish = () => { box.hidden = !li.classList.contains('open'); };
+  });
+  $$('[data-m]').forEach(b => b.onclick = () => { const e = c.arr[+b.dataset.m]; e.rep = Math.max(1, rOf(e) - 1); re(); });
+  $$('[data-p]').forEach(b => b.onclick = () => { const e = c.arr[+b.dataset.p]; e.rep = Math.min(9, rOf(e) + 1); re(); });
+  $$('[data-x]').forEach(b => b.onclick = () => { c.arr.splice(+b.dataset.x, 1); re(); });
+  $('#ap').onchange = e => { const b = AB[+e.target.value]; if (b) { c.arr.push({ src: b.id, label: b.label, rep: 1 }); re(); } };
+}
+
+// ---------- Inicio ----------
+async function load(force) {
+  if (force) await ds.refresh();
+  SONGS = prepare(await ds.getSongs());
+  [REG, SES, PERS] = await Promise.all([ds.getRegistro(), ds.listReuniones(), ds.getPersonas()]);
+}
+
+(async () => {
+  try { await load(); }
+  catch (e) { app.innerHTML = `<p class="err">${esc(e.message)} Revisá la conexión y recargá la página.</p>`; return; }
+  paintStatus(); render();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
