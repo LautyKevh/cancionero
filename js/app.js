@@ -373,7 +373,7 @@ function openSes(r) {
     if (!navigator.onLine) { $('#ask').innerHTML = '<p class="err">Para editar o borrar hace falta conexión.</p>'; return; }
     if (unlocked[r.id]) return run(unlocked[r.id]);
     const a = $('#ask');
-    a.innerHTML = `<form class="askf" id="af"><input id="kk" type="password" inputmode="numeric" maxlength="4" placeholder="Clave (4 números)" aria-label="Clave del director" autocomplete="off">
+    a.innerHTML = `<form class="askf" id="af"><input id="kk" type="password" inputmode="numeric" maxlength="4" placeholder="Clave" aria-label="Clave del director" autocomplete="off">
       <button class="primary">${what}</button><button type="button" id="cx">Cancelar</button><span id="er" class="err" role="alert"></span></form>`;
     openAnim(a);
     const kk = $('#kk'); kk.focus(); kk.oninput = () => { kk.value = kk.value.replace(/\D/g, '').slice(0, 4); };
