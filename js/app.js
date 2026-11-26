@@ -112,16 +112,15 @@ function wirePerson(sel, onSet) {
 }
 const ICON = {
   mic: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg>',
-  guitar: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 9.5 21 3M18 3h3v3"/><path d="M11.5 8.5c-1.5-1.5-4.5-1-6 .5-2.5 2.5-2.5 7 0 9.5s7 2.5 9.5 0c1.5-1.5 2-4.5.5-6"/><circle cx="10" cy="14" r="1.6"/><path d="m11.5 8.5 4 4"/></svg>',
+  piano: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M8.8 14v6M15.2 14v6"/><rect class="bk" x="7.3" y="4" width="3" height="10" rx=".6"/><rect class="bk" x="13.7" y="4" width="3" height="10" rx=".6"/></svg>',
   search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
   chev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>',
 };
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-const initials = n => String(n || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
 const dateBlock = f => { const [y, m, d] = (f || '').split('-'); return f ? `<span class="dblock" aria-label="${esc(fmt(f))}"><b>${+d}</b><small>${MESES[+m - 1]}</small></span>` : '<span class="dblock"></span>'; };
 const modeChooser = () => `<div class="mode">
   <button type="button" data-mode="c">${ICON.mic}<span class="mode-t">Cantante</span><small>Canto: solo la letra, grande</small></button>
-  <button type="button" data-mode="m">${ICON.guitar}<span class="mode-t">Músico</span><small>Toco: acordes y cambio de tono</small></button></div>`;
+  <button type="button" data-mode="m">${ICON.piano}<span class="mode-t">Músico</span><small>Toco: acordes y cambio de tono</small></button></div>`;
 
 // ---------- Canciones ----------
 function songList() {
@@ -133,7 +132,7 @@ function songList() {
   const hero = next ? `<button type="button" class="next" id="next">
       <span class="next-top"><span class="next-when">${esc(when)}</span><span class="next-date">${esc(fmt(next.fecha))}</span></span>
       <span class="next-name">${esc(next.nombre)}</span>
-      <span class="next-who"><span class="av">${esc(initials(next.director))}</span>Dirige ${esc(next.director)}</span>
+      <span class="next-who">Dirige ${esc(next.director)}</span>
       <span class="next-songs">${next.canciones.slice(0, 5).map(c => `<span><i>${esc(c.tono)}</i>${esc((songBy(c.id) || {}).titulo || '')}</span>`).join('')}
         ${next.canciones.length > 5 ? `<span class="more">y ${next.canciones.length - 5} más</span>` : ''}${next.canciones.length ? '' : '<span class="more">Todavía sin canciones</span>'}</span>
       <span class="next-go">Abrir la reunión ${ICON.chev}</span></button>` : '';
@@ -309,7 +308,7 @@ function sesList() {
   const today = isoOf(new Date());
   const up = list.filter(r => r.fecha >= today).reverse(), past = list.filter(r => r.fecha < today);
   const item = r => `<li><button type="button" class="row cal" data-r="${esc(r.id)}">${dateBlock(r.fecha)}<span class="row-main"><b>${esc(r.nombre)}</b>
-    <small><span class="av sm">${esc(initials(r.director))}</span>Dirige ${esc(r.director)} · ${r.canciones.length} ${r.canciones.length === 1 ? 'canción' : 'canciones'}</small></span>${ICON.chev}</button></li>`;
+    <small>Dirige ${esc(r.director)} · ${r.canciones.length} ${r.canciones.length === 1 ? 'canción' : 'canciones'}</small></span>${ICON.chev}</button></li>`;
   app.innerHTML = `<button type="button" class="primary wide" id="nw">+ Nueva reunión</button>
   ${up.length ? `<h3 class="group">Próximas</h3><ul class="list">${up.map(item).join('')}</ul>` : ''}
   ${past.length ? `<h3 class="group">Anteriores</h3><ul class="list">${past.map(item).join('')}</ul>` : ''}
@@ -362,9 +361,9 @@ function openSes(r) {
   }
   const rows = r.canciones.map((c, i) => { const s = songBy(c.id); if (!s) return '';
     return `<li><button type="button" class="row" data-o="${i}"><span class="num">${i + 1}</span><span class="row-main"><b>${esc(s.titulo)}</b>
-      <small><span class="av sm">${esc(initials(c.quien))}</span>${esc(c.quien)}${isDefArr(s, c.arr) ? '' : ' · orden modificado'}</small></span><span class="key">${esc(c.tono)}</span></button></li>`; }).join('');
+      <small>Dirige ${esc(c.quien)}${isDefArr(s, c.arr) ? '' : ' · orden modificado'}</small></span><span class="key">${esc(c.tono)}</span></button></li>`; }).join('');
   app.innerHTML = `${head}
-  <div class="ctl"><button type="button" id="sm2" class="modebtn" title="Cambiar modo">${P.modos[r.id] === 'm' ? ICON.guitar : ICON.mic}Modo: ${P.modos[r.id] === 'm' ? 'Músico' : 'Cantante'} ⇄</button><span class="sp"></span>
+  <div class="ctl"><button type="button" id="sm2" class="modebtn" title="Cambiar modo">${P.modos[r.id] === 'm' ? ICON.piano : ICON.mic}Modo: ${P.modos[r.id] === 'm' ? 'Músico' : 'Cantante'} ⇄</button><span class="sp"></span>
     <button type="button" id="ed">Editar</button><button type="button" id="del">Borrar</button></div>
   <div id="ask" class="askwrap"></div>
   <ol class="list setlist">${rows || '<li class="empty">Sin canciones todavía. Tocá “Editar” para agregarlas.</li>'}</ol>`;
@@ -429,10 +428,15 @@ function editSes(r) {
   $$('[data-q]').forEach(x => wirePerson(x, v => { r.canciones[+x.dataset.q].quien = v; persist(r); }));
   $$('[data-pa]').forEach(b => b.onclick = () => go(`#/reunion/${r.id}/editar/${b.dataset.pa}`));
   const ad = $('#ad'), sg = $('#sg');
-  ad.oninput = () => {
-    const q = ad.value.trim(); if (!q) { sg.innerHTML = ''; return; }
-    sg.innerHTML = search(SONGS, q, perOf).slice(0, 8).map(x => songItem(x, 'data-a')).join('') || '<li class="empty">Sin resultados.</li>';
+  // Al tocar el buscador aparece la lista completa; al escribir se va filtrando.
+  const showSg = () => {
+    const f = search(SONGS, ad.value.trim(), perOf);
+    sg.innerHTML = f.map(x => songItem(x, 'data-a')).join('') || '<li class="empty">Sin resultados. Probá con otra palabra.</li>';
   };
+  ad.oninput = showSg;
+  ad.onfocus = ad.onclick = () => { if (sg.innerHTML) return; showSg(); openAnim(sg); };
+  ad.onblur = () => setTimeout(() => { if (document.activeElement !== ad) sg.innerHTML = ''; }, 150);
+  sg.onmousedown = e => e.preventDefault(); // que tocar una opción no cierre la lista antes del click
   sg.onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; const s = songBy(b.dataset.a);
     r.canciones.push({ id: s.id, tono: keyOption(s), quien: r.director, arr: defArr(s) }); re().then(() => $('#ad')?.focus()); };
   $('#ok').onclick = async () => { await persist(r); go('#/reunion/' + r.id, 'back'); };

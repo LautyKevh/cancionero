@@ -1,10 +1,11 @@
-/* Cancionero — papel cálido / noche azul tinta.
-   Acordes en azul, secciones en naranja. Fraunces títulos, Inter texto, JetBrains Mono para tonos y cifrados.
-   Elemento distintivo: el "sello de tono" de la cabecera, como el recuadro de tonalidad de la hoja del atril. */
+/* Cancionero — paleta "Sapphire nightfall": #0474C4 · #5379AE · #2C444C · #A8C4EC · #06457F · #262B40.
+   --acc es el azul principal (botones, pestaña activa, enlaces); --sec el naranja, solo para los títulos de sección.
+   Acordes en azul. Fraunces títulos, Inter texto, JetBrains Mono para tonos y cifrados. */
 :root {
   color-scheme: light;
-  --bg: #f6f1e7; --card: #fffdf8; --ink: #1e1b17; --mute: #6b645a; --line: #e4dccd;
-  --ch: #1f4fbf; --ch-soft: #e3eafb; --acc: #c2410c; --acc-soft: #fbe7dc; --danger: #b42318;
+  --bg: #f2f5fa; --card: #ffffff; --ink: #1d2236; --mute: #5a6782; --line: #d8e0ec;
+  --ch: #0474c4; --ch-soft: #e2edf9; --acc: #06457f; --acc-soft: #dfe8f5; --sec: #c2410c; --danger: #b42318;
+  --hero: #06457f; --hero-ink: #f2f5fa; --hero-chip: #a8c4ec;
   --r-sm: 8px; --r: 12px;
   --gut: max(4.5vw, 16px);
   --ease: cubic-bezier(.2, .7, .2, 1);
@@ -12,14 +13,16 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #121722; --card: #1a2130; --ink: #ebe6dc; --mute: #9aa3b2; --line: #2a3346;
-    --ch: #86b4ff; --ch-soft: #1f2b45; --acc: #ff9a5c; --acc-soft: #3a2619; --danger: #ff6b5e;
+    --bg: #1c2031; --card: #262b40; --ink: #e8ecf5; --mute: #9aa6c0; --line: #353d58;
+    --ch: #a8c4ec; --ch-soft: #2d3a5c; --acc: #a8c4ec; --acc-soft: #2d3a5c; --sec: #ff9a5c; --danger: #ff6b5e;
+    --hero: #06457f; --hero-ink: #f2f5fa; --hero-chip: #a8c4ec;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #121722; --card: #1a2130; --ink: #ebe6dc; --mute: #9aa3b2; --line: #2a3346;
-  --ch: #86b4ff; --ch-soft: #1f2b45; --acc: #ff9a5c; --acc-soft: #3a2619; --danger: #ff6b5e;
+  --bg: #1c2031; --card: #262b40; --ink: #e8ecf5; --mute: #9aa6c0; --line: #353d58;
+  --ch: #a8c4ec; --ch-soft: #2d3a5c; --acc: #a8c4ec; --acc-soft: #2d3a5c; --sec: #ff9a5c; --danger: #ff6b5e;
+  --hero: #06457f; --hero-ink: #f2f5fa; --hero-chip: #a8c4ec;
 }
 
 * { box-sizing: border-box; min-width: 0; }
@@ -48,22 +51,19 @@ main { flex: 1; width: 100%; max-width: 900px; margin: 0 auto; padding: 12px var
 .loading { color: var(--mute); }
 
 /* ---------- Próxima reunión (lo primero que ve la banda) ---------- */
-.next { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 10px; width: 100%; margin: 10px 0 6px; padding: 18px 18px 16px; border-radius: 20px; background: #1d2a48; color: #f6f1e7; box-shadow: 0 10px 28px -14px rgba(29, 42, 72, .7); transition: transform .15s var(--ease); }
-:root[data-theme="dark"] .next { background: #24345a; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .next { background: #24345a; } }
+.next { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 10px; width: 100%; margin: 10px 0 6px; padding: 18px 18px 16px; border-radius: 20px; background: var(--hero); color: var(--hero-ink); box-shadow: 0 12px 30px -16px rgba(6, 69, 127, .8); transition: transform .15s var(--ease); }
 .next:active { transform: scale(.985); }
 .next:focus-visible { outline: 3px solid var(--acc); outline-offset: 3px; }
 .next-top { display: flex; justify-content: space-between; align-items: center; }
-.next-when { padding: 3px 10px; border-radius: 99px; background: #ff9a5c; color: #2a1406; font-weight: 700; font-size: 13px; }
+.next-when { padding: 3px 10px; border-radius: 99px; background: var(--hero-chip); color: #06457f; font-weight: 700; font-size: 13px; }
 .next-date { font-size: 13px; opacity: .75; }
 .next-name { font: 600 clamp(24px, 6vw, 30px)/1.1 Fraunces, Georgia, serif; }
 .next-who { display: flex; align-items: center; gap: 8px; font-size: 14px; opacity: .9; }
-.next .av { background: rgba(255, 255, 255, .14); color: #f6f1e7; }
 .next-songs { display: grid; gap: 6px; padding: 10px 0 2px; border-top: 1px solid rgba(255, 255, 255, .14); }
 .next-songs span { display: flex; align-items: center; gap: 10px; font-size: 15px; }
-.next-songs i { font: normal 700 13px "JetBrains Mono", monospace; min-width: 36px; text-align: center; padding: 2px 6px; border-radius: 7px; background: rgba(134, 180, 255, .18); color: #a9c8ff; }
+.next-songs i { font: normal 700 13px "JetBrains Mono", monospace; min-width: 36px; text-align: center; padding: 2px 6px; border-radius: 7px; background: rgba(168, 196, 236, .2); color: var(--hero-chip); }
 .next-songs .more { opacity: .7; font-size: 14px; padding-left: 2px; }
-.next-go { display: flex; align-items: center; justify-content: flex-end; gap: 2px; font-weight: 600; font-size: 14px; color: #ffb488; }
+.next-go { display: flex; align-items: center; justify-content: flex-end; gap: 2px; font-weight: 600; font-size: 14px; color: var(--hero-chip); }
 .next-go svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ---------- Listas ---------- */
@@ -143,7 +143,7 @@ input[type=search]::placeholder { color: var(--mute); }
 .lines .sg b { color: var(--ch); font-weight: 700; min-height: 1.3em; font-size: .95em; width: 0; overflow: visible; white-space: nowrap; }
 .lines .sg > span { min-height: 1.35em; }
 .lines .mix.at { font-family: Inter, system-ui, sans-serif; white-space: pre-wrap; }
-.lines .sec { font-family: Inter, sans-serif; font-weight: 600; color: var(--acc); margin-top: .8em; font-size: .85em; }
+.lines .sec { font-family: Inter, sans-serif; font-weight: 600; color: var(--sec); margin-top: .8em; font-size: .85em; }
 .lines .sec:first-child { margin-top: 0; }
 .lines .gap { min-height: .4em; }
 .lines.singer { font-family: Inter, system-ui, sans-serif; line-height: 1.5; }
@@ -161,8 +161,8 @@ input[type=search]::placeholder { color: var(--mute); }
 
 /* ---------- Botones y formularios ---------- */
 .primary { font-weight: 600; font-size: 15px; min-height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: var(--acc); color: #fff; margin: 12px 0; transition: transform .1s, filter .15s; }
-:root[data-theme="dark"] .primary { color: #1a1206; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .primary { color: #1a1206; } }
+:root[data-theme="dark"] .primary { color: #1c2031; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .primary { color: #1c2031; } }
 .primary:active { transform: scale(.98); }
 .danger { font-weight: 600; font-size: 14px; min-height: 40px; padding: 0 12px; border-radius: var(--r-sm); border: 0; background: var(--danger); color: #fff; }
 .err { color: var(--danger); font-size: 14px; margin: 0; }
@@ -202,7 +202,7 @@ input[type=search]::placeholder { color: var(--mute); }
 .pv b::after { content: " ▾"; color: var(--mute); font-size: .8em; display: inline-block; transition: transform .2s var(--ease); }
 li.open .pv b::after { transform: rotate(180deg); }
 .pvb { overflow: hidden; }
-.pvb-in { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--acc); background: var(--card); border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.45; }
+.pvb-in { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--sec); background: var(--card); border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.45; }
 @media (max-width: 520px) {
   .parts .edh { flex-wrap: wrap; }
   .parts .pv { flex-basis: 100%; }
@@ -212,7 +212,7 @@ li.open .pv b::after { transform: rotate(180deg); }
 /* ---------- Línea de estado ---------- */
 .status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; max-width: 900px; margin: 0 auto; padding: 10px var(--gut) calc(12px + env(safe-area-inset-bottom)); color: var(--mute); font-size: 13px; border-top: 1px solid var(--line); }
 .status .dot { width: 8px; height: 8px; border-radius: 50%; background: #2f9e5b; }
-.status[data-online="false"] .dot { background: var(--acc); }
+.status[data-online="false"] .dot { background: var(--sec); }
 .status button { font-weight: 600; font-size: 13px; min-height: 34px; padding: 0 10px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--card); }
 .status .demo { margin-left: auto; padding: 2px 8px; border-radius: 99px; background: var(--acc-soft); color: var(--acc); font-weight: 600; font-size: 12px; }
 
@@ -233,3 +233,10 @@ li.open .pv b::after { transform: rotate(180deg); }
   *, *::before, *::after { transition: none !important; animation: none !important; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+/* Teclas negras del ícono de piano */
+svg .bk { fill: currentColor; stroke: none; }
+.mode svg .bk { fill: var(--ch); }
+.mode [data-mode="c"] svg .bk, .modebtn svg .bk { fill: currentColor; }
+/* Lista de canciones para agregar: desplegable con scroll */
+.sugg { max-height: min(55vh, 420px); overflow-y: auto; overscroll-behavior: contain; box-shadow: 0 12px 24px -18px rgba(6, 69, 127, .5); }

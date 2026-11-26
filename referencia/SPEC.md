@@ -176,7 +176,7 @@ Además:
 ## 10. Diseño
 
 - Usar la skill frontend-design. Partir de la identidad del prototipo:
-  - Papel cálido / noche azul tinta.
+  - Paleta "Sapphire nightfall" (elegida por Lautaro el 26-11-2026): #0474C4, #5379AE, #2C444C, #A8C4EC, #06457F, #262B40. Fondo claro azulado / noche #262B40.
   - Acordes en azul, secciones en naranja.
   - Fraunces para títulos, Inter para texto.
 - Agregar animaciones sutiles y con propósito: transiciones entre pantallas, despliegue de la vista previa de partes, cambio de tono, aparición de resultados. Siempre respetar `prefers-reduced-motion`.
