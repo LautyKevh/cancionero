@@ -1,5 +1,5 @@
 // Service worker: app en caché (offline) y datos con "red primero, caché si no hay conexión".
-const VERSION = 'v4-2026-11-26';
+const VERSION = 'v5-2026-11-26';
 const SHELL = `shell-${VERSION}`, DATA = 'data-v1', FONTS = 'fonts-v1';
 const FILES = ['./', 'index.html', 'css/app.css', 'js/app.js', 'js/music.js', 'js/songs.js', 'js/datasource.js', 'js/demo.js',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'data/songs.json'];
@@ -14,7 +14,7 @@ self.addEventListener('activate', e => {
 
 const networkFirst = async (req, cacheName) => {
   const c = await caches.open(cacheName);
-  try { const r = await fetch(req); if (r.ok) c.put(req, r.clone()); return r; }
+  try { const r = await fetch(req, { cache: 'no-cache' }); // revalida siempre: evita los 10 min de caché de GitHub Pages if (r.ok) c.put(req, r.clone()); return r; }
   catch (e) { return (await c.match(req)) || (await caches.match(req)) || Response.error(); }
 };
 const staleWhileRevalidate = async (req, cacheName) => {
