@@ -15,7 +15,7 @@ export class ApiDataSource {
   _write(k, v) { try { localStorage.setItem(this.P + k, JSON.stringify(v)); } catch (e) { /* lleno o bloqueado */ } }
 
   async _get(a, extra = {}) {
-    const q = new URLSearchParams({ c: this.c, a, ...extra });
+    const q = new URLSearchParams({ iglesia: this.c, a, ...extra });
     try {
       const r = await fetch(this.url + '?' + q, { redirect: 'follow' });
       const j = await r.json();
@@ -35,7 +35,7 @@ export class ApiDataSource {
     let j;
     try {
       // text/plain evita el preflight de CORS (Apps Script no responde OPTIONS)
-      const r = await fetch(this.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ c: this.c, a, ...body }), redirect: 'follow' });
+      const r = await fetch(this.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ iglesia: this.c, a, ...body }), redirect: 'follow' });
       j = await r.json();
     } catch (e) { throw new ClaveError('No se pudo conectar con el servidor. Probá de nuevo.', 'red'); }
     if (!j.ok) throw CLAVE_CODES.includes(j.code) ? new ClaveError(j.error, j.code) : new Error(j.error);

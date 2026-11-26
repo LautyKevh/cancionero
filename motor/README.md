@@ -1,6 +1,6 @@
 # Motor del Cancionero (Google Apps Script)
 
-Un solo motor multi-iglesia publicado como Web App. Cada iglesia se identifica por el **id de su carpeta raíz** (`?c=<id>`) y tiene que estar registrada en el motor (Script Properties → `IGLESIAS`) y compartida con la cuenta dueña (`paisaarias@gmail.com`) como editor.
+Un solo motor multi-iglesia publicado como Web App. Cada iglesia se identifica por el **id de su carpeta raíz** (parámetro `iglesia=<id>` del motor; en la PWA, `?c=<id>`. Ojo: el motor no puede usar `c` porque Apps Script lo reserva) y tiene que estar registrada en el motor (Script Properties → `IGLESIAS`) y compartida con la cuenta dueña (`paisaarias@gmail.com`) como editor.
 
 - Proyecto: `Cancionero Motor` · scriptId `1szqOM5cxJrd7Auni1vxc5gsn4U1-uOBR0_ee1_xfAZQbKRywpqiLJFJF`
   (el `.clasp.json` está en `.gitignore`; para clonarlo: `clasp clone <scriptId> --rootDir motor`).

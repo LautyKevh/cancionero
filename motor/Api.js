@@ -1,6 +1,6 @@
 // Web App: API JSON del cancionero.
 //
-// GET  ?c=<rootId>&a=<acción>[&id=...]
+// GET  ?iglesia=<rootId>&a=<acción>   (no usar "c": Apps Script lo reserva y responde 400)[&id=...]
 //   a=info        → { nombre, version, actualizado }
 //   a=canciones   → Song[] (cancionero completo, con letra)
 //   a=cancion     → Song (id)
@@ -8,7 +8,7 @@
 //   a=personas    → string[]
 //   a=reuniones   → Reunion[] (sin clave)
 //
-// POST body (text/plain con JSON, evita el preflight de CORS): { c, a, ... }
+// POST body (text/plain con JSON, evita el preflight de CORS): { iglesia, a, ... }
 //   a=crearReunion   { nombre, fecha, director, clave }
 //   a=verificarClave { id, clave }
 //   a=editarReunion  { id, clave, cambios: { nombre?, fecha?, director?, canciones? } }
@@ -31,7 +31,7 @@ function responder_(fn) {
 function doGet(e) {
   const p = (e && e.parameter) || {};
   return responder_(() => {
-    const ig = iglesia_(p.c);
+    const ig = iglesia_(p.iglesia);
     switch (p.a) {
       case 'info': return { nombre: ig.nombre, version: ig.version || '1', prueba: !!ig.prueba, actualizado: ig.importado || null };
       case 'canciones': return cancionero_(ig);
@@ -47,7 +47,7 @@ function doGet(e) {
 function doPost(e) {
   return responder_(() => {
     let b; try { b = JSON.parse(e.postData.contents); } catch (x) { throw apiError_('Pedido inválido.', 'formato'); }
-    const ig = iglesia_(b.c);
+    const ig = iglesia_(b.iglesia);
     const buscar = () => {
       const r = reunionesTodas_(ig).find(x => x.id === b.id && !x.borrada);
       if (!r) throw apiError_('La reunión ya no existe.', 'no-existe');
