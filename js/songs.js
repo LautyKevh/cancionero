@@ -66,7 +66,8 @@ export const fmt = f => f ? f.split('-').reverse().join('-') : '';
 /** Registros de una canción: registro histórico + canciones de reuniones. */
 export function historyOf(id, registro, reuniones) {
   const a = registro.filter(x => x.id === id).map(x => ({ ...x }));
-  reuniones.forEach(r => r.canciones.forEach(c => { if (c.id === id) a.push({ f: r.fecha, id, t: c.tono, q: c.quien }); }));
+  // Las reuniones ya volcadas a Registro (registrada) no se cuentan dos veces.
+  reuniones.filter(r => !r.registrada).forEach(r => r.canciones.forEach(c => { if (c.id === id) a.push({ f: r.fecha, id, t: c.tono, q: c.quien }); }));
   return a.sort((x, y) => (x.f || '').localeCompare(y.f || ''));
 }
 

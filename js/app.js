@@ -1,10 +1,16 @@
 // UI del cancionero. Solo usa `ds` (DataSource) para leer y guardar.
 import { LocalDataSource, ClaveError } from './datasource.js';
+import { ApiDataSource } from './apidatasource.js';
+import { CONFIG } from './config.js';
 import { demoSeed } from './demo.js';
 import { KEYS, keyAt, shiftTo, keyOption, showKey, transposer } from './music.js';
 import { prepare, blocksOf, defArr, isDefArr, arrLines, blockText, base, rOf, summary, search, fmt, isoOf } from './songs.js';
 
-const ds = new LocalDataSource({ seedFn: demoSeed });
+// Motor real si hay iglesia (?c= o config) y no se pidió ?demo=1; si no, modo demo local.
+const qs = new URLSearchParams(location.search);
+const IGLESIA = qs.get('c') || CONFIG.iglesia;
+const DEMO = qs.has('demo') || !IGLESIA || !CONFIG.motor[CONFIG.entorno];
+const ds = DEMO ? new LocalDataSource({ seedFn: demoSeed }) : new ApiDataSource({ url: CONFIG.motor[CONFIG.entorno], iglesia: IGLESIA });
 
 // ---------- Estado ----------
 const prefs = (() => { try { return JSON.parse(localStorage.getItem('cancionero:prefs') || '{}'); } catch (e) { return {}; } })();
@@ -33,7 +39,11 @@ let NAVDIR = 'fwd';
 function transition(fn) {
   document.documentElement.dataset.dir = NAVDIR; NAVDIR = 'fwd';
   if (!document.startViewTransition || reduced() || document.hidden) { fn(); return; }
-  document.startViewTransition(fn);
+  // Si el navegador no llega a ejecutar la transición (pestaña en segundo plano), dibujar igual.
+  let done = false;
+  const once = () => { if (!done) { done = true; fn(); } };
+  const vt = document.startViewTransition(once);
+  setTimeout(() => { if (!done) { vt.skipTransition?.(); once(); } }, 300);
 }
 
 addEventListener('hashchange', () => render());
@@ -313,7 +323,7 @@ function sesList() {
   ${up.length ? `<h3 class="group">Próximas</h3><ul class="list">${up.map(item).join('')}</ul>` : ''}
   ${past.length ? `<h3 class="group">Anteriores</h3><ul class="list">${past.map(item).join('')}</ul>` : ''}
   ${list.length ? '' : '<p class="empty">Todavía no hay reuniones. Armá la del domingo con “Nueva reunión”.</p>'}
-  <p class="note">Modo demo: las reuniones quedan guardadas en este teléfono. La clave de las reuniones de ejemplo es 1234.</p>`;
+  ${DEMO ? '<p class="note">Modo demo: las reuniones quedan guardadas en este teléfono. La clave de las reuniones de ejemplo es 1234.</p>' : ''}`;
   $('#nw').onclick = () => go('#/reuniones/nueva');
   $$('[data-r]').forEach(b => b.onclick = () => go('#/reunion/' + b.dataset.r));
 }

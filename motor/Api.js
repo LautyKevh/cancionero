@@ -1,0 +1,89 @@
+// Web App: API JSON del cancionero.
+//
+// GET  ?c=<rootId>&a=<acción>[&id=...]
+//   a=info        → { nombre, version, actualizado }
+//   a=canciones   → Song[] (cancionero completo, con letra)
+//   a=cancion     → Song (id)
+//   a=historial   → [{f,id,t,q,o}]  (pestaña Registro)
+//   a=personas    → string[]
+//   a=reuniones   → Reunion[] (sin clave)
+//
+// POST body (text/plain con JSON, evita el preflight de CORS): { c, a, ... }
+//   a=crearReunion   { nombre, fecha, director, clave }
+//   a=verificarClave { id, clave }
+//   a=editarReunion  { id, clave, cambios: { nombre?, fecha?, director?, canciones? } }
+//   a=borrarReunion  { id, clave }                       (borrado lógico)
+//   a=registrarUso   { id, clave }                       (agrega filas a Registro, una sola vez)
+//   a=importar       { idToken }                         (admin)
+//
+// Respuesta: { ok: true, data } | { ok: false, error, code }
+
+function apiError_(msg, code) { const e = new Error(msg); e.api = true; e.code = code || 'error'; return e; }
+function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function responder_(fn) {
+  try { return json_({ ok: true, data: fn() }); }
+  catch (e) {
+    if (!e.api) console.error(e && e.stack || e);
+    return json_({ ok: false, error: e.api ? e.message : 'Error interno del motor.', code: e.code || 'interno' });
+  }
+}
+
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  return responder_(() => {
+    const ig = iglesia_(p.c);
+    switch (p.a) {
+      case 'info': return { nombre: ig.nombre, version: ig.version || '1', prueba: !!ig.prueba, actualizado: ig.importado || null };
+      case 'canciones': return cancionero_(ig);
+      case 'cancion': { const s = cancionero_(ig).find(x => x.id === p.id); if (!s) throw apiError_('No existe esa canción.', 'no-existe'); return s; }
+      case 'historial': return registro_(ig);
+      case 'personas': return personas_(ig);
+      case 'reuniones': return reuniones_(ig);
+      default: throw apiError_('Acción desconocida.', 'accion');
+    }
+  });
+}
+
+function doPost(e) {
+  return responder_(() => {
+    let b; try { b = JSON.parse(e.postData.contents); } catch (x) { throw apiError_('Pedido inválido.', 'formato'); }
+    const ig = iglesia_(b.c);
+    const buscar = () => {
+      const r = reunionesTodas_(ig).find(x => x.id === b.id && !x.borrada);
+      if (!r) throw apiError_('La reunión ya no existe.', 'no-existe');
+      return r;
+    };
+    switch (b.a) {
+      case 'crearReunion': return conLock_(() => {
+        const fecha = String(b.fecha || ''), nombre = String(b.nombre || '').trim(), director = String(b.director || '').trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) throw apiError_('Fecha inválida.', 'formato');
+        if (!nombre) throw apiError_('Escribí un nombre para la reunión.', 'formato');
+        const r = { id: 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), nombre, fecha, director,
+                    clave: nuevaClave_(b.clave), canciones: [] };
+        guardarReunion_(ig, r); agregarPersonas_(ig, [director]);
+        return publica_(r);
+      });
+      case 'verificarClave': { const r = buscar(); verificarPin_(ig, r, b.clave); return true; }
+      case 'editarReunion': return conLock_(() => {
+        const r = buscar(); verificarPin_(ig, r, b.clave);
+        const c = b.cambios || {};
+        if (c.nombre != null) r.nombre = String(c.nombre).trim() || r.nombre;
+        if (c.fecha != null && /^\d{4}-\d{2}-\d{2}$/.test(c.fecha)) r.fecha = c.fecha;
+        if (c.director != null) r.director = String(c.director).trim();
+        if (Array.isArray(c.canciones)) r.canciones = c.canciones.map(x => ({ id: String(x.id), tono: String(x.tono || ''), quien: String(x.quien || ''),
+          arr: Array.isArray(x.arr) ? x.arr.map(a => ({ src: a.src == null ? null : +a.src, label: a.label == null ? null : String(a.label), rep: Math.max(1, Math.min(9, +a.rep || 1)) })) : [] }));
+        guardarReunion_(ig, r);
+        agregarPersonas_(ig, [r.director].concat(r.canciones.map(x => x.quien)));
+        return publica_(r);
+      });
+      case 'borrarReunion': return conLock_(() => { const r = buscar(); verificarPin_(ig, r, b.clave); r.borrada = true; guardarReunion_(ig, r); return true; });
+      case 'registrarUso': return conLock_(() => {
+        const r = buscar(); verificarPin_(ig, r, b.clave);
+        if (r.registrada) return 0;
+        const n = registrarUso_(ig, r); r.registrada = true; guardarReunion_(ig, r); return n;
+      });
+      case 'importar': verificarAdmin_(ig, b.idToken); return conLock_(() => importarCanciones_(ig));
+      default: throw apiError_('Acción desconocida.', 'accion');
+    }
+  });
+}

@@ -1,0 +1,12 @@
+// Configuración pública de la PWA (sin secretos: las URL de Web App son públicas por diseño).
+// - Rama desarrollo → motor "prueba".  Rama estable → motor "estable".
+// - La iglesia se toma de ?c=<id de carpeta raíz>; si no hay, se usa `iglesia` de acá.
+// - Sin iglesia, o con ?demo=1, la app funciona en modo demo (datos simulados en el teléfono).
+export const CONFIG = {
+  entorno: 'prueba',
+  motor: {
+    prueba: 'https://script.google.com/macros/s/AKfycbwTr_TJAMkMLbJYjT733HQgMdeia74ChuPxnk8FHCm-fPZe77me3drkaZ6Kv5U0c7hCtw/exec',
+    estable: 'https://script.google.com/macros/s/AKfycbxsSFMZtkk1DFfDCW0hXq9hD53FsJ_JRwdIMR4KqmQM_2Rrt-F93HcF63K6KPu5LL4aaw/exec',
+  },
+  iglesia: '', // id de la carpeta "Cancionero PRUEBA" (se completa después de crearIglesiaPrueba)
+};

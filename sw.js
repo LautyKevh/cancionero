@@ -1,7 +1,7 @@
 // Service worker: app en caché (offline) y datos con "red primero, caché si no hay conexión".
-const VERSION = 'v6-2026-11-26';
+const VERSION = 'v7-2026-11-26';
 const SHELL = `shell-${VERSION}`, DATA = 'data-v1', FONTS = 'fonts-v1';
-const FILES = ['./', 'index.html', 'css/app.css', 'js/app.js', 'js/music.js', 'js/songs.js', 'js/datasource.js', 'js/demo.js',
+const FILES = ['./', 'index.html', 'css/app.css', 'js/app.js', 'js/music.js', 'js/songs.js', 'js/datasource.js', 'js/demo.js', 'js/apidatasource.js', 'js/config.js',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'data/songs.json'];
 
 self.addEventListener('install', e => {
