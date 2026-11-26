@@ -110,18 +110,40 @@ function wirePerson(sel, onSet) {
     inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); ok.click(); } if (e.key === 'Escape') cx.click(); };
   });
 }
+const ICON = {
+  mic: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg>',
+  guitar: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 9.5 21 3M18 3h3v3"/><path d="M11.5 8.5c-1.5-1.5-4.5-1-6 .5-2.5 2.5-2.5 7 0 9.5s7 2.5 9.5 0c1.5-1.5 2-4.5.5-6"/><circle cx="10" cy="14" r="1.6"/><path d="m11.5 8.5 4 4"/></svg>',
+  search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  chev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>',
+};
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const initials = n => String(n || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+const dateBlock = f => { const [y, m, d] = (f || '').split('-'); return f ? `<span class="dblock" aria-label="${esc(fmt(f))}"><b>${+d}</b><small>${MESES[+m - 1]}</small></span>` : '<span class="dblock"></span>'; };
 const modeChooser = () => `<div class="mode">
-  <button type="button" data-mode="c"><span class="mode-t">Cantante</span><small>Solo la letra, grande</small></button>
-  <button type="button" data-mode="m"><span class="mode-t">Músico</span><small>Letra con acordes y controles</small></button></div>`;
+  <button type="button" data-mode="c">${ICON.mic}<span class="mode-t">Cantante</span><small>Canto: solo la letra, grande</small></button>
+  <button type="button" data-mode="m">${ICON.guitar}<span class="mode-t">Músico</span><small>Toco: acordes y cambio de tono</small></button></div>`;
 
 // ---------- Canciones ----------
 function songList() {
   setTabs('c');
-  app.innerHTML = `<div class="searchbox"><input type="search" id="q" placeholder="Buscar canción, frase o director" value="${esc(lastQ)}" aria-label="Buscar canciones" autocomplete="off"></div>
+  const today = isoOf(new Date());
+  const next = [...SES].filter(r => r.fecha >= today).sort((a, b) => a.fecha.localeCompare(b.fecha))[0];
+  const daysTo = next ? Math.round((new Date(next.fecha + 'T00:00') - new Date(today + 'T00:00')) / 864e5) : 0;
+  const when = !next ? '' : daysTo === 0 ? 'Hoy' : daysTo === 1 ? 'Mañana' : daysTo < 7 ? 'Este ' + next.nombre.split(' ')[0].toLowerCase() : 'Próxima reunión';
+  const hero = next ? `<button type="button" class="next" id="next">
+      <span class="next-top"><span class="next-when">${esc(when)}</span><span class="next-date">${esc(fmt(next.fecha))}</span></span>
+      <span class="next-name">${esc(next.nombre)}</span>
+      <span class="next-who"><span class="av">${esc(initials(next.director))}</span>Dirige ${esc(next.director)}</span>
+      <span class="next-songs">${next.canciones.slice(0, 5).map(c => `<span><i>${esc(c.tono)}</i>${esc((songBy(c.id) || {}).titulo || '')}</span>`).join('')}
+        ${next.canciones.length > 5 ? `<span class="more">y ${next.canciones.length - 5} más</span>` : ''}${next.canciones.length ? '' : '<span class="more">Todavía sin canciones</span>'}</span>
+      <span class="next-go">Abrir la reunión ${ICON.chev}</span></button>` : '';
+  app.innerHTML = `${lastQ ? '' : hero}<div class="searchbox">${ICON.search}<input type="search" id="q" placeholder="Buscar canción, frase o director" value="${esc(lastQ)}" aria-label="Buscar canciones" autocomplete="off"></div>
   <ul class="list" id="res"></ul>`;
+  $('#next') && ($('#next').onclick = () => go('#/reunion/' + next.id));
   const q = $('#q'), res = $('#res');
   const paint = () => {
-    lastQ = q.value;
+    const had = !!lastQ; lastQ = q.value;
+    if (!!lastQ !== had && $('#next')) $('#next').hidden = !!lastQ;
     const f = search(SONGS, q.value, perOf);
     res.innerHTML = f.map(x => songItem(x, 'data-id')).join('') || '<li class="empty">No hay canciones con ese nombre, frase ni director. Probá con otra palabra.</li>';
     if (!reduced()) res.animate([{ opacity: .35 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' });
@@ -284,11 +306,15 @@ let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() 
 function sesList() {
   setTabs('r');
   const list = [...SES].sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
-  app.innerHTML = `<button type="button" class="primary" id="nw">+ Nueva reunión</button>
-  <ul class="list">${list.map(r => `<li><button type="button" class="row" data-r="${esc(r.id)}"><span class="row-main"><b>${esc(r.nombre)}</b>
-    <small>Dirige ${esc(r.director)} · ${r.canciones.length} ${r.canciones.length === 1 ? 'canción' : 'canciones'}</small></span><span class="key date">${esc(fmt(r.fecha))}</span></button></li>`).join('')
-    || '<li class="empty">Todavía no hay reuniones. Creá la primera con “Nueva reunión”.</li>'}</ul>
-  <p class="note">Modo demo: las reuniones se guardan solo en este dispositivo. La clave de las reuniones de ejemplo es 1234.</p>`;
+  const today = isoOf(new Date());
+  const up = list.filter(r => r.fecha >= today).reverse(), past = list.filter(r => r.fecha < today);
+  const item = r => `<li><button type="button" class="row cal" data-r="${esc(r.id)}">${dateBlock(r.fecha)}<span class="row-main"><b>${esc(r.nombre)}</b>
+    <small><span class="av sm">${esc(initials(r.director))}</span>Dirige ${esc(r.director)} · ${r.canciones.length} ${r.canciones.length === 1 ? 'canción' : 'canciones'}</small></span>${ICON.chev}</button></li>`;
+  app.innerHTML = `<button type="button" class="primary wide" id="nw">+ Nueva reunión</button>
+  ${up.length ? `<h3 class="group">Próximas</h3><ul class="list">${up.map(item).join('')}</ul>` : ''}
+  ${past.length ? `<h3 class="group">Anteriores</h3><ul class="list">${past.map(item).join('')}</ul>` : ''}
+  ${list.length ? '' : '<p class="empty">Todavía no hay reuniones. Armá la del domingo con “Nueva reunión”.</p>'}
+  <p class="note">Modo demo: las reuniones quedan guardadas en este teléfono. La clave de las reuniones de ejemplo es 1234.</p>`;
   $('#nw').onclick = () => go('#/reuniones/nueva');
   $$('[data-r]').forEach(b => b.onclick = () => go('#/reunion/' + b.dataset.r));
 }
@@ -336,9 +362,9 @@ function openSes(r) {
   }
   const rows = r.canciones.map((c, i) => { const s = songBy(c.id); if (!s) return '';
     return `<li><button type="button" class="row" data-o="${i}"><span class="num">${i + 1}</span><span class="row-main"><b>${esc(s.titulo)}</b>
-      <small>Dirige ${esc(c.quien)}${isDefArr(s, c.arr) ? '' : ' · orden modificado'}</small></span><span class="key">${esc(c.tono)}</span></button></li>`; }).join('');
+      <small><span class="av sm">${esc(initials(c.quien))}</span>${esc(c.quien)}${isDefArr(s, c.arr) ? '' : ' · orden modificado'}</small></span><span class="key">${esc(c.tono)}</span></button></li>`; }).join('');
   app.innerHTML = `${head}
-  <div class="ctl"><button type="button" id="sm2" title="Cambiar modo">Modo: ${P.modos[r.id] === 'm' ? 'Músico' : 'Cantante'} ⇄</button><span class="sp"></span>
+  <div class="ctl"><button type="button" id="sm2" class="modebtn" title="Cambiar modo">${P.modos[r.id] === 'm' ? ICON.guitar : ICON.mic}Modo: ${P.modos[r.id] === 'm' ? 'Músico' : 'Cantante'} ⇄</button><span class="sp"></span>
     <button type="button" id="ed">Editar</button><button type="button" id="del">Borrar</button></div>
   <div id="ask" class="askwrap"></div>
   <ol class="list setlist">${rows || '<li class="empty">Sin canciones todavía. Tocá “Editar” para agregarlas.</li>'}</ol>`;
