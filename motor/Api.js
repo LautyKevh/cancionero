@@ -13,7 +13,7 @@
 //   a=verificarClave { id, clave }
 //   a=editarReunion  { id, clave, cambios: { nombre?, fecha?, director?, canciones? } }
 //   a=borrarReunion  { id, clave }                       (borrado lógico)
-//   a=registrarUso   { id, clave }                       (agrega filas a Registro, una sola vez)
+//   a=registrarUso   { id, clave }                       (agrega filas a Registro, una sola vez; también se hace solo al día siguiente de la reunión)
 //   a=importar       { idToken }                         (admin)
 //
 // Respuesta: { ok: true, data } | { ok: false, error, code }
@@ -36,9 +36,9 @@ function doGet(e) {
       case 'info': return { nombre: ig.nombre, version: ig.version || '1', prueba: !!ig.prueba, actualizado: ig.importado || null };
       case 'canciones': return cancionero_(ig);
       case 'cancion': { const s = cancionero_(ig).find(x => x.id === p.id); if (!s) throw apiError_('No existe esa canción.', 'no-existe'); return s; }
-      case 'historial': return registro_(ig);
+      case 'historial': anotarPasadas_(ig); return registro_(ig);
       case 'personas': return personas_(ig);
-      case 'reuniones': return reuniones_(ig);
+      case 'reuniones': anotarPasadas_(ig); return reuniones_(ig);
       default: throw apiError_('Acción desconocida.', 'accion');
     }
   });

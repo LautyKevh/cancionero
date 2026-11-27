@@ -379,9 +379,7 @@ function openSes(r) {
     <button type="button" id="ed">Editar</button><button type="button" id="del">Borrar</button></div>
   <div id="ask" class="askwrap"></div>
   <ol class="list setlist">${rows || '<li class="empty">Sin canciones todavía. Tocá “Editar” para agregarlas.</li>'}</ol>
-  ${!ds.registrarUso || !r.canciones.length ? '' : r.registrada
-    ? '<p class="hint reg">✓ Canciones anotadas en el historial.</p>'
-    : r.fecha <= isoOf(new Date()) ? '<div class="ctl"><button type="button" id="reg">Anotar en el historial</button></div><p class="hint">Cuando termina la reunión: suma estas canciones al historial de la iglesia. Se hace una sola vez.</p>' : ''}`;
+  ${r.registrada ? '<p class="hint reg">✓ Anotada en el historial de la planilla.</p>' : ''}`;
   $$('[data-o]').forEach(b => b.onclick = () => go(`#/reunion/${r.id}/${b.dataset.o}`));
   $('#sm2').onclick = () => { P.modos[r.id] = P.modos[r.id] === 'm' ? 'c' : 'm'; savePrefs(); openSes(r); };
   const ask = (what, run) => {
@@ -398,12 +396,6 @@ function openSes(r) {
       catch (x) { $('#er').textContent = x instanceof ClaveError ? x.message : 'No se pudo verificar la clave.'; kk.select(); } };
   };
   $('#ed').onclick = () => ask('Editar', () => go(`#/reunion/${r.id}/editar`));
-  const reg = $('#reg');
-  if (reg) reg.onclick = () => ask('Anotar', async clave => {
-    reg.disabled = true; reg.textContent = 'Anotando…'; $('#ask').innerHTML = '';
-    try { await ds.registrarUso(r.id, clave); r.registrada = true; REG = await ds.getRegistro().catch(() => REG); openSes(r); }
-    catch (x) { reg.disabled = false; $('#ask').innerHTML = `<p class="err">${esc(x.message)}</p>`; }
-  });
   $('#del').onclick = () => ask('Borrar', clave => {
     const a = $('#ask');
     a.innerHTML = `<div class="askf confirm"><span>¿Borrar “${esc(r.nombre)}”?</span><button type="button" class="danger" id="y">Sí, borrar</button><button type="button" id="n">No</button></div>`;

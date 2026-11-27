@@ -68,8 +68,9 @@ export const fmt = f => f ? f.split('-').reverse().join('-') : '';
 export function historyOf(id, registro, reuniones) {
   const ids = new Set([].concat(id)), has = x => ids.has(x);
   const a = registro.filter(x => has(x.id)).map(x => ({ ...x }));
-  // Las reuniones ya volcadas a Registro (registrada) no se cuentan dos veces.
-  reuniones.filter(r => !r.registrada).forEach(r => r.canciones.forEach(c => { if (has(c.id)) a.push({ f: r.fecha, id: c.id, t: c.tono, q: c.quien }); }));
+  // Las reuniones ya volcadas a Registro no se cuentan dos veces (si Registro todavía no
+  // trae esa fecha, p. ej. porque se anotó durante esta misma carga, se cuenta la reunión).
+  reuniones.filter(r => !r.registrada || !registro.some(x => x.f === r.fecha)).forEach(r => r.canciones.forEach(c => { if (has(c.id)) a.push({ f: r.fecha, id: c.id, t: c.tono, q: c.quien }); }));
   return a.sort((x, y) => (x.f || '').localeCompare(y.f || ''));
 }
 

@@ -188,3 +188,18 @@ function registrarUso_(ig, r) {
   cacheDel_(ck_(ig, 'registro'));
   return filas.length;
 }
+
+/** Reuniones cuya fecha ya pasó (hasta ayer) y todavía no están en Registro: se anotan solas,
+ *  con la última versión guardada de la lista. Se llama en las lecturas; nunca hace fallar la lectura. */
+function anotarPasadas_(ig) {
+  try {
+    const hoy = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    const pend = l => l.filter(r => !r.borrada && !r.registrada && r.canciones && r.canciones.length && r.fecha < hoy);
+    if (!pend(reuniones_(ig)).length) return;          // chequeo barato contra la caché
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(5000)) return;                    // otro pedido ya lo está haciendo
+    try {
+      pend(reunionesTodas_(ig)).forEach(r => { registrarUso_(ig, r); r.registrada = true; guardarReunion_(ig, r); });
+    } finally { lock.releaseLock(); }
+  } catch (e) { console.error(e && e.stack || e); }
+}
