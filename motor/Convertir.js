@@ -201,7 +201,10 @@ function convertirParrafos_(ps) {
       const tl = tituloLibre_(s) || tituloSuelto_(s, ultima_(L));
       if (tl) { secs('[' + tl.v + ']'); if (tl.ch) L.push({ t: 'ch', v: tl.ch }); i++; continue; }
     }
-    if (chordyNota_(rest)) {
+    // Una línea de acordes con nota entre paréntesis solo cambia si tiene letra abajo para emparejar;
+    // si no, queda como antes (letra o mixta).
+    const conNota = !chordy_(rest) && chordyNota_(rest);
+    if (chordy_(rest) || conNota) {
       const nxt = i + 1 < ps.length ? ps[i + 1] : null;
       const nt = nxt ? texto_(nxt).replace(/\s+$/, '') : '';
       const nm = LAB_RE.exec(nt), nlab = nm ? nm[1] : '';
@@ -238,8 +241,10 @@ function convertirParrafos_(ps) {
         L.push({ t: 'pair', segs: segs.map(([c, w]) => [c, w.replace(/_+/g, '')]) });
         i += 2; continue;
       }
-      if (lab) secs(lab);
-      L.push({ t: 'ch', v: rest.trim() }); i++; continue;
+      if (!conNota) {
+        if (lab) secs(lab);
+        L.push({ t: 'ch', v: rest.trim() }); i++; continue;
+      }
     }
     if (lab) secs(lab);
     if (/\(?[A-G][#b]?\d/.test(rest) && /\b[A-G][#b]?(m|\d|\/)/.test(rest)) L.push({ t: 'mix', v: rest.trim() });
