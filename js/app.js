@@ -645,7 +645,7 @@ function editSes(r) {
   const rows = r.canciones.map((c, i) => { const s = songBy(c.id); if (!s) return '';
     return `<li class="ed"><div class="edh"><b><span class="num">${i + 1}</span>${esc(s.titulo)}</b><span class="tools">
       <button type="button" data-up="${i}" aria-label="Subir"${i ? '' : ' disabled'}>▲</button><button type="button" data-dn="${i}" aria-label="Bajar"${i < r.canciones.length - 1 ? '' : ' disabled'}>▼</button><button type="button" data-rm="${i}" aria-label="Quitar">✕</button></span></div>
-      <div class="edr"><label>Tono<select data-k="${i}">${KEYS.map(k => `<option${k === c.tono ? ' selected' : ''}>${k}</option>`).join('')}</select></label>
+      <div class="edr una"><label>Tono<select data-k="${i}">${KEYS.map(k => `<option${k === c.tono ? ' selected' : ''}>${k}</option>`).join('')}</select></label>
       <label>Dirige${personSelect(`data-q="${i}"`, c.quien)}</label>
       <button type="button" data-pa="${i}">Editar</button></div></li>`; }).join('');
   app.innerHTML = `${back(nombreSes(r), '#/reunion/' + r.id)}<h2 class="title">Editar reunión</h2><p class="meta">${esc(nombreSes(r))} · Dirige ${esc(r.director)}</p>
