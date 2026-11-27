@@ -1,6 +1,6 @@
 # Pendientes
 
-Estado al 27-11-2026 (rama `desarrollo`, app v42; motor de PRUEBA: implementación @29). Nada en `main` ni en IBSI.
+Estado al 27-11-2026 (rama `desarrollo`, app v43; motor de PRUEBA: implementación @29). Nada en `main` ni en IBSI.
 
 ## Hecho hoy (en desarrollo)
 - Aprobado en el celular: etapa C (tono por parte, Modulante, guardado, sin conexión), medley (etapa D), variantes de una parte.
