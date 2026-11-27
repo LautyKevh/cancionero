@@ -8,5 +8,5 @@ export const CONFIG = {
     prueba: 'https://script.google.com/macros/s/AKfycbwTr_TJAMkMLbJYjT733HQgMdeia74ChuPxnk8FHCm-fPZe77me3drkaZ6Kv5U0c7hCtw/exec',
     estable: 'https://script.google.com/macros/s/AKfycbxsSFMZtkk1DFfDCW0hXq9hD53FsJ_JRwdIMR4KqmQM_2Rrt-F93HcF63K6KPu5LL4aaw/exec',
   },
-  iglesia: '', // id de la carpeta "Cancionero PRUEBA" (se completa después de crearIglesiaPrueba)
+  iglesia: '1BjV_7ZrAKoO0IW6F92YGLj8bGyMfjDnc', // carpeta "Cancionero PRUEBA" (copia de la planilla de IBSI)
 };
