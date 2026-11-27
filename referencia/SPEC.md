@@ -129,6 +129,13 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 
 - Título y tono salen del primer párrafo: `Título [Tono]`.
 - `[Lo que sea]` es un título de sección. Las indicaciones encadenadas se separan, cada una en su línea (`[Coro][Repite final]` → dos títulos). Se aceptan `:` y `x2`/`X2`/`×2` (`[Parte 1]: x2` → "Parte 1 x2").
+- **Títulos sin corchetes:** también valen como título de parte:
+  - con dos puntos: `Coro:`, `Estrofa 1:`, `Puente 1:`;
+  - en mayúsculas: `CORO`, `PRE-CORO`, `PUENTE (Repite "cumple Señor")`;
+  - con acordes en la misma línea: `Inter: Bb F C - Gm Dm C`, `INTERLUDIO(2x): G - D`, `FINAL /B-E-F#/` (las barras de compás se ignoran);
+  - con una aclaración: `Intro: (Primera parte de la estrofa)` y `CORO (Dm)`.
+  - Las mayúsculas se muestran como "Coro". Una línea de letra que empieza con esas palabras ("Solo hay uno digno", "Coro de ángeles…") sigue siendo letra.
+  - Una línea de acordes nunca se empareja con un título como si fuera letra.
 - Una línea solo con acordes, seguida de una línea de letra, forma un par: cada acorde se ancla a una sílaba.
   - La posición se calcula con las métricas de la fuente del Word (Times New Roman ≈ Liberation Serif) y factor 0,94 para los espacios.
   - Después se ajusta al inicio de la sílaba más cercana.
@@ -189,10 +196,21 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - Repeticiones: un bloque ya mostrado aparece solo con su título ("Coro x2").
 - Junto al tono original se muestra el BPM, solo si está confirmado.
 
+**Vista de la canción (Músico y Cantante):**
+- Cada parte va en su bloque, con un espacio claro antes del título siguiente.
+- Una parte de una sola línea de acordes (Intro, Inter) muestra los acordes al lado del título.
+- "(Sube a X)" / "(Baja a X)" no se muestran como texto: se reemplazan por el indicador "↑ X" / "↓ X", transportado.
+- Si no hay intérprete, no se muestra nada (nunca "Intérprete sin confirmar").
+
 **Imprimir / PDF:**
 - Botón **"Imprimir"** en cada canción y en cada reunión (la reunión entera, en orden).
 - Imprime lo que se está viendo: tono elegido, arreglo de la reunión y modo Músico (con acordes) o Cantante (solo letra).
 - Versión limpia para papel: sin botones ni menús, acordes alineados, salto de página entre canciones.
+- Sin encabezado ni pie del navegador (fecha, título, URL, número de página).
+- Título como en los documentos de la iglesia: "Nombre [Tono]" centrado, en una línea; ningún otro dato.
+- Cada canción intenta entrar en una hoja, como el documento original: márgenes chicos y, si no entra, la letra se achica hasta 8 pt antes de pasar a otra hoja.
+- Reunión: arriba de la primera canción, una sola línea con el nombre de la reunión. Cada canción empieza en hoja nueva.
+- Una parte nunca se corta entre hojas; si no entra, pasa entera a la siguiente.
 - Usa el diálogo de impresión del sistema. En la compu abre la impresión de siempre; en el celular el mismo diálogo ofrece "Guardar como PDF".
 
 **Datos de la canción:**
@@ -304,7 +322,16 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 ## 8. Sin conexión y actualización
 
 - La PWA (service worker) cachea la app y el `cancionero.json`. Al abrir con internet, pide los cambios y actualiza.
-- Línea de estado: "Actualizado hoy 10:32" / "Sin conexión · datos del 22-11", más un botón "Actualizar".
+- Línea de estado: "Actualizado hoy 10:32" / "Sin conexión · datos del 22-11", más un botón "Actualizar". "Actualizar" solo vuelve a pedir los datos al motor; los cambios de la carpeta entran con la importación (Ajustes, admin).
+- Ajustes se abre desde el engranaje del encabezado (y el link del pie, que no aparece dentro de Ajustes).
+- **Navegación por niveles** (atrás del celular, flecha del navegador y "←" de la app hacen lo mismo):
+  - 0 = Canciones / Reuniones; 1 = una canción, una reunión, Ajustes; 2 = Cantante / Músico, edición; 3 = partes en la edición.
+  - Entrar más profundo agrega un paso; mismo nivel (Anterior/Siguiente, modo, pestañas) reemplaza; volver baja un nivel y "adelante" no hace nada.
+  - Un link directo arma el historial como si se hubiera entrado desde el nivel 0.
+  - En el nivel 0, atrás muestra "Tocá atrás de nuevo para salir"; un segundo toque dentro de 2,5 s sale de la app.
+- **Ingreso de admin:** se recuerda en el dispositivo mientras vale el token de Google (~1 h); después reingresa solo o con un toque.
+- **Importación desde Ajustes:** avanza por tandas, muestra "X de Y canciones" y, si el motor dice que la tanda anterior sigue corriendo o se corta la conexión, espera 30 s y reintenta sola.
+- **Editar reunión:** los cambios se ven al instante y se guardan en segundo plano, en orden; "Listo" espera a que terminen. El botón de cada canción para ordenar sus partes se llama "Editar".
 - Sin conexión se puede ver todo. Editar reuniones requiere conexión.
 
 ## 9. Carga de canciones nuevas
