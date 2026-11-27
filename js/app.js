@@ -1165,18 +1165,19 @@ function settings() {
   if (!st.online) { box.innerHTML = '<p class="hint">Hace falta conexión.</p>'; return; }
   if (ADMIN && ADMIN.exp * 1000 < Date.now() + 60000) setAdmin(null);
   if (!ADMIN) {
-    box.innerHTML = '<p class="hint">Solo para quien administra el cancionero de la iglesia.</p><div id="gbtn"></div><p class="err" id="er" role="alert"></p>';
+    // Solo el botón "Iniciar sesión" (sin el cartel emergente de Google): se ingresa cuando uno lo toca.
+    box.innerHTML = '<p class="hint">Solo para quien administra el cancionero de la iglesia.</p><div id="gbtn" class="gbtn"></div><p class="err" id="er" role="alert"></p>';
     loadGsi().then(() => {
-      google.accounts.id.initialize({ client_id: CONFIG.googleClientId, auto_select: true, callback: r => { setAdmin(r.credential); settings(); } });
-      google.accounts.id.renderButton($('#gbtn'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'es' });
-      google.accounts.id.prompt();
+      google.accounts.id.initialize({ client_id: CONFIG.googleClientId, callback: r => { setAdmin(r.credential); settings(); } });
+      google.accounts.id.renderButton($('#gbtn'), { theme: P.tema === 'dark' || (!P.tema && matchMedia('(prefers-color-scheme: dark)').matches) ? 'filled_black' : 'outline',
+        size: 'large', text: 'signin', shape: 'pill', locale: 'es' });
     }).catch(e => { $('#er').textContent = e.message; });
     return;
   }
-  box.innerHTML = `<p class="hint">Ingresaste como <b>${esc(ADMIN.email)}</b>.</p>
+  box.innerHTML = `<div class="sesion"><p class="hint">Ingresaste como <b>${esc(ADMIN.email)}</b></p><button type="button" id="out">Cerrar sesión</button></div>
     <button type="button" class="primary" id="imp">Importar canciones de Drive</button>
     <p class="hint">Convierte los Word de “Letra y Acordes”. Solo procesa los nuevos o modificados; si son muchos puede tardar varios minutos.</p>
-    <div id="res" role="status"></div><button type="button" id="out">Salir</button>`;
+    <div id="res" role="status"></div>`;
   $('#out').onclick = () => { setAdmin(null); window.google?.accounts?.id?.disableAutoSelect(); settings(); };
   $('#imp').onclick = async () => {
     const b = $('#imp'), res = $('#res'); b.disabled = true;

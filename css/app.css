@@ -371,6 +371,10 @@ svg .bk { fill: currentColor; stroke: none; }
 .status .demo + .cfg { margin-left: 0; }
 .adm { margin-top: 20px; display: grid; gap: 10px; justify-items: start; }
 .adm h3 { margin: 0; font-size: 15px; }
+.adm .sesion { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.adm .sesion .hint { margin: 0; }
+.adm .sesion button { font-weight: 600; font-size: 14px; min-height: 40px; padding: 0 14px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+.gbtn { min-height: 44px; }
 .adm .hint { margin: -6px 0 0; }
 .seg { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
 .seg button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 9px; background: none; color: var(--mute); font-weight: 600; font-size: 14px; }

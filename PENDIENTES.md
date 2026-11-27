@@ -1,24 +1,25 @@
 # Pendientes
 
-Estado al 27-11-2026 (rama `desarrollo`, app v44; motor de PRUEBA: implementación @29). Nada en `main` ni en IBSI.
+Estado al 27-11-2026 (rama `desarrollo`, app v45; motor de PRUEBA: implementación @29). Nada en `main` ni en IBSI.
 
 ## Hecho hoy (en desarrollo)
 - Aprobado en el celular: etapa C (tono por parte, Modulante, guardado, sin conexión), medley (etapa D), variantes de una parte.
 - Imprimir / PDF (A4 por defecto, sin tamaño fijo); resumen de parte sin "(Sube a X)"; la versión nueva se activa sola.
 - Editor de partes rediseñado (tarjetas, manija, chips de repeticiones y tono, hoja de tono, ⋯) y deslizar a la izquierda para borrar con "Deshacer" (también en "Crear medley").
 - Ajustes → Pantalla: Automático / Claro / Oscuro, solo en el dispositivo.
+- Ajustes → Administración: botón "Iniciar sesión" (sin cartel emergente de Google) y "Cerrar sesión" en el mismo lugar.
 - Encabezado de la canción en tres renglones; Editar reunión con Tono, Dirige y Editar en una línea.
 - Medley: crear, ordenar canciones arrastrando (al crearlo y en el editor), nombre según el orden.
 - Agrupación por tono solo en la app (`js/grupos.js`, 56 grupos; ver `referencia/agrupacion-por-tono.md`).
 - Variantes de una parte: Músico elige "es el Coro 2" con un toque, sin clave ni nombre, compartido (motor `elegirVariante`).
 - Editar fecha, nombre y director de una reunión ya creada (ruedita ⚙ al lado de "Editar reunión", hoja desde abajo, con clave), sin pisar otra reunión del mismo día.
-- Admin sobre las reuniones: edita sin clave; en la misma hoja de la ruedita, en chico, "Clave nueva" e "Historial del admin" (motor `adminReunion`). **Sin probar con una sesión real de admin**: el ingreso con Google todavía no tiene el ID de cliente de OAuth (ver "Fase 2 (motor)").
+- Admin sobre las reuniones: edita sin clave; en la misma hoja de la ruedita, en chico, "Clave nueva" e "Historial del admin" (motor `adminReunion`). **Sin probar con una sesión real de admin** (Claude no puede ingresar con Google): lo prueba Lautaro desde Ajustes → Acceder.
 
 ## Próximo, en orden
 Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesia de prueba; la planilla real de IBSI no se toca sin OK.
 1. **Etapa E: prueba en la iglesia de prueba** (tono por parte, Modulante, medley, variantes y arreglo compartido con reuniones reales). No empezada.
 2. **Esperan respuesta u OK de Lautaro:**
-   - Probar en el celular: deslizar para borrar, la ruedita de Editar reunión (fecha/nombre/director) y, cuando haya ingreso con Google, lo del admin.
+   - Probar en el celular: deslizar para borrar, la ruedita de Editar reunión (fecha/nombre/director) y lo del admin (ingresando en Ajustes).
    - OK final al editor de partes rediseñado, ahora con deslizar para borrar (el ✕ ya no está en la tarjeta; queda "Quitar" en ⋯).
    - Agrupación: ¿agregar ya los 6 grupos decididos (Aquí estoy como en A; El Dios que adoramos F/F#/G como en F#/G; Él nos ama como en A; No voy a caer como en A; Por siempre como en Ab) o esperar a corregir esos Word? Mientras tanto siguen separados. Sin agrupar: "Levanto un aleluya" (versiones distintas).
    - "Con tu sangre" [D-Eb] y [D]: van por separado salvo que se haga la función de mostrar "Padre eterno, Cordero de Dios (Sube a…)" solo con Modulante (sin proponer todavía).
