@@ -41,11 +41,14 @@ const degOf = (n, tonic) => { const i = idx(n); return i < 0 ? n : DEG[(i - toni
 /**
  * Crea un transpositor para un contexto (canción, desplazamiento, cifrado).
  * Devuelve { chord(c), line(text, strict) }.
+ * tal = true: sin transporte, los acordes quedan tal como están escritos (no se cambia # por b).
  */
-export function transposer(song, sh, not) {
-  const key = keyAt(song, sh), flat = FLATKEYS.includes(key), tonic = idx(key.replace(/m$/, ''));
+export function transposer(song, sh, not, tal) {
+  const igual = tal && (sh % 12 + 12) % 12 === 0;
+  const key = igual ? baseKey(song) : keyAt(song, sh), flat = FLATKEYS.includes(key), tonic = idx(key.replace(/m$/, ''));
   const note = n => {
     const i = idx(n); if (i < 0) return n;
+    if (igual) return not === 1 ? LAT[n[0]] + n.slice(1) : n;
     let o = (flat ? FL : SH)[(i + sh + 120) % 12];
     if (not === 1) o = LAT[o[0]] + o.slice(1);
     return o;
@@ -99,6 +102,8 @@ export function enTonos(n) {
   return (n < 0 ? '−' : '+') + (e ? e : '') + h;
 }
 const sinRep = a => a.filter((t, i) => t && (i === 0 || t !== a[i - 1]));
+/** Mismo tono aunque esté escrito distinto (F# = Gb). */
+const mismo = (a, b) => intervalo(a, b) === 0 && /m$/.test(a || '') === /m$/.test(b || '');
 
 /**
  * Tonos de un ítem de reunión (canción o medley), parte por parte.
@@ -109,7 +114,7 @@ const sinRep = a => a.filter((t, i) => t && (i === 0 || t !== a[i - 1]));
  *    tono = tono en que se toca; sh = semitonos para llevar sus líneas del tono escrito al tocado;
  *    ver = false solo en transiciones ocultas; puente/modula/repite = acordes puente, [ ] y { } del final de la parte
  *    (puente y modula se transportan sh desde el tono escrito de la parte siguiente: escrito → tono);
- *  - modulante; secuencias: [{ id, quien, tonos }] (igual que tonosTocados_ del motor, para el Registro).
+ *  - modulante; arr (el arreglo usado: el del ítem o el base); secuencias: [{ id, quien, tonos }] (igual que tonosTocados_ del motor, para el Registro).
  */
 export function tonosDelItem(item, songs) {
   const medley = item.tipo === 'medley';
@@ -147,7 +152,7 @@ export function tonosDelItem(item, songs) {
     const n = sig(k);
     if (o.transicion) {
       // Se transporta según el tono de destino; se ve solo si cambia el tono (o con "Mostrar igual").
-      const cambia = !!(n && prev && n.tono !== prev.tono);
+      const cambia = !!(n && prev && !mismo(n.tono, prev.tono));
       o.tono = n ? n.tono : (prev ? prev.tono : unTono);
       o.sh = n ? intervalo(o.destino, n.tono) : 0;
       o.cambia = cambia; o.ver = cambia || o.mostrar;
@@ -156,16 +161,17 @@ export function tonosDelItem(item, songs) {
     }
     o.sh = intervalo(o.escrito, o.tono);
     o.ver = true;
-    o.cambia = !!(n && n.tono !== o.tono);
+    o.cambia = !!(n && !mismo(n.tono, o.tono));
     const shSig = n ? intervalo(n.escrito, n.tono) : o.sh;  // escritos para ir al tono escrito de la siguiente
-    const dest = n ? { tono: n.tono, escrito: n.escrito } : { tono: o.tono, escrito: o.escrito };  // para escribir # o b
+    const dest = n ? { tono: n.tono, escrito: n.escrito, cancion: n.cancion } : { tono: o.tono, escrito: o.escrito, cancion: o.cancion };
     o.puente = { ver: !!n && (o.cambia || o.mostrar), sh: shSig, ...dest };
     // [ ] = modular: solo si la siguiente cambia de tono; en la última parte, siempre (tag o cierre final).
-    o.modula = { ver: n ? (o.cambia || o.mostrar) : true, sh: n ? shSig : o.sh, ...dest };
+    // Con Modulante apagado se ocultan siempre, también en la última parte.
+    o.modula = { ver: modul && (n ? (o.cambia || o.mostrar) : true), sh: n ? shSig : o.sh, ...dest };
     // { } = repetir en el mismo tono: solo si la siguiente queda igual.
     o.repite = { ver: !n || !o.cambia };
     o.indicador = null;
-    if (prev && prev.tono !== o.tono) {
+    if (prev && !mismo(prev.tono, o.tono)) {
       const d = intervalo(prev.tono, o.tono);
       o.indicador = { dir: d < 0 ? '↓' : '↑', tono: o.tono, dif: d, texto: `${d < 0 ? '↓' : '↑'} ${o.tono} (${enTonos(d)})` };
     }
@@ -179,5 +185,5 @@ export function tonosDelItem(item, songs) {
     ? ids.map(id => ({ id, quien: quienDe(id), tonos: sinRep(P.filter(o => !o.transicion && o.cancion === id).map(o => o.tono)) }))
          .map(x => x.tonos.length ? x : Object.assign(x, { tonos: [item.tono || ''] }))
     : [{ id: item.id, quien: item.quien, tonos: [unTono] }];
-  return { modulante: modul, partes: P, secuencias };
+  return { modulante: modul, arr, partes: P, secuencias };
 }

@@ -1837,5 +1837,563 @@
    "F#"
   ],
   "modulante": true
+ },
+ "quiero-llenar": {
+  "id": "quiero-llenar",
+  "titulo": "Quiero llenar",
+  "interprete": "",
+  "tono": "D",
+  "lineas": [
+   {
+    "t": "blank"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Intro",
+    "tono": "D"
+   },
+   {
+    "t": "ch",
+    "v": "D Em A D C#-B"
+   },
+   {
+    "t": "ch",
+    "v": "B-A Em A D     G/A  Gdim7/A"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Coro",
+    "tono": "D"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "D",
+      "Quiero "
+     ],
+     [
+      "D/B",
+      "llenar "
+     ],
+     [
+      "G/E",
+      "tu trono de ala"
+     ],
+     [
+      "G/D",
+      "banza"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "G/A",
+      "Quiero "
+     ],
+     [
+      "A",
+      "llenar tu "
+     ],
+     [
+      "G/D",
+      "trono de a"
+     ],
+     [
+      "D",
+      "doración"
+     ],
+     [
+      "A/C#",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "D/B",
+      "Quiero a"
+     ],
+     [
+      "D/A",
+      "dorar, "
+     ],
+     [
+      "G/E",
+      "postrarme en tu "
+     ],
+     [
+      "G/D",
+      "presencia"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "G/A",
+      "Y procla"
+     ],
+     [
+      "A",
+      "marte Se"
+     ],
+     [
+      "D",
+      "ñor"
+     ],
+     [
+      "(B/A",
+      ""
+     ],
+     [
+      "B)",
+      ""
+     ]
+    ],
+    "puente": true
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Coro",
+    "tono": "E"
+   },
+   {
+    "t": "ly",
+    "v": "(Sube a E)"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "E",
+      "Quiero "
+     ],
+     [
+      "E/C#",
+      "llenar "
+     ],
+     [
+      "A/F#",
+      "tu trono de ala"
+     ],
+     [
+      "A/E",
+      "banza"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "A/B",
+      "Quiero "
+     ],
+     [
+      "B",
+      "llenar tu "
+     ],
+     [
+      "A/E",
+      "trono de a"
+     ],
+     [
+      "E",
+      "doración"
+     ],
+     [
+      "B/D#",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "E/C#",
+      "Quiero a"
+     ],
+     [
+      "E/B",
+      "dorar, "
+     ],
+     [
+      "A/F#",
+      "postrarme en tu pre"
+     ],
+     [
+      "A/E",
+      "sencia"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "A/B",
+      "Y procla"
+     ],
+     [
+      "B",
+      "marte Se"
+     ],
+     [
+      "E",
+      "ñor"
+     ],
+     [
+      "[B/C#",
+      ""
+     ],
+     [
+      "E/C#",
+      ""
+     ],
+     [
+      "A/F#]",
+      ""
+     ],
+     [
+      "{A",
+      ""
+     ],
+     [
+      "Am",
+      ""
+     ],
+     [
+      "E}",
+      ""
+     ]
+    ],
+    "modula": true,
+    "repite": true
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "ly",
+    "v": "Subida a F: (Bb/C C), Subida a F#: (C#/B C#)"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Coro",
+    "tono": "F"
+   },
+   {
+    "t": "ly",
+    "v": "(Sube a F)"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "F",
+      "Quiero "
+     ],
+     [
+      "F/D",
+      "llenar "
+     ],
+     [
+      "Bb/G",
+      "tu trono de ala"
+     ],
+     [
+      "Bb/F",
+      "banza"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "Bb/C",
+      "Quiero "
+     ],
+     [
+      "C",
+      "llenar tu tro"
+     ],
+     [
+      "Bb/F",
+      "no de a"
+     ],
+     [
+      "F",
+      "doración"
+     ],
+     [
+      "C/E",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "F/D",
+      "Quiero a"
+     ],
+     [
+      "F/C",
+      "dorar, "
+     ],
+     [
+      "Bb/G",
+      "postrarme en tu pre"
+     ],
+     [
+      "Bb/F",
+      "sencia"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "Bb/C",
+      "Y procla"
+     ],
+     [
+      "C",
+      "marte Se"
+     ],
+     [
+      "F",
+      "ñor"
+     ],
+     [
+      "(D/C",
+      ""
+     ],
+     [
+      "D)",
+      ""
+     ],
+     [
+      "[C/D",
+      ""
+     ],
+     [
+      "F/D",
+      ""
+     ],
+     [
+      "Bb/G]",
+      ""
+     ],
+     [
+      "{Bb",
+      ""
+     ],
+     [
+      "Bbm",
+      ""
+     ],
+     [
+      "F}",
+      ""
+     ]
+    ],
+    "puente": true,
+    "modula": true,
+    "repite": true
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Coro",
+    "tono": "F#"
+   },
+   {
+    "t": "ly",
+    "v": "(Sube a F#)"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "F#",
+      "Quiero "
+     ],
+     [
+      "F#/D#",
+      "llenar tu "
+     ],
+     [
+      "A#/G",
+      "trono de alabanza"
+     ],
+     [
+      "B/F",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "B/C#",
+      "Quiero "
+     ],
+     [
+      "C#",
+      "llenar tu tro"
+     ],
+     [
+      "B/F#",
+      "no de a"
+     ],
+     [
+      "F#",
+      "doración"
+     ],
+     [
+      "C#/F",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "F#/D#",
+      "Quiero ado"
+     ],
+     [
+      "F#/C#",
+      "rar, "
+     ],
+     [
+      "A#/G",
+      "postrarme en tu pre"
+     ],
+     [
+      "A#/F",
+      "sencia"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "B/C#",
+      "Y procla"
+     ],
+     [
+      "C#",
+      "marte Se"
+     ],
+     [
+      "F#",
+      "ñor"
+     ],
+     [
+      "(D#/C#",
+      ""
+     ],
+     [
+      "D#)",
+      ""
+     ],
+     [
+      "[C#/D#",
+      ""
+     ],
+     [
+      "F#/D#",
+      ""
+     ],
+     [
+      "A#/G]",
+      ""
+     ],
+     [
+      "{B",
+      ""
+     ],
+     [
+      "Bm",
+      ""
+     ],
+     [
+      "F#}",
+      ""
+     ]
+    ],
+    "modula": true,
+    "repite": true
+   }
+  ],
+  "bpm": null,
+  "estado": "oficial",
+  "fuente": "Quiero llenar [D-E-F-F#].docx",
+  "tonos": [
+   "D",
+   "E",
+   "F",
+   "F#"
+  ],
+  "modulante": true
  }
 }

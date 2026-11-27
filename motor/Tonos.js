@@ -236,8 +236,9 @@ function tonosTocados_(item, songs) {
 
   const bloquesDe = {}; ids.forEach(id => { if (songs[id]) bloquesDe[id] = bloques_(songs[id].lineas); });
   let arr = item.arr && item.arr.length ? item.arr : [];
-  if (!arr.length) arr = medley ? [].concat(...ids.map(id => (bloquesDe[id] || []).map(b => ({ cancion: id, src: b.id }))))
-                                : (bloquesDe[item.id] || []).map(b => ({ src: b.id }));
+  // arr vacío = versión base en su orden original (igual que defArr de js/songs.js y que editarAcordes_).
+  if (!arr.length) arr = medley ? [].concat(...ids.filter(id => songs[id]).map(id => arrBase_(songs[id]).map(p => Object.assign({ cancion: id }, p))))
+                                : (songs[item.id] ? arrBase_(songs[item.id]) : []);
   const porCancion = {}; ids.forEach(id => { porCancion[id] = []; });
   let tocado = null, escrito = null, cancionAnt = null;
   arr.forEach((p, i) => {

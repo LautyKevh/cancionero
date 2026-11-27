@@ -108,6 +108,25 @@ const puente = (r, s, re) => {
   igual(motor(item, songs), r.secuencias.map(x => x.tonos), 'Medley: igual que el motor');
 }
 
+// ---------- [ ] (modular) y { } (repetir): "Quiero llenar" ----------
+{
+  const s = SONGS['quiero-llenar'], songs = { [s.id]: s }, base = { id: s.id, quien: 'X', tono: 'D' };
+  const vis = r => r.partes.map(p => [p.modula.ver, p.repite.ver]);
+  let r = tonosDelItem({ ...base, arr: defArr(s) }, songs);
+  igual(vis(r), [[false, true], [true, false], [true, false], [true, false], [true, true]], 'Quiero llenar modulante: [ ] antes de subir, { } ocultos; en la última, los dos');
+  r = tonosDelItem({ ...base, modulante: false, arr: defArr(s) }, songs);
+  igual(vis(r), [[false, true], [false, true], [false, true], [false, true], [false, true]], 'Quiero llenar un solo tono: [ ] ocultos siempre (también en la última), { } visibles');
+}
+
+// ---------- arr vacío = versión base (app y motor iguales) ----------
+{
+  const a = SONGS['al-estar-aqui'], b = SONGS['hay-poder-2'], songs = { [a.id]: a, [b.id]: b };
+  let item = { id: a.id, quien: 'X', tono: 'G', arr: [] };
+  igual(motor(item, songs), tonosDelItem(item, songs).secuencias.map(x => x.tonos), 'arr vacío: igual que el motor');
+  item = { tipo: 'medley', tono: 'A', quien: 'X', canciones: [{ id: b.id }, { id: a.id }], arr: [] };
+  igual(motor(item, songs), tonosDelItem(item, songs).secuencias.map(x => x.tonos), 'Medley con arr vacío: igual que el motor');
+}
+
 // ---------- Comparación con el motor en todo el cancionero (opcional) ----------
 if (process.argv[2]) {
   let todo = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')); todo = todo.data || todo;

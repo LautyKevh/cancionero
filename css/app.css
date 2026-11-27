@@ -157,6 +157,8 @@ input[type=search]::placeholder { color: var(--mute); }
 .lines .modi { font-family: Inter, sans-serif; font-weight: 700; font-size: .95em; color: var(--acc); }
 .lines .sec .modi { font-size: 1em; }
 .lines .gap { min-height: .4em; }
+.lines .medsep { font-family: Fraunces, Georgia, serif; font-weight: 700; font-size: 1.05em; color: var(--ink, inherit); border-top: 1px solid var(--line, #ddd); padding-top: .5em; margin: 1.4em 0 .5em; white-space: normal; }
+.lines .medsep:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
 .lines.singer { font-family: Inter, system-ui, sans-serif; line-height: 1.5; }
 .lines.singer div { white-space: pre-wrap; }
 .lines.singer .sec { font-size: .7em; margin-top: 1em; }
@@ -282,6 +284,7 @@ body.imprimiendo #print { display: block; width: 198mm; max-width: 100%; margin:
 #print .sec { color: #000; font-weight: 700; }
 #print .sg > b, #print .ch, #print .mix, #print .modi { color: #0a3d8f; }
 #print .parte { break-inside: avoid; page-break-inside: avoid; }
+#print .medsep { color: #000; break-after: avoid; page-break-after: avoid; }
 #print .parte + .parte { margin-top: 1em; }
 @media print {
   body.imprimiendo #print { width: auto; }

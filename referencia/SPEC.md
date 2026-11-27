@@ -111,7 +111,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Canción: `{ pid, id, tono, quien, modulante?, desde?, arr: [Parte] }`.
   - Medley: `{ pid, tipo: "medley", nombre?, tono, quien, canciones: [{ id, quien? }], arr: [Parte] }`. Siempre es modulante.
   - `pid`: id estable del ítem dentro de la reunión. Lo usan el Registro (`reunión <id>#<pid>`) y "Como la última vez".
-  - `tono` del ítem: el tono de inicio. `arr` vacío = versión base en su orden original.
+  - `tono` del ítem: el tono de inicio. `arr` vacío = versión base en su orden original (el mismo arreglo que arma la app: los títulos sin contenido usan el bloque con contenido del mismo nombre).
   - `desde`: de dónde se copió el arreglo, `"base"` o `"<id reunión>#<pid>"` ("Como la última vez").
   - Sin `modulante` (reuniones anteriores), se toma el valor de la canción.
 - **Parte** (`arr[i]`): `{ pid, src | nueva, cancion?, label, rep, tono?, mostrar?, lineas?, cambios? }`.
@@ -275,8 +275,8 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Si la parte siguiente queda en el mismo tono que la actual, el puente y la transición se ocultan por defecto. Hay una opción **"Mostrar igual"**, para quien quiera tocar el interludio aunque no module.
   - **`[ ]` (modular):** se muestran solo si la parte siguiente cambia de tono, transportados según el tono de destino, igual que los puentes entre paréntesis.
   - **`{ }` (repetir):** se muestran solo si la parte siguiente queda en el mismo tono.
-  - **Última parte de la canción:** si tiene `[ ]`, se muestran siempre, transportados al tono de esa parte (es un tag o cierre final).
-  - Las dos marcas conviven con "Mostrar igual" y con el modo Modulante. Con Modulante apagado no hay cambios de tono, así que se ven los `{ }` y se ocultan los `[ ]`.
+  - **Última parte de la canción:** con Modulante encendido, si tiene `[ ]`, se muestran siempre, transportados al tono de esa parte (es un tag o cierre final).
+  - Las dos marcas conviven con "Mostrar igual" y con el modo Modulante. Con Modulante apagado no hay cambios de tono, así que se ven los `{ }` y los `[ ]` se ocultan siempre, también en la última parte.
   - Si la transición original no sirve para el nuevo salto, en esa reunión los músicos pueden editar sus acordes (ver "Arreglo compartido"). Si el arreglo de la base está mal, lo corrige el admin (ver 5).
 
 **Medley (fase posterior; todavía sin implementar):**
@@ -301,7 +301,10 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 **Vistas Músico y Cantante con cambios de tono:**
 - La canción (o el medley) se ve como una sola canción continua.
 - En cada cambio de tono hay un indicador discreto: "↑ A (+1½)" o "↓ F# (−1½)".
-- En un medley, un separador muestra el nombre de cada canción al cambiar.
+- En un medley, un separador muestra el nombre de cada canción al cambiar. Si una parte no tiene tono propio, al cambiar de canción se sigue en el mismo tono.
+- El indicador va en el renglón del título de la parte ("Coro  ↑ A (+1½)").
+- Una parte escrita en otro tono que el de la canción (una subida, un puente, `[ ]`), cuando no se transporta, se ve tal como está escrita (no se cambia # por b).
+- `{ }` en la última parte: se muestran (no hay parte siguiente que cambie de tono).
 
 **Registro de tonos:**
 - Se registra la secuencia completa de tonos tocados (`G→Ab→A→Bb→C`) y la referencia al arreglo de esa reunión, para poder repetirlo con "Como la última vez".

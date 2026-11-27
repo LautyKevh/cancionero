@@ -82,7 +82,7 @@ export function tonosTocados(item, songById) {
   if (!modul) return [{ id: item.id, quien: item.quien, tonos: [item.tono || (s0 && s0.tono) || ''] }];
   const B = {}; ids.forEach(id => { const s = songById(id); if (s) B[id] = blocksOf(s); });
   let arr = item.arr && item.arr.length ? item.arr : [];
-  if (!arr.length) arr = medley ? [].concat(...ids.map(id => (B[id] || []).map(b => ({ cancion: id, src: b.id })))) : (B[item.id] || []).map(b => ({ src: b.id }));
+  if (!arr.length) arr = medley ? [].concat(...ids.filter(id => B[id]).map(id => defArr(songById(id)).map(e => ({ ...e, cancion: id })))) : (B[item.id] ? defArr(songById(item.id)) : []);
   const por = {}; ids.forEach(id => { por[id] = []; });
   let toc = null, esc = null, ant = null;
   arr.forEach(p => {

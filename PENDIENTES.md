@@ -3,7 +3,7 @@
 ## Próximo, en orden de prioridad
 Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesia de prueba; la planilla real de IBSI no se toca sin OK.
 1. ✅ (hecho, en prueba) **Imprimir / PDF:** botón en canción y en reunión (entera, en orden). Imprime lo que se ve (tono, arreglo, Músico o Cantante), versión limpia para papel, salto de página entre canciones, diálogo del sistema ("Guardar como PDF" en el celular).
-2. **Tono por parte, Modulante y Medley (interfaz):** etapa A hecha (cálculo en `js/music.js` → `tonosDelItem`, pruebas en `pruebas/tonos.test.mjs`: `node pruebas/tonos.test.mjs [cancionero.json]`). Falta: B (vista e impresión), C (editor con clave), D (medley), E (prueba en la iglesia de prueba). Ver "Tono por parte, Modulante, arreglo por reunión y Medley" en "Para una fase posterior" y SPEC §7.
+2. **Tono por parte, Modulante y Medley (interfaz):** etapas A y B hechas (cálculo en `js/music.js` → `tonosDelItem`, pruebas en `pruebas/tonos.test.mjs`: `node pruebas/tonos.test.mjs [cancionero.json]`; vista e impresión por parte, con medley). Falta: C (editor con clave), D (crear medley), E (prueba en la iglesia de prueba). Ver "Tono por parte, Modulante, arreglo por reunión y Medley" en "Para una fase posterior" y SPEC §7.
 3. **Completar datos de canciones (sin clave):** intérprete, BPM (cuenta como confirmado), tono original (de una lista; en modulantes, una por tono de la secuencia), link (solo si está vacío). Gana lo editado en la app; si el archivo trae otro valor, es conflicto en "Revisar cambios". Definir `Datos/ediciones.json`. Confirmación antes de guardar, nombre guardado en el dispositivo, historial con quién y cuándo, y "deshacer".
 4. **Director edita la letra** de cualquier parte del arreglo de su reunión, con PIN. Solo esa reunión; nunca la base.
 5. **"Pendientes de revisión"** (una bandeja por iglesia, admin en Ajustes):
@@ -19,11 +19,9 @@ Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesi
 - "Inter (E B/G#m B)(…)": el bajo "G#m" no es un acorde válido, así que esa línea no se toma como título con acordes. Probable error de tipeo en el archivo.
 - "En el monte calvario", "Nos unimos al cielo" y "Ven ante su trono" (x2) no tienen títulos de parte visibles: Lautaro los corrige en el Word.
 - "Interlude 2" + "(Chorus)" en "Because He Lives" y "Coro 2" + "(final)" en "Jesucristo basta": el paréntesis queda como aclaración del título de arriba, no como parte nueva. Confirmar que es lo que se quiere.
-- Tono por parte (para la etapa B):
-  - Con `arr` vacío, el motor (`tonosTocados_`) arma el arreglo con todos los bloques y la app con `defArr` (los títulos vacíos apuntan al bloque con contenido). Hoy la app siempre guarda `arr`, así que no se nota; conviene igualarlos.
-  - `[ ]` en la última parte con Modulante apagado: la SPEC dice "se ocultan los [ ]" y también "en la última parte se muestran siempre". Hoy gana "siempre". Confirmar.
-  - El transpositor reescribe # / b aunque no haya transporte (Ab → G# en tono A; en "Al estar aquí" el tono F# se muestra Gb). Para "tal como está escrito", sin transporte no hay que reescribir.
-  - "Al estar aquí": el segundo "Verso 1" solo trae "(Baja a F#)", sin letra. En la vista Cantante queda solo el título.
+- Tono por parte (preguntar a Lautaro, porque cambian lo que se ve):
+  - El transpositor reescribe # / b aunque no haya transporte: una canción en F# se muestra en Gb, y en tono A un "Bb" escrito sale "A#". Desde la etapa B, una parte escrita en otro tono que el de la canción (subidas, puentes, `[ ]`) sin transporte ya se ve tal como está escrita; las canciones de un solo tono siguen como antes. ¿Se extiende a toda la hoja?
+  - "Al estar aquí": el segundo "Verso 1" solo trae "(Baja a F#)", sin letra. En la vista Cantante queda solo el título (con el indicador). ¿Un bloque que solo tiene la indicación de subida o bajada se toma como repetición del bloque con el mismo nombre?
 - Confirmar en el diálogo real de impresión (compu y celular) que no salen encabezado ni pie del navegador.
 
 ## Para una fase posterior

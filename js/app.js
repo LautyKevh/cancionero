@@ -3,8 +3,8 @@ import { LocalDataSource, ClaveError } from './datasource.js';
 import { ApiDataSource } from './apidatasource.js';
 import { CONFIG } from './config.js';
 import { demoSeed } from './demo.js';
-import { KEYS, keyAt, shiftTo, keyOption, showKey, transposer } from './music.js';
-import { prepare, blocksOf, defArr, isDefArr, arrLines, blockText, base, rOf, summary, search, fmt, isoOf } from './songs.js';
+import { KEYS, keyAt, baseKey, shiftTo, keyOption, showKey, transposer, tonosDelItem, tonoMas, enTonos, CHORD } from './music.js';
+import { prepare, blocksOf, defArr, isDefArr, blockText, base, rOf, labOf, summary, search, fmt, isoOf } from './songs.js';
 
 // Motor real si hay iglesia (?c= o config) y no se pidió ?demo=1; si no, modo demo local.
 const qs = new URLSearchParams(location.search);
@@ -33,6 +33,12 @@ const versiones = id => { const s = songBy(id); return s ? SONGS.filter(x => x.t
 const perOf = id => summary(versiones(id), REG, SES, songBy).per;
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const interp = s => s.interprete && s.interprete !== '-' ? s.interprete : '';
+// Ítems de reunión: canción ({ id }) o medley ({ tipo: 'medley', nombre, canciones: [{ id }] }).
+const itemOk = c => c.tipo === 'medley' ? (c.canciones || []).some(x => songBy(x.id)) : !!songBy(c.id);
+const tituloItem = c => c.tipo === 'medley' ? (c.nombre || (c.canciones || []).map(x => (songBy(x.id) || {}).titulo).filter(Boolean).join(' + '))
+  : ((songBy(c.id) || {}).titulo || '');
+/** Ítem con el transporte personal del músico (d semitonos): tono de inicio y tonos por parte. */
+const conDelta = (c, d) => !d ? c : { ...c, tono: tonoMas(c.tono, d), arr: (c.arr || []).map(p => p.tono ? { ...p, tono: tonoMas(p.tono, d) } : p) };
 
 // ---------- Fechas (siempre en español; la fecha de una reunión es solo día: AAAA-MM-DD) ----------
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -216,7 +222,7 @@ function songList() {
       <span class="next-top"><span class="next-when">${esc(when)}</span><span class="next-date">${esc(fmt(next.fecha))}</span></span>
       <span class="next-name">${esc(nombreSes(next))}</span>
       <span class="next-who">Dirige ${esc(next.director)}</span>
-      <span class="next-songs">${next.canciones.slice(0, 5).map(c => `<span><i>${esc(c.tono)}</i>${esc((songBy(c.id) || {}).titulo || '')}</span>`).join('')}
+      <span class="next-songs">${next.canciones.slice(0, 5).map(c => `<span><i>${esc(c.tono)}</i>${esc(tituloItem(c))}</span>`).join('')}
         ${next.canciones.length > 5 ? `<span class="more">y ${next.canciones.length - 5} más</span>` : ''}${next.canciones.length ? '' : '<span class="more">Todavía sin canciones</span>'}</span>
       <span class="next-go">Abrir la reunión ${ICON.chev}</span></button>` : '';
   app.innerHTML = `${lastQ ? '' : hero}<div class="searchbox">${ICON.search}<input type="search" id="q" placeholder="Buscar canción, frase o director" value="${esc(lastQ)}" aria-label="Buscar canciones" autocomplete="off"></div>
@@ -261,57 +267,107 @@ function openSheet(s, mode, ctx) {
   drawSheet();
 }
 
-/** Líneas de una canción ya transportadas, en HTML. Lo usan la vista y la impresión. */
-function sheetRows(s, shift, mus, arr) {
-  const T = transposer(s, shift, P.not), kd = showKey(T.key, P.not);
-  const src = arrLines(s, arr || defArr(s), mus)
-    .filter(l => mus || (l.t !== 'ch' && l.t !== 'mix'))
-    .filter((l, i, a) => l.t !== 'blank' || (i > 0 && a[i - 1].t !== 'blank' && a[i - 1].t !== 'sec' && a[i + 1] && a[i + 1].t !== 'sec'));
-  // "(Sube a A)" / "(Baja a F#)" no se muestran como texto: se reemplazan por el indicador de cambio de tono.
-  const SUBA = /^\(?\s*(sube|baja|subida|bajada)\s+(?:a|al)\s+([A-G][#b]?m?)\s*\)?\.?$/i;
-  const indicador = (dir, k) => `<span class="modi">${/^b/i.test(dir) ? '↓' : '↑'} ${esc(showKey(T.chord(k), P.not))}</span>`;
-  const line = l => {
-    if (l.t === 'blank') return '<div class="gap"></div>';
-    if (l.t === 'ly' && SUBA.test(l.v.trim())) { const m = SUBA.exec(l.v.trim()); return `<div>${indicador(m[1], m[2])}</div>`; }
-    if (l.t === 'pair') {
-      if (!mus) return `<div>${esc(l.segs.map(x => x[1]).join('').trim())}</div>`;
-      const it = []; l.segs.forEach(([c, t]) => t.split(/(\s+)/).forEach((x, j) => { if (j === 0 || x) it.push({ c: j === 0 ? c : '', t: x }); }));
-      const words = []; let cur = [];
-      it.forEach(o => { if (/^\s+$/.test(o.t) && !o.c) { if (cur.length) words.push(cur); words.push([o]); cur = []; } else cur.push(o); });
-      if (cur.length) words.push(cur);
-      const sg = o => `<span class="sg"><b>${esc(o.c ? T.chord(o.c) : '')}</b><span>${esc(o.t)}</span></span>`;
-      return `<div class="pair">${words.map(w => `<span class="w">${w.map(sg).join('')}</span>`).join('')}</div>`;
-    }
-    if (l.t === 'ch') return `<div class="ch">${esc(T.line(l.v, false))}</div>`;
-    if (l.t === 'mix') return `<div class="mix${l.at != null ? ' at' : ''}"${l.at != null ? ` data-anchor="${esc(l.at)}"` : ''}>${esc(T.line(l.v, true))}</div>`;
-    return `<div>${esc(mus ? l.v : l.v.replace(/\s{2,}/g, ' ').trim())}</div>`;
-  };
-  // Cada parte va en su propio bloque (espacio entre partes; al imprimir nunca se corta).
-  // Una parte de un solo renglón de acordes (Intro, Inter, Final) muestra los acordes al lado del título;
-  // con 2 renglones o más van abajo. El indicador de subida o bajada va en el mismo renglón que el título.
-  const partes = []; let cur = null;
-  src.forEach(l => { if (l.t === 'sec' || !cur) { cur = { sec: l.t === 'sec' ? l : null, ls: [] }; partes.push(cur); if (l.t === 'sec') return; } cur.ls.push(l); });
-  const rows = partes.map(pt => {
-    let ls = pt.ls.slice(); while (ls.length && ls[0].t === 'blank') ls.shift(); while (ls.length && ls[ls.length - 1].t === 'blank') ls.pop();
-    if (!pt.sec && !ls.length) return '';
-    let head = '';
-    if (pt.sec) {
-      const k = ls.findIndex(x => x.t === 'ly' && SUBA.test(x.v.trim()));
-      let mod = '';
-      if (k >= 0) { const m = SUBA.exec(ls[k].v.trim()); mod = indicador(m[1], m[2]); ls.splice(k, 1); while (ls.length && ls[0].t === 'blank') ls.shift(); }
-      else if (pt.sec.mod && pt.sec.tono) mod = indicador(pt.sec.mod, pt.sec.tono);
-      const uno = ls.length === 1 && (ls[0].t === 'ch' || (ls[0].t === 'mix' && ls[0].at == null)) ? ls[0] : null;
-      if (uno) return `<section class="parte"><div class="sec inl"><span>${esc(pt.sec.v)}</span>${mod}<span class="${uno.t}">${esc(T.line(uno.v, uno.t === 'mix'))}</span></div></section>`;
-      head = `<div class="sec${mod ? ' inl' : ''}"><span>${esc(pt.sec.v)}</span>${mod}</div>`;
-    }
-    return `<section class="parte">${head}${ls.map(line).join('')}</section>`;
+// "(Sube a A)" / "(Baja a F#)" no se muestran como texto: los reemplaza el indicador de cambio de tono.
+const SUBA = /^\(?\s*(sube|baja|subida|bajada)\s+(?:a|al)\s+([A-G][#b]?m?)\s*\)?\.?$/i;
+/**
+ * Grupo de cada acorde de una línea: 'p' = acordes puente (paréntesis al final de la parte), 'm' = [ ] (modular),
+ * 'r' = { } (repetir), null = acorde común. Los paréntesis dentro de la línea, como (C - G), son comunes.
+ */
+function gruposAcordes(toks, puente) {
+  const g = [], par = []; let cur = null, ini = -1;
+  toks.forEach((t, i) => {
+    if (cur == null && t) { const c = t[0]; if (c === '[') cur = 'm'; else if (c === '{') cur = 'r'; else if (c === '(') { cur = '('; ini = i; } }
+    g.push(cur);
+    if (cur && t && t.includes({ m: ']', r: '}', '(': ')' }[cur])) { if (cur === '(') par.push([ini, i]); cur = null; }
+  });
+  if (cur === '(') par.push([ini, toks.length - 1]);
+  const ult = par[par.length - 1];
+  const esPuente = !!(puente && ult) && g.slice(ult[1] + 1).every((x, j) => x === 'm' || x === 'r' || !/[A-G]/.test(toks[ult[1] + 1 + j] || ''));
+  return g.map((x, i) => x === '(' ? (esPuente && i >= ult[0] && i <= ult[1] ? 'p' : null) : x);
+}
+/** Transporta un "token" de acordes ("[B/C#-E/C#", "{A", "(D/F#"): solo las partes que son acordes. */
+const xpose = (T, tok) => tok.split(/([-–|])/).map(p => CHORD.test(p.replace(/[{}]/g, '')) ? T.chord(p) : p).join('');
+
+/**
+ * Hoja de un ítem (canción o medley) en HTML: cada parte en su tono (SPEC §7, tono por parte), con puentes,
+ * transiciones, [ ] / { } e indicador de cambio de tono. Lo usan la vista y la impresión.
+ * item: { id | tipo: 'medley', canciones, tono, arr?, modulante? }.
+ */
+function sheetRows(item, mus) {
+  const songs = {}; (item.tipo === 'medley' ? (item.canciones || []).map(c => c.id) : [item.id]).forEach(id => { const s = songBy(id); if (s) songs[id] = s; });
+  const R = tonosDelItem(item, songs), medley = item.tipo === 'medley';
+  // Una parte escrita en otro tono que el de la canción (subida, puente, [ ]) sin transporte se ve tal como está escrita.
+  const TR = (tono, sh, s) => transposer({ tono: tono || item.tono || 'C' }, sh || 0, P.not, !!s && baseKey({ tono }) !== baseKey(s));
+  const p0 = R.partes.find(p => !p.transicion), kd = showKey(p0 ? TR(p0.escrito, p0.sh, songs[p0.cancion]).key : item.tono, P.not);
+  const seen = new Set(); let antCancion = null;
+
+  const rows = R.partes.map((p, k) => {
+    const e = R.arr[k], s = songs[p.cancion]; if (!s) return '';
+    let sep = '';
+    if (medley && p.cancion !== antCancion) sep = `<div class="medsep">${esc(s.titulo)}</div>`;
+    antCancion = p.cancion;
+    if (p.transicion && !p.ver) return sep;                    // transición oculta (no cambia el tono)
+    const T = TR(p.escrito, p.sh, s);
+    const TG = { p: TR(p.puente.escrito, p.puente.sh, songs[p.puente.cancion] || s), m: TR(p.modula.escrito, p.modula.sh, songs[p.modula.cancion] || s), r: T };
+    const VER = { p: p.puente.ver, m: p.modula.ver, r: p.repite.ver };
+    const b = e.src != null ? blocksOf(s)[e.src] : null, clave = p.cancion + '#' + e.src;
+    let ls = b && !(mus && seen.has(clave)) ? b.lines : [];   // en Músico, una parte repetida va solo con su título
+    if (b) seen.add(clave);
+    ls = ls.filter(l => (mus || (l.t !== 'ch' && l.t !== 'mix')) && !(l.t === 'ly' && SUBA.test(l.v.trim())))
+      .filter((l, i, a) => l.t !== 'blank' || (i > 0 && a[i - 1].t !== 'blank'));
+    while (ls.length && ls[0].t === 'blank') ls.shift();
+    while (ls.length && ls[ls.length - 1].t === 'blank') ls.pop();
+
+    // Línea de acordes (ch / mix) con grupos puente, [ ] o { }: cada grupo se transporta o se oculta.
+    const textoCh = l => {
+      if (!(l.puente || l.modula || l.repite)) return T.line(l.v, l.t === 'mix');
+      const parts = l.v.split(/(\s+)/), toks = parts.map(x => /^\s*$/.test(x) ? '' : x), g = gruposAcordes(toks, l.puente);
+      let out = '', pend = 0;
+      parts.forEach((x, i) => {
+        if (!x) return;
+        if (/^\s+$/.test(x)) { out += ' '.repeat(Math.max(1, x.length - pend)); pend = 0; return; }
+        if (g[i] && !VER[g[i]]) { pend = 0; return; }
+        const n = l.t === 'mix' && !g[i] ? T.line(x, true) : xpose(g[i] ? TG[g[i]] : T, x);
+        pend = Math.max(0, n.length - x.length); out += n;
+      });
+      return out.replace(/\s+$/, '');
+    };
+    const line = l => {
+      if (l.t === 'blank') return '<div class="gap"></div>';
+      if (l.t === 'pair') {
+        if (!mus) return `<div>${esc(l.segs.map(x => x[1]).join('').trim())}</div>`;
+        const g = l.puente || l.modula || l.repite ? gruposAcordes(l.segs.map(x => x[0]), l.puente) : [];
+        const segs = l.segs.map(([c, t], i) => [!c ? '' : g[i] ? (VER[g[i]] ? TG[g[i]].chord(c) : '') : T.chord(c), t]);
+        const it = []; segs.forEach(([c, t]) => t.split(/(\s+)/).forEach((x, j) => { if (j === 0 || x) it.push({ c: j === 0 ? c : '', t: x }); }));
+        const words = []; let cur = [];
+        it.forEach(o => { if (/^\s+$/.test(o.t) && !o.c) { if (cur.length) words.push(cur); words.push([o]); cur = []; } else cur.push(o); });
+        if (cur.length) words.push(cur);
+        const sg = o => `<span class="sg"><b>${esc(o.c)}</b><span>${esc(o.t)}</span></span>`;
+        return `<div class="pair">${words.map(w => `<span class="w">${w.map(sg).join('')}</span>`).join('')}</div>`;
+      }
+      if (l.t === 'ch') { const v = textoCh(l); return v.trim() ? `<div class="ch">${esc(v)}</div>` : ''; }
+      if (l.t === 'mix') { const v = textoCh(l); return v.trim() ? `<div class="mix${l.at != null ? ' at' : ''}"${l.at != null ? ` data-anchor="${esc(l.at)}"` : ''}>${esc(v)}</div>` : ''; }
+      return `<div>${esc(mus ? l.v : l.v.replace(/\s{2,}/g, ' ').trim())}</div>`;
+    };
+    const L = ls.map(line).filter(Boolean);
+    // Indicador en el renglón del título: "Coro  ↑ A (+1½)".
+    const ind = p.indicador ? `<span class="modi">${p.indicador.dir} ${esc(showKey(T.key, P.not))} (${enTonos(p.indicador.dif)})</span>` : '';
+    const label = labOf(e);
+    if (!label && !ind && !L.length) return sep;
+    // Una parte de un solo renglón de acordes (Intro, Inter, Final) los muestra al lado del título; con 2 o más, abajo.
+    if (label && ls.length === 1 && L.length === 1 && (ls[0].t === 'ch' || (ls[0].t === 'mix' && ls[0].at == null)))
+      return `${sep}<section class="parte"><div class="sec inl"><span>${esc(label)}</span>${ind}<span class="${ls[0].t}">${esc(textoCh(ls[0]))}</span></div></section>`;
+    const head = label || ind ? `<div class="sec${ind ? ' inl' : ''}"><span>${esc(label)}</span>${ind}</div>` : '';
+    return `${sep}<section class="parte">${head}${L.join('')}</section>`;
   }).join('');
   return { rows, kd };
 }
 
 function drawSheet(anim) {
   const { song: s, mode, shift, ctx } = view, mus = mode === 'm';
-  const { rows, kd } = sheetRows(s, shift, mus, ctx && ctx.arr);
+  const c = ctx && ctx.item;
+  const item = c ? conDelta(c, shift - shiftTo(s, c.tono)) : { id: s.id, tono: keyAt(s, shift), arr: defArr(s) };
+  const { rows, kd } = sheetRows(item, mus);
 
   const ctl = (mus ? `<button type="button" id="dn" aria-label="Bajar medio tono">−½</button>
       <span class="now" id="now" title="Tono actual" aria-live="polite">${esc(kd)}</span>
@@ -325,12 +381,12 @@ function drawSheet(anim) {
   const r = ctx && ctx.ses, i = ctx && ctx.i;
   let nav = '';
   if (r && i != null) {
-    const Pv = r.canciones[i - 1], Nx = r.canciones[i + 1], t = c => esc((songBy(c.id) || {}).titulo || '');
+    const Pv = r.canciones[i - 1], Nx = r.canciones[i + 1], t = c => esc(tituloItem(c));
     nav = `<nav class="snav" aria-label="Canciones de la reunión">${Pv ? `<button type="button" id="pv"><small>← Anterior</small><b>${t(Pv)}</b></button>` : '<span></span>'}
       ${Nx ? `<button type="button" id="nx" class="nx"><small>Siguiente →</small><b>${t(Nx)}</b></button>`
            : `<button type="button" id="fin" class="nx"><small>Fin de la reunión</small><b>Volver a la lista</b></button>`}</nav>`;
   }
-  const meta = [ctx ? `<b>Dirige ${esc(ctx.quien)}</b>` : '', esc(interp(s)), `Tono original ${esc(s.tono)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ');
+  const meta = [ctx ? `<b>Dirige ${esc(ctx.quien)}</b>` : '', esc(interp(s)), s.medley ? 'Medley' : `Tono original ${esc(s.tono)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ');
   app.innerHTML = `${r ? back(nombreSes(r), '#/reunion/' + r.id) : back('Canciones', '#/canciones')}
   <article class="sheet">
     <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${meta}</p></div>
@@ -360,7 +416,7 @@ function drawSheet(anim) {
     if (r) { P.modos[r.id] = view.mode; savePrefs(); drawSheet(); }
     else replaceHash(`#/cancion/${s.id}/${view.mode}`), transition(() => drawSheet());
   };
-  $('#pr').onclick = () => imprimir(hojaImpresa(s, shift, mus, ctx && ctx.arr), s.titulo);
+  $('#pr').onclick = () => imprimir(hojaImpresa(item, mus), s.titulo);
   if (r) {
     $('#pv') && ($('#pv').onclick = () => go(`#/reunion/${r.id}/${i - 1}`, 'back'));
     $('#nx') && ($('#nx').onclick = () => go(`#/reunion/${r.id}/${i + 1}`));
@@ -472,9 +528,10 @@ function openSes(r) {
     $$('[data-mode]').forEach(b => b.onclick = () => { P.modos[r.id] = b.dataset.mode; savePrefs(); transition(() => openSes(r)); });
     return;
   }
-  const rows = r.canciones.map((c, i) => { const s = songBy(c.id); if (!s) return '';
-    return `<li><button type="button" class="row" data-o="${i}"><span class="num">${i + 1}</span><span class="row-main"><b>${esc(s.titulo)}</b>
-      <small>Dirige ${esc(c.quien)}${isDefArr(s, c.arr) ? '' : ' · orden modificado'}</small></span><span class="key">${esc(c.tono)}</span></button></li>`; }).join('');
+  const rows = r.canciones.map((c, i) => { if (!itemOk(c)) return '';
+    const extra = c.tipo === 'medley' ? ' · medley' : isDefArr(songBy(c.id), c.arr) ? '' : ' · orden modificado';
+    return `<li><button type="button" class="row" data-o="${i}"><span class="num">${i + 1}</span><span class="row-main"><b>${esc(tituloItem(c))}</b>
+      <small>Dirige ${esc(c.quien)}${extra}</small></span><span class="key">${esc(c.tono)}</span></button></li>`; }).join('');
   app.innerHTML = `${head}
   <div class="ctl"><button type="button" id="sm2" class="modebtn" title="Cambiar modo">${P.modos[r.id] === 'm' ? ICON.piano : ICON.mic}Modo: ${P.modos[r.id] === 'm' ? 'Músico' : 'Cantante'} ⇄</button><span class="sp"></span>
     <button type="button" id="pr" title="Imprimir o guardar como PDF"${r.canciones.length ? '' : ' disabled'}>Imprimir</button><button type="button" id="ed">Editar</button><button type="button" id="del">Borrar</button></div>
@@ -484,7 +541,7 @@ function openSes(r) {
   $$('[data-o]').forEach(b => b.onclick = () => go(`#/reunion/${r.id}/${b.dataset.o}`));
   $('#pr').onclick = () => {
     const mus = P.modos[r.id] === 'm';
-    const hojas = r.canciones.filter(c => songBy(c.id)).map((c, k) => { const s = songBy(c.id); return hojaImpresa(s, shiftTo(s, c.tono), mus, c.arr, k ? '' : nombreSes(r)); }).join('');
+    const hojas = r.canciones.filter(itemOk).map((c, k) => hojaImpresa(c, mus, k ? '' : nombreSes(r))).join('');
     imprimir(hojas, nombreSes(r));
   };
   $('#sm2').onclick = () => { P.modos[r.id] = P.modos[r.id] === 'm' ? 'c' : 'm'; savePrefs(); openSes(r); };
@@ -513,9 +570,9 @@ function openSes(r) {
 // ---------- Imprimir / PDF ----------
 // Arma una copia limpia (sin botones) en #print y abre el diálogo del sistema; en el celular ofrece "Guardar como PDF".
 // Hoja como los documentos de la iglesia: "Nombre [Tono]" centrado, en una línea; sin otros datos.
-function hojaImpresa(s, shift, mus, arr, arriba) {
-  const { rows, kd } = sheetRows(s, shift, mus, arr);
-  return `<article class="phoja">${arriba ? `<p class="pses">${esc(arriba)}</p>` : ''}<h2>${esc(s.titulo)} [${esc(kd)}]</h2><div class="lines ${mus ? '' : 'singer'}">${rows}</div></article>`;
+function hojaImpresa(item, mus, arriba) {
+  const { rows, kd } = sheetRows(item, mus);
+  return `<article class="phoja">${arriba ? `<p class="pses">${esc(arriba)}</p>` : ''}<h2>${esc(tituloItem(item))} [${esc(kd)}]</h2><div class="lines ${mus ? '' : 'singer'}">${rows}</div></article>`;
 }
 // Alto útil de la hoja: A4 o carta, menos los márgenes (se usa el menor de los dos para que entre en ambos).
 const HOJA_MM = 279.4 - 2 * 9;
@@ -546,10 +603,11 @@ function imprimir(html, titulo) {
 const openAnim = el => { if (!reduced()) el.animate([{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'none' }], { duration: 180, easing: 'ease-out' }); };
 
 function openSesSong(r, i) {
-  const c = r.canciones[i], s = c && songBy(c.id);
-  if (!s) return openSes(r);
+  const c = r.canciones[i];
+  if (!c || !itemOk(c)) return openSes(r);
+  const s = c.tipo === 'medley' ? { titulo: tituloItem(c), tono: c.tono, interprete: '', medley: true } : songBy(c.id);
   if (!P.modos[r.id]) { P.modos[r.id] = 'm'; savePrefs(); }
-  openSheet(s, P.modos[r.id], { ses: r, i, arr: c.arr, quien: c.quien, shift: shiftTo(s, c.tono) });
+  openSheet(s, P.modos[r.id], { ses: r, i, item: c, quien: c.quien, shift: shiftTo(s, c.tono) });
 }
 
 // ---------- Editar reunión ----------
