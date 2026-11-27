@@ -656,7 +656,7 @@ function editSes(r) {
     <ul class="list sugg" id="sg"></ul>
     <button type="button" id="mb" aria-expanded="false">Crear medley</button>
     <div class="medbox" id="mbx" hidden>
-      <p class="hint">Elegí dos o más canciones, en el orden en que se cantan.</p>
+      <p class="hint">Elegí dos o más canciones. El orden se cambia arrastrando ≡, también después en el editor de partes.</p>
       <ol class="medsel" id="mbl"></ol>
       <label>Agregar canción al medley<input id="mbq" type="search" autocomplete="off" placeholder="Buscar por nombre o frase"></label>
       <ul class="list sugg" id="mbs"></ul>
@@ -688,9 +688,13 @@ function editSes(r) {
   const med = [], mbx = $('#mbx'), mbq = $('#mbq'), mbs = $('#mbs'), mbt = $('#mbt');
   let tonoElegido = false;
   const pintaMed = () => {
-    $('#mbl').innerHTML = med.map((s, k) => `<li><span class="num">${k + 1}</span><b>${esc(s.titulo)}</b><span class="key">${esc(keyOption(s))}</span>
+    $('#mbl').innerHTML = med.map((s, k) => `<li>${med.length > 1 ? `<button type="button" class="sh" data-mh="${k}" aria-label="Mover ${esc(s.titulo)} (flechas arriba y abajo)"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 5h12M3 9h12M3 13h12"/></svg></button>` : ''}<span class="num">${k + 1}</span><b>${esc(s.titulo)}</b><span class="key">${esc(keyOption(s))}</span>
       <button type="button" data-mq="${k}" aria-label="Quitar ${esc(s.titulo)} del medley">✕</button></li>`).join('');
     $$('[data-mq]').forEach(b => b.onclick = () => { med.splice(+b.dataset.mq, 1); pintaMed(); });
+    const L = [...$('#mbl').children];
+    arrastrar($('#mbl'), L.map(li => [li]), L.map(li => li.querySelector('[data-mh]')), (a, b, tecla) => {
+      const [x] = med.splice(a, 1); med.splice(b, 0, x); pintaMed(); if (tecla) { const f = $(`[data-mh="${b}"]`); if (f) f.focus(); }
+    });
     if (!tonoElegido) { const t = med[0] ? keyOption(med[0]) : ''; mbt.innerHTML = KEYS.map(k => `<option${k === t ? ' selected' : ''}>${k}</option>`).join(''); }
     $('#mbok').disabled = med.length < 2;
   };
@@ -715,6 +719,47 @@ function editSes(r) {
     persist(r); go(`#/reunion/${r.id}/editar/${r.canciones.length - 1}`);
   };
   $('#ok').onclick = async () => { const b = $('#ok'); b.disabled = true; b.textContent = 'Guardando…'; await colaGuardar; go('#/reunion/' + r.id, 'back'); };
+}
+
+// ---------- Arrastre de grupos ----------
+/**
+ * Reordenar arrastrando: grupos[k] = elementos que se mueven juntos (una canción del medley con todas sus partes,
+ * o un renglón); handles[k] = su manija. También con las flechas arriba/abajo cuando la manija tiene el foco.
+ * onDrop(desde, hasta, conTeclado) recibe índices de grupo.
+ */
+function arrastrar(lista, grupos, handles, onDrop) {
+  handles.forEach((h, k) => {
+    if (!h) return;
+    h.addEventListener('keydown', ev => {
+      const n = ev.key === 'ArrowUp' ? k - 1 : ev.key === 'ArrowDown' ? k + 1 : -1;
+      if (n < 0 || n >= grupos.length) return; ev.preventDefault(); onDrop(k, n, true);
+    });
+    h.addEventListener('pointerdown', ev => {
+      if (ev.button || grupos.length < 2) return; ev.preventDefault();
+      const caja = g => ({ t: g[0].getBoundingClientRect().top + scrollY, b: g[g.length - 1].getBoundingClientRect().bottom + scrollY });
+      const G = grupos.map(caja), mid = G.map(g => (g.t + g.b) / 2);
+      const gap = k + 1 < G.length ? G[k + 1].t - G[k].b : G[k].t - G[k - 1].b, alto = G[k].b - G[k].t + gap;
+      const y0 = ev.clientY + scrollY; let py = ev.clientY, dest = k, raf = 0;
+      h.setPointerCapture(ev.pointerId); grupos[k].forEach(x => x.classList.add('lift')); lista.classList.add('drag'); lista.classList.toggle('grupo', grupos[k].length > 1);
+      const pinta = () => {
+        const dy = py + scrollY - y0, centro = mid[k] + dy;
+        grupos[k].forEach(x => { x.style.translate = `0 ${dy}px`; });
+        dest = k;
+        for (let n = k + 1; n < G.length && centro > mid[n]; n++) dest = n;
+        for (let n = k - 1; n >= 0 && centro < mid[n]; n--) dest = n;
+        grupos.forEach((g, n) => { if (n === k) return; const d = n > k && n <= dest ? -alto : n < k && n >= dest ? alto : 0; g.forEach(x => { x.style.translate = d ? `0 ${d}px` : ''; }); });
+      };
+      // Cerca del borde de la pantalla se desplaza solo.
+      const auto = () => { const v = py < 80 ? -10 : py > innerHeight - 80 ? 10 : 0; if (v) { scrollBy(0, v); pinta(); } raf = requestAnimationFrame(auto); };
+      raf = requestAnimationFrame(auto);
+      h.onpointermove = e2 => { py = e2.clientY; pinta(); };
+      h.onpointerup = h.onpointercancel = () => {
+        cancelAnimationFrame(raf); h.onpointermove = h.onpointerup = h.onpointercancel = null;
+        grupos.forEach(g => g.forEach(x => { x.style.translate = ''; x.classList.remove('lift'); })); lista.classList.remove('drag', 'grupo');
+        if (dest !== k) onDrop(k, dest, false);
+      };
+    });
+  });
 }
 
 // ---------- Partes ----------
@@ -758,7 +803,10 @@ function parts(r, i, abrirTono) {
     .filter(([e], k, a) => a.findIndex(([x]) => x.src === e.src && idDe(x) === idDe(e)) === k);
   // En un medley, el nombre de la canción va arriba de su primera parte (y cada vez que cambia de canción).
   const tituloDe = id => (SG[id] || {}).titulo || '';
-  const cancionDe = j => medley && (j === 0 || idDe(c.arr[j - 1]) !== idDe(c.arr[j])) ? `<div class="so">${esc(tituloDe(idDe(c.arr[j])))}</div>` : '';
+  // Tramos seguidos de partes de una misma canción: se mueven juntos desde la manija del nombre de la canción.
+  const tramos = []; c.arr.forEach((e, j) => { if (medley && j && idDe(c.arr[j - 1]) === idDe(e)) tramos[tramos.length - 1].b = j; else tramos.push({ a: j, b: j }); });
+  const cancionDe = j => { if (!medley) return ''; const k = tramos.findIndex(t => t.a === j); if (k < 0) return ''; const tt = tituloDe(idDe(c.arr[j]));
+    return `<div class="so">${tramos.length > 1 ? `<button type="button" class="sh" data-sh="${k}" aria-label="Mover ${esc(tt)} con todas sus partes (flechas arriba y abajo)"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 5h12M3 9h12M3 13h12"/></svg></button>` : ''}<span>${esc(tt)}</span></div>`; };
   const agregar = medley
     ? ids.filter(id => SG[id]).map(id => `<optgroup label="${esc(tituloDe(id))}">${ABde(id).filter(b => b.has).map(b => `<option value="${esc(id)}|${b.id}">${esc((b.label || '(inicio)') + ' — ' + (letraDe(id, b.id)[0] || 'instrumental'))}</option>`).join('')}</optgroup>`).join('')
     : ABde(c.id).filter(b => b.has).map(b => `<option value="${esc(c.id)}|${b.id}">${esc((b.label || '(inicio)') + ' — ' + (letraDe(c.id, b.id)[0] || 'instrumental'))}</option>`).join('');
@@ -776,7 +824,17 @@ function parts(r, i, abrirTono) {
   <div class="form"><label>Agregar parte<select id="ap"><option value="">Elegir…</option>${agregar}</select></label>
     ${modul ? `<label>+ Agregar sección (copia de una parte, con tono nuevo)<select id="as"><option value="">Elegir…</option>${secciones.map(([e, j]) => `<option value="${j}">${esc(nom(e) + ' — ' + PT[j].tono)}</option>`).join('')}</select></label>` : ''}
     <button type="button" id="rs">Volver al orden original</button><button type="button" class="primary" id="ok">Listo</button></div>`;
-  const re = abrir => { persist(r); const y = scrollY; parts(r, i, abrir); scrollTo(0, y); };
+  // En un medley, el orden de las canciones (y el nombre "A + B + C") sigue a la primera parte de cada una.
+  const ordenar = () => { if (!medley) return; const pos = id => { const k = c.arr.findIndex(e => e.cancion === id); return k < 0 ? 1e9 : k; };
+    c.canciones = c.canciones.map((x, n) => [x, n]).sort((a, b) => pos(a[0].id) - pos(b[0].id) || a[1] - b[1]).map(a => a[0]); };
+  const re = abrir => { ordenar(); persist(r); const y = scrollY; parts(r, i, abrir); scrollTo(0, y); };
+  if (medley && tramos.length > 1) {
+    const L = [...$('.pl').children];
+    arrastrar($('.pl'), tramos.map(t => L.slice(t.a, t.b + 1)), tramos.map((t, k) => $(`[data-sh="${k}"]`)), (a, b, tecla) => {
+      const bl = tramos.map(t => c.arr.slice(t.a, t.b + 1)), [x] = bl.splice(a, 1); bl.splice(b, 0, x); c.arr = [].concat(...bl); re();
+      if (tecla) { const f = $(`[data-sh="${b}"]`); if (f) f.focus(); }
+    });
+  }
   $('#rs').onclick = () => { c.arr = baseArr(); re(); };
   $('#ok').onclick = async () => { await colaGuardar; go('#/reunion/' + r.id + '/editar', 'back'); };
   // La copia va sin pid: el motor le da uno nuevo (y la app lo toma al guardar).

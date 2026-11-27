@@ -241,7 +241,15 @@ input[type=search]::placeholder { color: var(--mute); }
 .pc .x i { font-style: normal; font-family: "JetBrains Mono", monospace; font-weight: 700; color: var(--ch); }
 .pc .pvb { grid-area: b; padding-right: 10px; }
 /* Medley: nombre de la canción arriba de su primera parte (igual que el separador de la hoja) */
-.pc .so { grid-area: s; margin: 0 10px 6px 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font: 700 15px/1.25 Fraunces, Georgia, serif; color: var(--ink); }
+.pc .so { grid-area: s; display: flex; align-items: center; gap: 2px; margin: 0 10px 6px 0; padding-bottom: 6px; border-bottom: 1px solid var(--line); font: 700 15px/1.25 Fraunces, Georgia, serif; color: var(--ink); }
+.pc .so > span { padding-left: 12px; }
+.pc .so .sh + span { padding-left: 0; }
+/* Manija de una canción entera (medley) y de la lista al crear el medley */
+.sh { flex: none; width: 30px; height: 36px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--mute); cursor: grab; touch-action: none; border-radius: 8px; }
+.sh svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; stroke-linecap: round; fill: none; }
+.pl.grupo .pc.lift { scale: 1; rotate: 0deg; }
+.medsel.drag li:not(.lift) { transition: translate .18s var(--ease); }
+.medsel li.lift { position: relative; z-index: 2; box-shadow: 0 10px 24px -12px rgba(6, 69, 127, .45); outline: 1px solid var(--ch); }
 .medtag { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 9px; background: var(--acc-soft); color: var(--acc); font: 600 11px/1.6 Inter, sans-serif; vertical-align: 2px; }
 /* Crear medley */
 .medbox { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--card); }
