@@ -1,5 +1,6 @@
 // Teoría musical: transposición, cifrado americano / latino / grados.
 // Funciones puras: no tocan el DOM ni el estado global.
+import { blocksOf, defArr } from './songs.js';
 
 export const SH = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 export const FL = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
@@ -73,3 +74,110 @@ export function transposer(song, sh, not) {
 }
 
 export const CHORD = /^[(\[]*[A-G][#b]?(m|maj|min|sus|add|dim|aug|M)?\d*(sus\d*|add\d*|maj\d*|b\d+|#\d+)*(\/[A-G][#b]?)?[)\],.]*$/;
+
+// ---------- Tono por parte, Modulante y Medley (SPEC §5 y §7) ----------
+// Mismo cálculo que tonosTocados_ de motor/Tonos.js (Registro), más lo que necesita la vista:
+// tono de cada parte, transporte de sus líneas, puentes y transiciones, [ ] / { } e indicador.
+const NOM_MAY = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+const NOM_MEN = ['Cm', 'C#m', 'Dm', 'Ebm', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'Bbm', 'Bm'];
+const TONO = /^([A-G][#b]?)(m?)$/;
+/** Tono transportado n semitonos ("A" + 1 → "Bb"). */
+export function tonoMas(t, n) {
+  const m = TONO.exec(String(t || '').trim()); if (!m || idx(m[1]) < 0) return t;
+  const pc = ((idx(m[1]) + n) % 12 + 12) % 12;
+  return m[2] ? NOM_MEN[pc] : NOM_MAY[pc];
+}
+/** Semitonos de a → b, en −6…+5 (la subida o bajada más corta). */
+export function intervalo(a, b) {
+  const x = TONO.exec(String(a || '').trim()), y = TONO.exec(String(b || '').trim());
+  if (!x || !y || idx(x[1]) < 0 || idx(y[1]) < 0) return 0;
+  let d = ((idx(y[1]) - idx(x[1])) % 12 + 12) % 12; if (d > 5) d -= 12; return d;
+}
+/** Semitonos en tonos para el indicador: 3 → "+1½", −1 → "−½", 2 → "+1". */
+export function enTonos(n) {
+  const a = Math.abs(n), e = Math.floor(a / 2), h = a % 2 ? '½' : '';
+  return (n < 0 ? '−' : '+') + (e ? e : '') + h;
+}
+const sinRep = a => a.filter((t, i) => t && (i === 0 || t !== a[i - 1]));
+
+/**
+ * Tonos de un ítem de reunión (canción o medley), parte por parte.
+ * songs: { id → canción }. Devuelve:
+ *  - partes: una por entrada del arreglo (mismo orden), con
+ *      { i, cancion, src, escrito, tono, sh, transicion, ver, cambia, indicador,
+ *        puente: { ver, sh, tono, escrito }, modula: { ver, sh, tono, escrito }, repite: { ver } }
+ *    tono = tono en que se toca; sh = semitonos para llevar sus líneas del tono escrito al tocado;
+ *    ver = false solo en transiciones ocultas; puente/modula/repite = acordes puente, [ ] y { } del final de la parte
+ *    (puente y modula se transportan sh desde el tono escrito de la parte siguiente: escrito → tono);
+ *  - modulante; secuencias: [{ id, quien, tonos }] (igual que tonosTocados_ del motor, para el Registro).
+ */
+export function tonosDelItem(item, songs) {
+  const medley = item.tipo === 'medley';
+  const ids = medley ? (item.canciones || []).map(c => c.id) : [item.id];
+  const s0 = songs[ids[0]];
+  const modul = medley || (item.modulante != null ? !!item.modulante : !!(s0 && s0.modulante));
+  let arr = item.arr && item.arr.length ? item.arr : [];
+  if (!arr.length) arr = medley ? [].concat(...ids.filter(id => songs[id]).map(id => defArr(songs[id]).map(e => ({ ...e, cancion: id }))))
+                                : (s0 ? defArr(s0) : []);
+  const unTono = item.tono || (s0 && s0.tono) || '';
+
+  // 1) Tono escrito y tocado de cada parte (las transiciones toman el de la parte siguiente).
+  let tocado = null, escrito = null, ant = null;
+  const P = arr.map((p, i) => {
+    const id = medley ? p.cancion : item.id, s = songs[id];
+    const b = s && p.src != null ? blocksOf(s)[p.src] : null;
+    const esc = (b && b.sec && b.sec.tono) || (s && s.tono) || null;
+    const o = { i, cancion: id, src: p.src, escrito: esc, transicion: !!(b && b.sec && b.sec.transicion), mostrar: !!p.mostrar, b };
+    if (o.transicion) { o.destino = b.sec.destino || esc; return o; }
+    let t;
+    if (!modul) t = unTono;
+    else if (p.tono) t = p.tono;
+    else if (tocado == null) t = item.tono || esc;
+    else if (id === ant && esc && escrito) t = tonoMas(tocado, intervalo(escrito, esc));
+    else t = tocado;                                     // parte nueva o cambio de canción del medley
+    tocado = t; if (esc) escrito = esc; ant = id;
+    o.tono = t;
+    return o;
+  });
+
+  // 2) Lo que depende de la parte siguiente: puentes, transiciones, [ ] / { } e indicador.
+  const sig = k => { for (let j = k + 1; j < P.length; j++) if (!P[j].transicion) return P[j]; return null; };
+  let prev = null;
+  P.forEach((o, k) => {
+    const n = sig(k);
+    if (o.transicion) {
+      // Se transporta según el tono de destino; se ve solo si cambia el tono (o con "Mostrar igual").
+      const cambia = !!(n && prev && n.tono !== prev.tono);
+      o.tono = n ? n.tono : (prev ? prev.tono : unTono);
+      o.sh = n ? intervalo(o.destino, n.tono) : 0;
+      o.cambia = cambia; o.ver = cambia || o.mostrar;
+      o.puente = { ver: false, sh: 0 }; o.modula = { ver: false, sh: 0 }; o.repite = { ver: false };
+      return;
+    }
+    o.sh = intervalo(o.escrito, o.tono);
+    o.ver = true;
+    o.cambia = !!(n && n.tono !== o.tono);
+    const shSig = n ? intervalo(n.escrito, n.tono) : o.sh;  // escritos para ir al tono escrito de la siguiente
+    const dest = n ? { tono: n.tono, escrito: n.escrito } : { tono: o.tono, escrito: o.escrito };  // para escribir # o b
+    o.puente = { ver: !!n && (o.cambia || o.mostrar), sh: shSig, ...dest };
+    // [ ] = modular: solo si la siguiente cambia de tono; en la última parte, siempre (tag o cierre final).
+    o.modula = { ver: n ? (o.cambia || o.mostrar) : true, sh: n ? shSig : o.sh, ...dest };
+    // { } = repetir en el mismo tono: solo si la siguiente queda igual.
+    o.repite = { ver: !n || !o.cambia };
+    o.indicador = null;
+    if (prev && prev.tono !== o.tono) {
+      const d = intervalo(prev.tono, o.tono);
+      o.indicador = { dir: d < 0 ? '↓' : '↑', tono: o.tono, dif: d, texto: `${d < 0 ? '↓' : '↑'} ${o.tono} (${enTonos(d)})` };
+    }
+    prev = o;
+  });
+  P.forEach(o => { delete o.b; delete o.mostrar; });
+
+  // 3) Secuencia de tonos tocados por canción (sin repetidos consecutivos), como el Registro.
+  const quienDe = id => medley ? ((item.canciones.find(c => c.id === id) || {}).quien || item.quien) : item.quien;
+  const secuencias = modul
+    ? ids.map(id => ({ id, quien: quienDe(id), tonos: sinRep(P.filter(o => !o.transicion && o.cancion === id).map(o => o.tono)) }))
+         .map(x => x.tonos.length ? x : Object.assign(x, { tonos: [item.tono || ''] }))
+    : [{ id: item.id, quien: item.quien, tonos: [unTono] }];
+  return { modulante: modul, partes: P, secuencias };
+}

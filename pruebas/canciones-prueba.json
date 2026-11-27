@@ -1,0 +1,1841 @@
+{
+ "hay-poder-2": {
+  "id": "hay-poder-2",
+  "titulo": "Hay poder",
+  "interprete": "",
+  "tono": "G",
+  "lineas": [
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "CORO (1er VUELTA)",
+    "tono": "G"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Hay "
+     ],
+     [
+      "G",
+      "po"
+     ],
+     [
+      "(C",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "G)",
+      "der, "
+     ],
+     [
+      "G",
+      "po"
+     ],
+     [
+      "(C",
+      ""
+     ],
+     [
+      "-",
+      "der "
+     ],
+     [
+      "G)",
+      ""
+     ],
+     [
+      "C",
+      "sin igual po"
+     ],
+     [
+      "G",
+      "der,"
+     ],
+     [
+      "(C",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "G)",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "En Je"
+     ],
+     [
+      "D",
+      ""
+     ],
+     [
+      "(Am/D",
+      "sús, "
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "D7)",
+      "quien mu"
+     ],
+     [
+      "G",
+      "rió;"
+     ],
+     [
+      "(C",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "G)",
+      ""
+     ],
+     [
+      "D7",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Hay "
+     ],
+     [
+      "G",
+      "po"
+     ],
+     [
+      "(C",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "G)",
+      "der, "
+     ],
+     [
+      "G",
+      "po"
+     ],
+     [
+      "(C",
+      ""
+     ],
+     [
+      "-",
+      "der "
+     ],
+     [
+      "G)",
+      ""
+     ],
+     [
+      "C",
+      "sin igual po"
+     ],
+     [
+      "G",
+      "der,"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "En la "
+     ],
+     [
+      "Am7",
+      "sangre "
+     ],
+     [
+      "D7",
+      "que él ver - "
+     ],
+     [
+      "G",
+      "tió."
+     ],
+     [
+      "(Eb)",
+      ""
+     ]
+    ],
+    "puente": true
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "ESTROFA 1",
+    "tono": "Ab"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "¿"
+     ],
+     [
+      "Ab",
+      "Quieres ser salvo de "
+     ],
+     [
+      "C#",
+      "toda "
+     ],
+     [
+      "Ab",
+      "maldad?"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Tan "
+     ],
+     [
+      "Eb",
+      "solo hay poder "
+     ],
+     [
+      "Ab",
+      "en mi Je"
+     ],
+     [
+      "Eb",
+      "sús;"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "¿"
+     ],
+     [
+      "Ab",
+      "Quieres vivir y "
+     ],
+     [
+      "C#",
+      "gozar santi"
+     ],
+     [
+      "Ab",
+      "dad?"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Tan "
+     ],
+     [
+      "Eb",
+      "solo hay poder en "
+     ],
+     [
+      "G#",
+      "Jesús."
+     ],
+     [
+      "(E)",
+      ""
+     ]
+    ],
+    "puente": true
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "CORO (2da VUELTA)",
+    "tono": "A"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Hay "
+     ],
+     [
+      "A",
+      "po"
+     ],
+     [
+      "(D",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "A)",
+      "der, "
+     ],
+     [
+      "A",
+      "po"
+     ],
+     [
+      "(D",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "A)",
+      "der "
+     ],
+     [
+      "D",
+      "sin igual "
+     ],
+     [
+      "A",
+      "po"
+     ],
+     [
+      "(D",
+      "der,"
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "A)",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "En Je"
+     ],
+     [
+      "E",
+      ""
+     ],
+     [
+      "(Bm/E",
+      "sús, "
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "E7)",
+      "quien "
+     ],
+     [
+      "A",
+      "murió;"
+     ],
+     [
+      "(D",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "A)",
+      ""
+     ],
+     [
+      "E7",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Hay "
+     ],
+     [
+      "A",
+      "po"
+     ],
+     [
+      "(D",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "A)",
+      "der, "
+     ],
+     [
+      "A",
+      "po"
+     ],
+     [
+      "(D",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "A)",
+      "der "
+     ],
+     [
+      "D",
+      "sin igual "
+     ],
+     [
+      "A",
+      "poder,"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "En la "
+     ],
+     [
+      "Bm7",
+      "sangre "
+     ],
+     [
+      "E7",
+      "que él ver - "
+     ],
+     [
+      "A",
+      "tió."
+     ],
+     [
+      "(F)",
+      ""
+     ]
+    ],
+    "puente": true
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "ESTROFA 2",
+    "tono": "Bb"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "Bb",
+      "¿Quieres ser libre de "
+     ],
+     [
+      "Eb",
+      "orgullo y "
+     ],
+     [
+      "Bb",
+      "pasión?"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Tan "
+     ],
+     [
+      "F",
+      "solo hay po"
+     ],
+     [
+      "Bb",
+      "der en mi "
+     ],
+     [
+      "F",
+      "Jesús;"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "¿"
+     ],
+     [
+      "Bb",
+      "Quieres vencer toda "
+     ],
+     [
+      "Eb",
+      "cruel tenta"
+     ],
+     [
+      "Bb",
+      "ción?"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Tan "
+     ],
+     [
+      "F",
+      "solo hay poder en "
+     ],
+     [
+      "Bb",
+      "Jesús."
+     ]
+    ]
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "CORO (3ra VUELTA)",
+    "tono": "Bb"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "Bb",
+      "Hay "
+     ],
+     [
+      "(Eb",
+      "po"
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "Bb)",
+      "der, "
+     ],
+     [
+      "Bb",
+      "po"
+     ],
+     [
+      "(Eb",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "Bb)",
+      "der "
+     ],
+     [
+      "Eb",
+      "sin igual po"
+     ],
+     [
+      "Bb",
+      "der,"
+     ],
+     [
+      "(Eb",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "Bb)",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "En Je"
+     ],
+     [
+      "F",
+      ""
+     ],
+     [
+      "(Cm/F",
+      "sús, "
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "F7)",
+      "quien mu"
+     ],
+     [
+      "Bb",
+      "rió;"
+     ],
+     [
+      "(Eb",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "Bb)",
+      ""
+     ],
+     [
+      "F7",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Hay "
+     ],
+     [
+      "Bb",
+      "po"
+     ],
+     [
+      "(Eb",
+      "der, "
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "Bb)",
+      "po"
+     ],
+     [
+      "Bb",
+      ""
+     ],
+     [
+      "(Eb",
+      "der "
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "Bb)",
+      "sin i"
+     ],
+     [
+      "Eb",
+      "gual poder,"
+     ],
+     [
+      "Bb",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "En la "
+     ],
+     [
+      "Cm7",
+      "sangre "
+     ],
+     [
+      "F7",
+      "que él ver "
+     ],
+     [
+      "Bb",
+      "- tió."
+     ],
+     [
+      "(G)",
+      ""
+     ]
+    ],
+    "puente": true
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "CORO (4ta VUELTA)",
+    "tono": "C"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "C",
+      ""
+     ],
+     [
+      "(F",
+      "Hay "
+     ],
+     [
+      "-",
+      "po"
+     ],
+     [
+      "C)",
+      "der, "
+     ],
+     [
+      "C",
+      ""
+     ],
+     [
+      "(F",
+      "po"
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "C)",
+      "der "
+     ],
+     [
+      "F",
+      "sin igual po"
+     ],
+     [
+      "C",
+      "der,"
+     ],
+     [
+      "(F",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "C)",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "En Je"
+     ],
+     [
+      "G",
+      ""
+     ],
+     [
+      "(Dm/G",
+      "sús, "
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "G7)",
+      "quien mu"
+     ],
+     [
+      "C",
+      "rió;"
+     ],
+     [
+      "(F",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "C)",
+      ""
+     ],
+     [
+      "G7",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "C",
+      "Hay "
+     ],
+     [
+      "(F",
+      ""
+     ],
+     [
+      "-",
+      "po"
+     ],
+     [
+      "C)",
+      "der, "
+     ],
+     [
+      "C",
+      ""
+     ],
+     [
+      "(F",
+      "po"
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "C)",
+      "der "
+     ],
+     [
+      "F",
+      "sin igual po"
+     ],
+     [
+      "C",
+      "der,"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "En "
+     ],
+     [
+      "Dm7",
+      "la sangre "
+     ],
+     [
+      "G7",
+      "que él "
+     ],
+     [
+      "Am",
+      "ver - tió "
+     ],
+     [
+      "D7",
+      "Oh, uh, oh!"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "En "
+     ],
+     [
+      "Dm7",
+      "la sangre "
+     ],
+     [
+      "G7",
+      "que él "
+     ],
+     [
+      "Am",
+      "ver - tió "
+     ],
+     [
+      "D7",
+      "Oh, uh, oh!"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "En "
+     ],
+     [
+      "Dm7",
+      "la sangre "
+     ],
+     [
+      "G7",
+      "que él "
+     ],
+     [
+      "C",
+      "ver - "
+     ],
+     [
+      "Bb",
+      ""
+     ],
+     [
+      "F/A",
+      "tiooooooooooooooooo"
+     ],
+     [
+      "G7",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "G",
+      "Hay "
+     ],
+     [
+      "G",
+      "po"
+     ],
+     [
+      "G",
+      ""
+     ],
+     [
+      "G",
+      "der en "
+     ],
+     [
+      "G",
+      "Je - "
+     ],
+     [
+      "C",
+      "sus"
+     ]
+    ]
+   }
+  ],
+  "bpm": null,
+  "estado": "oficial",
+  "fuente": "Hay poder [G-Ab-A-Bb-C].docx",
+  "tonos": [
+   "G",
+   "Ab",
+   "A",
+   "Bb",
+   "C"
+  ],
+  "modulante": true
+ },
+ "al-estar-aqui": {
+  "id": "al-estar-aqui",
+  "titulo": "Al estar aqui",
+  "interprete": "",
+  "tono": "F#",
+  "lineas": [
+   {
+    "t": "blank"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Intro",
+    "tono": "F#"
+   },
+   {
+    "t": "ch",
+    "v": "F# - B - (Ab|F – Bb|F#) - D#m - C# - Ab/C - Abdim/B"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Verso 1",
+    "tono": "F#"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Al "
+     ],
+     [
+      "F#",
+      "estar en la "
+     ],
+     [
+      "C#/F",
+      "presencia de "
+     ],
+     [
+      "F#/Eb",
+      "Tu divinidad"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Y al "
+     ],
+     [
+      "B",
+      "contemplar "
+     ],
+     [
+      "F#/Bb",
+      "la hermo"
+     ],
+     [
+      "B/Ab",
+      "sura de Tu "
+     ],
+     [
+      "C#sus4",
+      "santidad"
+     ],
+     [
+      "C#",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "F#",
+      "Mi espíritu "
+     ],
+     [
+      "Ddim/Bb",
+      "se alegra en "
+     ],
+     [
+      "C#/Eb",
+      "Tu ma"
+     ],
+     [
+      "–",
+      "jestad"
+     ],
+     [
+      "B/Eb",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Te "
+     ],
+     [
+      "B/Ab",
+      "adoro a Tí, te a"
+     ],
+     [
+      "C#sus4",
+      "doro a Tí"
+     ],
+     [
+      "(D/F#",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "E/Ab)",
+      ""
+     ]
+    ],
+    "puente": true
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Verso 2",
+    "tono": "A"
+   },
+   {
+    "t": "ly",
+    "v": "(Sube a A)"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Cuando "
+     ],
+     [
+      "A",
+      "veo la "
+     ],
+     [
+      "E/G#",
+      "grandeza de tu "
+     ],
+     [
+      "A/F#",
+      "dulce amor"
+     ],
+     [
+      "A/E",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Y comprue"
+     ],
+     [
+      "D",
+      "bo la "
+     ],
+     [
+      "A/C#",
+      "pureza de "
+     ],
+     [
+      "D/B",
+      "Tu cora"
+     ],
+     [
+      "Esus4",
+      "zón"
+     ],
+     [
+      "E",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "A",
+      "Mi espíritu se "
+     ],
+     [
+      "C#",
+      "alegra en Tu "
+     ],
+     [
+      "E/F#",
+      "ma"
+     ],
+     [
+      "-",
+      "jestad"
+     ],
+     [
+      "D/F#",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Te a"
+     ],
+     [
+      "D/B",
+      "doro "
+     ],
+     [
+      "D/A",
+      "a Tí, te "
+     ],
+     [
+      "Esus4",
+      "adoro "
+     ],
+     [
+      "D/F#",
+      "a Tí"
+     ],
+     [
+      "E/Ab",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Coro 1",
+    "tono": "A"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Y al "
+     ],
+     [
+      "A",
+      "estar aquí, "
+     ],
+     [
+      "A/F#",
+      "delante de Tí "
+     ],
+     [
+      "E/D",
+      "te ado"
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "D/D",
+      "raré"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "A/C#",
+      "Postrado "
+     ],
+     [
+      "D/B",
+      "ante Tí, mi "
+     ],
+     [
+      "D/A",
+      "corazón "
+     ],
+     [
+      "Esus4",
+      "te adora "
+     ],
+     [
+      "D/F#",
+      "oh Dios"
+     ],
+     [
+      "E/Ab",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Y siempre "
+     ],
+     [
+      "A",
+      "quiero estar "
+     ],
+     [
+      "A/C#",
+      "para adorar, "
+     ],
+     [
+      "D",
+      "Y contemplar "
+     ],
+     [
+      "Dm",
+      "Tu santidad"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Te ado"
+     ],
+     [
+      "A/E",
+      "ro a Tí "
+     ],
+     [
+      "Esus4",
+      "Señor, te a"
+     ],
+     [
+      "A4",
+      "doro a "
+     ],
+     [
+      "A",
+      "Tí"
+     ],
+     [
+      "(A/E",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "E)",
+      ""
+     ]
+    ],
+    "puente": true
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Verso 1",
+    "tono": "F#"
+   },
+   {
+    "t": "ly",
+    "v": "(Baja a F#)"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Te "
+     ],
+     [
+      "B/Ab",
+      "adoro a Tí, te a"
+     ],
+     [
+      "C#sus4",
+      "doro a Tí"
+     ],
+     [
+      "B/Eb",
+      ""
+     ],
+     [
+      "-",
+      ""
+     ],
+     [
+      "C#/F",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Coro 2",
+    "tono": "F#"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Y al "
+     ],
+     [
+      "F#",
+      "estar aquí, "
+     ],
+     [
+      "F#/D#",
+      "delante de Tí te "
+     ],
+     [
+      "C#/B",
+      "adora"
+     ],
+     [
+      "-",
+      "ré"
+     ],
+     [
+      "G#/B",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "F#/Bb",
+      "Postrado "
+     ],
+     [
+      "B/G#",
+      "ante Tí, mi "
+     ],
+     [
+      "B/F#",
+      "corazón te "
+     ],
+     [
+      "C#sus4",
+      "adora oh Dios"
+     ],
+     [
+      "B/D#",
+      ""
+     ],
+     [
+      "C#/F",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Y siempre "
+     ],
+     [
+      "F#",
+      "quiero estar "
+     ],
+     [
+      "F#/Bb",
+      "para adorar, "
+     ],
+     [
+      "B",
+      "Y contemplar "
+     ],
+     [
+      "Bm",
+      "Tu santidad"
+     ]
+    ]
+   },
+   {
+    "t": "ly",
+    "v": "F#         C#sus4      B/F#  F#  (Para repetir coro: C#/F)"
+   },
+   {
+    "t": "ly",
+    "v": "Te adoro a Tí Señor, te adoro a Tí"
+   },
+   {
+    "t": "ly",
+    "v": "↓"
+   },
+   {
+    "t": "sec",
+    "v": "Inter para subir a A",
+    "tono": "A",
+    "transicion": true,
+    "destino": "A"
+   },
+   {
+    "t": "ch",
+    "v": "F – Dm7 – Bb – E4 – D/F#-E/G#"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Coro 1 Final",
+    "tono": "A"
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Y al estar a"
+     ],
+     [
+      "(A",
+      "quí, "
+     ],
+     [
+      "–",
+      ""
+     ],
+     [
+      "Bm7",
+      "delante "
+     ],
+     [
+      "–",
+      ""
+     ],
+     [
+      "A/C#)",
+      "de Tí te a"
+     ],
+     [
+      "E/D",
+      "dora"
+     ],
+     [
+      "-",
+      "ré"
+     ],
+     [
+      "D/D",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "A/C#",
+      "Postrado "
+     ],
+     [
+      "D/B",
+      "ante Tí, mi "
+     ],
+     [
+      "D/A",
+      "corazón te "
+     ],
+     [
+      "G",
+      "ado"
+     ],
+     [
+      "D/F#",
+      "ra oh "
+     ],
+     [
+      "E/Ab",
+      "Dios"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Y siempre "
+     ],
+     [
+      "A",
+      "quiero estar "
+     ],
+     [
+      "A/C#",
+      "para adorar, "
+     ],
+     [
+      "D",
+      "Y contemplar "
+     ],
+     [
+      "Bdim7/D",
+      "Tu santidad"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Te ado"
+     ],
+     [
+      "A/C#",
+      "ro a Tí "
+     ],
+     [
+      "E/G#",
+      "Señor, te a"
+     ],
+     [
+      "D",
+      "do"
+     ],
+     [
+      "Bdim7/D",
+      "ro a Tí"
+     ],
+     [
+      "A",
+      ""
+     ],
+     [
+      "–",
+      ""
+     ],
+     [
+      "D",
+      ""
+     ],
+     [
+      "–",
+      ""
+     ],
+     [
+      "Bdim7/D",
+      ""
+     ],
+     [
+      "–",
+      ""
+     ],
+     [
+      "A",
+      ""
+     ]
+    ]
+   },
+   {
+    "t": "blank"
+   },
+   {
+    "t": "sec",
+    "v": "Final",
+    "tono": "F#"
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "F#/C#",
+      "Te adoro a "
+     ],
+     [
+      "C#",
+      "Tí Señor, "
+     ],
+     [
+      "B",
+      "te ado"
+     ],
+     [
+      "F#",
+      "ro a Tí"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Te a"
+     ],
+     [
+      "G#m",
+      "doro a Tí Se"
+     ],
+     [
+      "C#",
+      "ñor, te a"
+     ],
+     [
+      "B",
+      "doro a "
+     ],
+     [
+      "F#",
+      "Tí"
+     ]
+    ]
+   },
+   {
+    "t": "pair",
+    "segs": [
+     [
+      "",
+      "Te a"
+     ],
+     [
+      "G#m",
+      "doro a Tí Se"
+     ],
+     [
+      "C#",
+      "ñor, te a"
+     ],
+     [
+      "B",
+      ""
+     ],
+     [
+      "Bm",
+      "doro a Tí"
+     ],
+     [
+      "F#m/D",
+      ""
+     ],
+     [
+      "E",
+      ""
+     ],
+     [
+      "F#",
+      ""
+     ]
+    ]
+   }
+  ],
+  "bpm": null,
+  "estado": "oficial",
+  "fuente": "Al estar aqui [F# - A].docx",
+  "tonos": [
+   "F#",
+   "A",
+   "F#",
+   "A",
+   "F#"
+  ],
+  "modulante": true
+ }
+}
