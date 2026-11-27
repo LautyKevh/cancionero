@@ -64,6 +64,13 @@ export class ApiDataSource {
   async deleteReunion(id, clave) { await this._post('borrarReunion', { id, clave }); }
   registrarUso(id, clave) { return this._post('registrarUso', { id, clave }); }
 
+  info() { return this._get('info'); }
+  /** Admin: convierte los Word de Drive (por tandas de ~4,5 min; repetir hasta completo). */
+  async importar(idToken) {
+    const r = await fetch(this.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ iglesia: this.c, a: 'importar', idToken }), redirect: 'follow' });
+    const j = await r.json(); if (!j.ok) throw Object.assign(new Error(j.error), { code: j.code }); return j.data;
+  }
+
   status() { return { online: this.online && navigator.onLine, updatedAt: this.updatedAt, source: 'motor' }; }
   async refresh() { this.songs = null; await this.getSongs(); }
 }

@@ -241,3 +241,11 @@ svg .bk { fill: currentColor; stroke: none; }
 .mode [data-mode="c"] svg .bk, .modebtn svg .bk { fill: currentColor; }
 /* Lista de canciones para agregar: desplegable con scroll */
 .sugg { max-height: min(55vh, 420px); overflow-y: auto; overscroll-behavior: contain; box-shadow: 0 12px 24px -18px rgba(6, 69, 127, .5); }
+
+/* Ajustes */
+.status .cfg { margin-left: auto; color: var(--mute); font-weight: 600; text-decoration: none; padding: 6px 4px; }
+.status .demo + .cfg { margin-left: 0; }
+.adm { margin-top: 20px; display: grid; gap: 10px; justify-items: start; }
+.adm h3 { margin: 0; font-size: 15px; }
+.adm .ok { color: #2f9e5b; font-weight: 600; }
+.adm .fails { margin: 0; padding-left: 18px; font-size: 13px; color: var(--mute); }

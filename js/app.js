@@ -17,7 +17,7 @@ const prefs = (() => { try { return JSON.parse(localStorage.getItem('cancionero:
 const P = { not: prefs.not || 0, adj: prefs.adj || 0, sadj: prefs.sadj || 0, modos: prefs.modos || {} };
 const savePrefs = () => { try { localStorage.setItem('cancionero:prefs', JSON.stringify(P)); } catch (e) {} };
 
-let SONGS = [], REG = [], SES = [], PERS = [];
+let SONGS = [], REG = [], SES = [], PERS = [], INFO = {};
 const unlocked = {};             // id de reunión → clave verificada (solo en memoria)
 let view = { shift: 0 };          // estado de la hoja abierta
 let lastQ = '';
@@ -56,6 +56,7 @@ function render() {
   transition(() => {
     scrollTo(0, 0);
     if (!p.length || p[0] === 'canciones') return songList();
+    if (p[0] === 'ajustes') return settings();
     if (p[0] === 'reuniones') return p[1] === 'nueva' ? newSes() : sesList();
     if (p[0] === 'cancion') { const s = songBy(p[1]); if (!s) return songList(); return p[2] ? openSheet(s, p[2], null) : pickMode(s); }
     if (p[0] === 'reunion') {
@@ -86,7 +87,7 @@ function paintStatus() {
   statusEl.innerHTML = `<span class="dot" aria-hidden="true"></span><span>${s.online
     ? (d ? 'Actualizado ' + esc(when) : 'Conectado')
     : 'Sin conexión' + (d ? ' · datos del ' + esc(isToday ? 'hoy' : fmt(isoOf(d)).slice(0, 5)) : '')}</span>
-    ${s.online ? '<button type="button" id="refresh">Actualizar</button>' : ''}${s.source === 'demo' ? '<span class="demo">Modo demo</span>' : ''}`;
+    ${s.online ? '<button type="button" id="refresh">Actualizar</button>' : ''}${s.source === 'demo' ? '<span class="demo">Modo demo</span>' : ''}<a class="cfg" href="#/ajustes">Ajustes</a>`;
   const b = document.getElementById('refresh');
   if (b) b.onclick = async () => { b.disabled = true; b.textContent = 'Actualizando…'; try { await load(true); } finally { paintStatus(); render(); } };
 }
@@ -489,6 +490,56 @@ function parts(r, i) {
   $('#ap').onchange = e => { const b = AB[+e.target.value]; if (b) { c.arr.push({ src: b.id, label: b.label, rep: 1 }); re(); } };
 }
 
+// ---------- Ajustes (admin con Google) ----------
+let ADMIN = null;                 // { token, email } solo en memoria
+const GSI = 'https://accounts.google.com/gsi/client';
+const loadGsi = () => window.google?.accounts?.id ? Promise.resolve() : new Promise((ok, ko) => {
+  const s = document.createElement('script'); s.src = GSI; s.async = true; s.onload = ok; s.onerror = () => ko(new Error('No se pudo cargar el ingreso de Google.')); document.head.appendChild(s);
+});
+const emailDe = t => { try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).email; } catch (e) { return ''; } };
+
+function settings() {
+  setTabs(null);
+  const st = ds.status();
+  app.innerHTML = `${back('Canciones', '#/canciones')}<h2 class="title">Ajustes</h2>
+    <p class="meta">${esc(INFO.nombre || (DEMO ? 'Modo demo' : ''))}${INFO.actualizado ? ' · canciones importadas el ' + esc(fmt(INFO.actualizado.slice(0, 10))) : ''}</p>
+    <section class="adm"><h3>Administración</h3><div id="adm"></div></section>`;
+  const box = $('#adm');
+  if (DEMO || !ds.importar) { box.innerHTML = '<p class="hint">En modo demo no hay acciones de administrador.</p>'; return; }
+  if (!CONFIG.googleClientId) { box.innerHTML = '<p class="hint">El ingreso de administrador todavía no está configurado.</p>'; return; }
+  if (!st.online) { box.innerHTML = '<p class="hint">Hace falta conexión.</p>'; return; }
+  if (!ADMIN) {
+    box.innerHTML = '<p class="hint">Solo para quien administra el cancionero de la iglesia.</p><div id="gbtn"></div><p class="err" id="er" role="alert"></p>';
+    loadGsi().then(() => {
+      google.accounts.id.initialize({ client_id: CONFIG.googleClientId, callback: r => { ADMIN = { token: r.credential, email: emailDe(r.credential) }; settings(); } });
+      google.accounts.id.renderButton($('#gbtn'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'es' });
+    }).catch(e => { $('#er').textContent = e.message; });
+    return;
+  }
+  box.innerHTML = `<p class="hint">Ingresaste como <b>${esc(ADMIN.email)}</b>.</p>
+    <button type="button" class="primary" id="imp">Importar canciones de Drive</button>
+    <p class="hint">Convierte los Word de “Letra y Acordes”. Solo procesa los nuevos o modificados; si son muchos puede tardar varios minutos.</p>
+    <div id="res" role="status"></div><button type="button" id="out">Salir</button>`;
+  $('#out').onclick = () => { ADMIN = null; window.google?.accounts?.id?.disableAutoSelect(); settings(); };
+  $('#imp').onclick = async () => {
+    const b = $('#imp'), res = $('#res'); b.disabled = true;
+    try {
+      let r, n = 0;
+      do {
+        res.innerHTML = `<p class="hint">Importando${n ? ' (tanda ' + (n + 1) + ')' : ''}… no cierres esta pantalla.</p>`;
+        r = await ds.importar(ADMIN.token); n++;
+      } while (!r.completo && n < 20);
+      res.innerHTML = r.completo
+        ? `<p class="ok">Listo: ${r.importadas} canciones.${r.fallidas.length ? ' Con problemas:' : ''}</p>${r.fallidas.length ? '<ul class="fails">' + r.fallidas.map(f => `<li><b>${esc(f.archivo)}</b>: ${esc(f.error)}</li>`).join('') + '</ul>' : ''}`
+        : `<p class="err">Quedaron ${r.pendientes} archivos sin procesar. Tocá de nuevo para seguir.</p>`;
+      if (r.completo) { await load(true); INFO = await ds.info().catch(() => INFO); paintStatus(); }
+    } catch (x) {
+      if (x.code === 'admin') ADMIN = null;
+      res.innerHTML = `<p class="err">${esc(x.message)}</p>`;
+    } finally { b.disabled = false; }
+  };
+}
+
 // ---------- Inicio ----------
 async function load(force) {
   if (force) await ds.refresh();
@@ -500,5 +551,6 @@ async function load(force) {
   try { await load(); }
   catch (e) { app.innerHTML = `<p class="err">${esc(e.message)} Revisá la conexión y recargá la página.</p>`; return; }
   paintStatus(); render();
+  if (ds.info) ds.info().then(i => { INFO = i || {}; const c = document.querySelector('.church'); if (c && INFO.nombre) c.textContent = 'Alabanza · ' + INFO.nombre; }).catch(() => {});
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();

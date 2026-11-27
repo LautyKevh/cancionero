@@ -82,7 +82,14 @@ function doPost(e) {
         if (r.registrada) return 0;
         const n = registrarUso_(ig, r); r.registrada = true; guardarReunion_(ig, r); return n;
       });
-      case 'importar': verificarAdmin_(ig, b.idToken); return conLock_(() => importarCanciones_(ig));
+      case 'importar': {
+        verificarAdmin_(ig, b.idToken);
+        // Sin el lock general (la tanda dura ~4,5 min y bloquearía las reuniones): marca propia por iglesia.
+        const cache = CacheService.getScriptCache(), k = 'importando:' + ig.rootId;
+        if (cache.get(k)) throw apiError_('Ya hay una importación en curso. Esperá unos minutos.', 'ocupado');
+        cache.put(k, '1', 360);
+        try { return importarCanciones_(ig); } finally { cache.remove(k); }
+      }
       default: throw apiError_('Acción desconocida.', 'accion');
     }
   });
