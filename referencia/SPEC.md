@@ -344,6 +344,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - En el nivel 0, atrás muestra "Tocá atrás de nuevo para salir"; un segundo toque dentro de 2,5 s sale de la app.
 - **Ingreso de admin:** se recuerda en el dispositivo mientras vale el token de Google (~1 h); después reingresa solo o con un toque.
 - **Importación desde Ajustes:** avanza por tandas, muestra "X de Y canciones" y, si el motor dice que la tanda anterior sigue corriendo o se corta la conexión, espera 30 s y reintenta sola.
+- **Reconversión:** los Word nuevos o modificados se bajan y se convierten. Cuando cambia el conversor (sube `CONV_V`), los Word sin cambios se reconvierten desde la copia de sus párrafos (`Datos/import-parrafos.json`, sin volver a bajarlos) y solo se reescriben las canciones cuyo resultado cambió; `import-log.json` lista las reescritas. Si cambia la lectura del Word (sube `LECTOR_V`), se descarta la copia y se vuelve a bajar todo.
 - **Editar reunión:** los cambios se ven al instante y se guardan en segundo plano, en orden; "Listo" espera a que terminen. El botón de cada canción para ordenar sus partes se llama "Editar".
 - Sin conexión se puede ver todo. Editar reuniones requiere conexión.
 

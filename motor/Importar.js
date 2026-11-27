@@ -46,12 +46,48 @@ function nombreArchivo_(n, conocidos) {
 // Apps Script corta cada ejecución a los 6 min: la importación avanza por tandas.
 // El progreso queda en Datos/import-estado.json; los Word que no cambiaron no se vuelven a convertir.
 const TANDA_MS = 4.5 * 60 * 1000;
-const CONV_V = 9;   // subir cuando cambia Convertir.js: fuerza a reconvertir todo
+// Subir cuando cambia Convertir.js o Tonos.js. Los Word sin cambios se reconvierten desde la copia de sus
+// párrafos (Datos/import-parrafos.json, sin volver a bajarlos) y solo se reescriben las canciones cuyo resultado cambia.
+const CONV_V = 9;
+// Subir cuando cambia leerDocx_ (lo que se guarda de cada Word): descarta la copia de los párrafos.
+const LECTOR_V = 1;
+
+/** Párrafos sin runs vacíos y con los runs seguidos de igual negrita unidos (mismo texto y mismos anchos). */
+function compactar_(ps) {
+  return ps.map(p => {
+    const runs = [];
+    p.runs.forEach(r => { if (!r.text) return; const u = runs[runs.length - 1];
+      if (u && !!u.bold === !!r.bold) u.text += r.text; else runs.push(r.bold ? { text: r.text, bold: true } : { text: r.text }); });
+    return { runs };
+  });
+}
+
+/** Canción a partir de los párrafos de un Word (convertirParrafos_ modifica los párrafos: se le pasa una copia). */
+function cancionDe_(nombre, ps, id, cat, conocidos) {
+  const { titulo, tono: tonoArchivo, interprete: intArchivo, dudosos } = nombreArchivo_(nombre, conocidos);
+  const conv = convertirParrafos_(JSON.parse(JSON.stringify(ps)).map(p => ({ runs: p.runs.map(r => ({ text: r.text, bold: !!r.bold })) })));
+  const c = cat[norm_(titulo)] || {};
+  // BPM solo si está confirmado (confianza alta o sin columna de confianza)
+  const bpm = c.bpm && (!c.confianza || c.confianza === 'alta') ? c.bpm : null;
+  const song = { id, titulo: c.titulo || titulo, interprete: c.interprete || intArchivo || '', tono: conv.tono || tonoArchivo || c.tono,
+                 lineas: conv.lineas, bpm, estado: c.estado || 'oficial', fuente: nombre };
+  if (!song.lineas.length) throw new Error('El documento no tiene letra.');
+  // Tono por parte, transiciones, puentes y Modulante (SPEC §6). song.tono pasa a ser el tono de inicio.
+  const dudas = analizarTonos_(song, song.tono);
+  if (!song.interprete && dudosos.length)
+    dudas.push({ parte: 'Intérprete', motivo: 'Sin intérprete. ¿"(' + dudosos.join('), (') + ')" del nombre del archivo es el intérprete? Completalo como corrección.' });
+  return { song, dudas, enPlanilla: !!c.titulo, idPlanilla: c.id, titulo };
+}
 
 function importarCanciones_(ig, desdeCero) {
   if (!ig.letrasId) throw apiError_('Falta configurar la carpeta "Letra y Acordes" de esta iglesia.', 'config');
   const t0 = Date.now(), datos = datos_(ig), dirCanciones = subcarpeta_(datos, 'canciones');
   const estado = desdeCero ? { archivos: {}, canciones: {} } : leerJson_(datos, 'import-estado.json', { archivos: {}, canciones: {} });
+  let parrafos = desdeCero ? null : leerJson_(datos, 'import-parrafos.json', null);
+  if (!parrafos || parrafos.lector !== LECTOR_V) parrafos = { lector: LECTOR_V, archivos: {} };
+  let parrafosCambian = false, iguales = 0;
+  // Una importación nueva (no la continuación de una por tandas) empieza la lista de canciones reescritas.
+  if (!estado.enCurso) { Object.keys(estado.archivos).forEach(k => { delete estado.archivos[k].cambio; }); estado.enCurso = true; }
   const cat = catalogo_(ig);
   const conocidos = Object.keys(cat).map(k => cat[k].interprete).filter(x => x && x !== '-');
   const it = DriveApp.getFolderById(ig.letrasId).getFiles(), lista = [];
@@ -61,32 +97,30 @@ function importarCanciones_(ig, desdeCero) {
   let hechos = 0, pendientes = 0;
   for (const f of lista) {
     const fid = f.getId(), nombre = f.getName(), upd = f.getLastUpdated().getTime(), prev = estado.archivos[fid];
-    if (prev && prev.upd === upd && prev.v === CONV_V) continue;                // ya convertido y sin cambios
+    const copia = parrafos.archivos[fid], conCopia = !!(copia && copia.upd === upd);
+    // Ya convertido, sin cambios y con su copia de párrafos (o con error, que no se guarda copia): nada que hacer.
+    if (prev && prev.upd === upd && prev.v === CONV_V && (conCopia || prev.error)) continue;
     if (Date.now() - t0 > TANDA_MS) { pendientes++; continue; }
     try {
       if (f.getMimeType() !== DOCX) throw new Error('No es un .docx (' + f.getMimeType() + ')');
-      const { titulo, tono: tonoArchivo, interprete: intArchivo, dudosos } = nombreArchivo_(nombre, conocidos);
-      const conv = convertirDocx_(f.getBlob());
-      const c = cat[norm_(titulo)] || {};
+      // Word sin cambios: desde la copia de sus párrafos. Nuevo o modificado: se baja y se lee.
+      let ps;
+      if (conCopia) ps = copia.ps;
+      else { ps = compactar_(leerDocx_(f.getBlob())); parrafos.archivos[fid] = { upd, ps }; parrafosCambian = true; }
       // id estable: se conserva el de una importación anterior del mismo archivo
       let id = prev && prev.id;
+      const r = cancionDe_(nombre, ps, id || 'x', cat, conocidos);
       if (!id) {
-        id = c.id || slug_(titulo);
+        id = r.idPlanilla || slug_(r.titulo);
         const usado = x => Object.keys(estado.archivos).some(k => k !== fid && estado.archivos[k].id === x);
         if (usado(id)) { let n = 2; while (usado(id + '-' + n)) n++; id = id + '-' + n; }
+        r.song.id = id;
       }
-      // BPM solo si está confirmado (confianza alta o sin columna de confianza)
-      const bpm = c.bpm && (!c.confianza || c.confianza === 'alta') ? c.bpm : null;
-      const song = { id, titulo: c.titulo || titulo, interprete: c.interprete || intArchivo || '', tono: conv.tono || tonoArchivo || c.tono,
-                     lineas: conv.lineas, bpm, estado: c.estado || 'oficial', fuente: nombre };
-      if (!song.lineas.length) throw new Error('El documento no tiene letra.');
-      // Tono por parte, transiciones, puentes y Modulante (SPEC §6). song.tono pasa a ser el tono de inicio.
-      const dudas = analizarTonos_(song, song.tono);
-      if (!song.interprete && dudosos.length)
-        dudas.push({ parte: 'Intérprete', motivo: 'Sin intérprete. ¿"(' + dudosos.join('), (') + ')" del nombre del archivo es el intérprete? Completalo como corrección.' });
-      escribirJson_(dirCanciones, id + '.json', song);
-      estado.canciones[id] = song;
-      estado.archivos[fid] = { upd, v: CONV_V, nombre, id, enPlanilla: !!c.titulo, dudas };
+      // Solo se reescribe si el resultado cambió.
+      const cambio = JSON.stringify(estado.canciones[id]) !== JSON.stringify(r.song);
+      if (cambio) escribirJson_(dirCanciones, id + '.json', r.song); else iguales++;
+      estado.canciones[id] = r.song;
+      estado.archivos[fid] = { upd, v: CONV_V, nombre, id, enPlanilla: r.enPlanilla, dudas: r.dudas, cambio };
     } catch (e) {
       estado.archivos[fid] = { upd, v: CONV_V, nombre, error: String(e && e.message || e) };
     }
@@ -96,11 +130,14 @@ function importarCanciones_(ig, desdeCero) {
   // Archivos que ya no están en la carpeta: se quitan del cancionero.
   const vivos = {}; lista.forEach(f => { vivos[f.getId()] = 1; });
   Object.keys(estado.archivos).forEach(k => { if (!vivos[k]) { const id = estado.archivos[k].id; if (id) delete estado.canciones[id]; delete estado.archivos[k]; } });
+  Object.keys(parrafos.archivos).forEach(k => { if (!vivos[k]) { delete parrafos.archivos[k]; parrafosCambian = true; } });
+  if (pendientes === 0) estado.enCurso = false;
   escribirJson_(datos, 'import-estado.json', estado);
+  if (parrafosCambian) escribirJson_(datos, 'import-parrafos.json', parrafos);
 
   const A = Object.keys(estado.archivos).map(k => estado.archivos[k]);
   const ok = A.filter(a => a.id), fallidas = A.filter(a => a.error).map(a => ({ archivo: a.nombre, error: a.error }));
-  const res = { completo: pendientes === 0, hechosEnEstaTanda: hechos, pendientes, total: lista.length, listos: lista.length - pendientes, importadas: ok.length, fallidas };
+  const res = { completo: pendientes === 0, hechosEnEstaTanda: hechos, igualesEnEstaTanda: iguales, pendientes, total: lista.length, listos: lista.length - pendientes, importadas: ok.length, fallidas };
   if (res.completo) {
     // Correcciones del admin sobre la base (Datos/correcciones.json): se aplican después de cada importación.
     const corr = leerJson_(datos, 'correcciones.json', {});
@@ -111,7 +148,9 @@ function importarCanciones_(ig, desdeCero) {
     const dudas = [].concat(...ok.filter(a => a.dudas && a.dudas.length && !corr[a.id]).map(a => a.dudas.map(d => Object.assign({ archivo: a.nombre, id: a.id }, d))));
     escribirJson_(datos, 'cancionero.json', canciones);
     const fecha = new Date().toISOString();
-    escribirJson_(datos, 'import-log.json', { fecha, ok: ok.map(a => ({ archivo: a.nombre, id: a.id, enPlanilla: a.enPlanilla })), fallidas, dudas });
+    const reescritas = ok.filter(a => a.cambio).map(a => a.id);
+    escribirJson_(datos, 'import-log.json', { fecha, conv: CONV_V, reescritas, ok: ok.map(a => ({ archivo: a.nombre, id: a.id, enPlanilla: a.enPlanilla })), fallidas, dudas });
+    res.reescritas = reescritas.length;
     res.dudas = dudas;
     registrarIglesia_(ig.rootId, { importado: fecha });
     cacheDel_(ck_(ig, 'cancionero')); cacheDel_(ck_(ig, 'registro'));
