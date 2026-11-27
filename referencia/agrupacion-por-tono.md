@@ -1,126 +1,108 @@
-# Agrupar versiones que solo cambian de tono (propuesta)
+# Agrupar versiones que solo cambian de tono
 
-Propuesta, sin implementar. Datos: iglesia de prueba, importación del 27-11-2026 (292 canciones), Registro y reuniones de ese día. Detalle de la regla en PENDIENTES.
+**Estado:** implementado solo en la app (rama `desarrollo`, en prueba). La lista de grupos está en `js/grupos.js` (se genera con el script de clasificación; datos: iglesia de prueba, 27-11-2026). En Drive y en la planilla nada cambia: cada Word sigue siendo una canción con su id.
 
-**Criterio de "mismo arreglo":** mismo título base (sin paréntesis ni número final) + misma letra + mismas partes (mismos nombres, en el mismo orden) + acordes que son un transporte exacto (misma calidad y bajo, mismo intervalo en todos).
+## Cómo funciona en la app
+- Cada grupo aparece **una sola vez** en la lista de canciones, en el buscador de Editar reunión y en el de "Crear medley".
+- **Búsqueda:** se busca en todos los Word del grupo (título, intérprete, letra, director); el resultado muestra el Word representativo.
+- **Tono que se muestra** (y Word representativo):
+  1. tono original del intérprete registrado — todavía no existe el campo (Prioridad 3), no aplica;
+  2. si no, el **más usado en el Registro** (y reuniones no volcadas) entre todos los Word del grupo; empate: el más reciente. Se muestra el Word que está en ese tono; si ninguno lo está, el Word más usado. En la ficha dice "Tono más usado";
+  3. si no hay registros, el **primer Word** por nombre de archivo, con "Tono original no registrado".
+- **Historial:** "Última vez" y "Tono por persona" suman todos los Word del grupo.
+- Reuniones, historial y Registro que usan cualquiera de los Word siguen funcionando igual (cada ítem guarda su id).
 
-**Tono en que se muestra:** 1) tono original del intérprete registrado; 2) si no, el más usado en el Registro; 3) si no, el del Word (el primero), con "Tono original no registrado". Hoy ninguna canción tiene tono original registrado (el campo llega con la Prioridad 3), así que la regla 1 no aplica todavía.
+## Criterio
+Mismo título base (sin paréntesis ni número final) + misma letra (sin contar los nombres de parte) + acordes que son un transporte. Tipos:
+- **Confirmado:** transporte exacto en todos los acordes.
+- **Nombres de parte distintos:** igual que confirmado, pero los nombres de las partes no coinciden (se comparan ignorándolos). Se agrupan.
+- **Acorde distinto por error del Word:** misma letra y hasta 3 acordes que no siguen el transporte (sobra, falta o cambia uno). Se agrupan y el error queda en PENDIENTES → Revisar para corregir el Word.
 
-**Word a conservar:** el que está en el tono que se muestra; si ninguno, el más usado. Los demás quedan propuestos para borrar más adelante. Si un Word propuesto está en uso (Registro o una reunión), antes de borrarlo hay que pasar esas referencias al que se conserva. No se borra nada de Drive.
+## Grupos (56 grupos, 128 Word)
 
-## Grupos detectados (34 grupos, 71 Word)
-
-| Canción | Word | Tono a mostrar | Regla | Por qué | Se conserva | Propuesto para borrar (uso) |
-|---|---|---|---|---|---|---|
-| A ti me rindo | [Eb] · [F] | Eb | 3 | Tono original no registrado | [Eb] | [F] — **en uso:** Reunión: Domingo 29-11-2026 |
-| Al único que es digno | [A] · [D] | A | 2 | A×1, D×1, G×1 · empate: el más reciente | [A] (Registro ×3) | [D] — **en uso:** Reunión: Domingo 29-11-2026 |
-| Aqui te esperaré | [A] · [Bb] | A | 3 | Tono original no registrado | [A] | [Bb] |
-| Con mis manos levantadas (Simple) | [E] · [G] | E | 3 | Tono original no registrado | [E] | [G] |
-| Cuánto vales Cristo | [A] · [C] | A | 3 | Tono original no registrado | [A] | [C] |
-| Cuanto vales, Cristo + Si vale la pena | [A] · [C] | A | 3 | Tono original no registrado | [A] | [C] |
-| El Cordero y el León | [C] · [D] | C | 3 | Tono original no registrado | [C] | [D] |
-| El infinito Dios | [C] · [G] | G | 2 | G×1 | [G] | [C] — **en uso:** Registro ×1 |
-| El nombre | [C] · [Eb] | C | 2 | C×1, Eb×1, G×1 · empate: el más reciente | [C] (Registro ×3) | [Eb] |
-| Eres Rey de los cielos | [A] · [F] | A | 2 | A×1 | [A] (Registro ×1) | [F] |
-| Gracia sobre gracia | [Em] · [Fm] | Em | 3 | Tono original no registrado | [Em] | [Fm] |
-| Hay poder | [E-F-F#-G-A] (adentro dice E) · [G-Ab-A-Bb-C] (adentro dice G) | E-F-F#-G-A | 2 | E-F-F#-G-A×1, G-Ab-A-Bb-C×1 · empate: el más reciente | [E-F-F#-G-A] (Registro ×2) | [G-Ab-A-Bb-C] |
-| Hermoso nombre | [C] · [D] | C | 3 | Tono original no registrado | [C] | [D] |
-| Hermoso-No volveré atrás | [A] · [D] | A | 3 | Tono original no registrado | [A] | [D] |
-| Infinito Dios | [C] · [G] | G | 2 | G×2 | [G] | [C] — **en uso:** Registro ×2 |
-| Jesús | [D] · [F] | D | 3 | Tono original no registrado | [D] | [F] |
-| Jesús en el centro | [C] · [F] | C | 3 | Tono original no registrado | [C] | [F] |
-| La sangre de Jesus | [A] (adentro dice E) · [C] | E | 3 | Tono original no registrado | [A] | [C] |
-| Lo único que quiero | [C] · [F#] · [G] | F# | 2 | F#×2, G×1, C×1 | [F#] | [C] — **en uso:** Registro ×4 · [G] |
-| Mi plenitud | [A] · [C] | C | 2 | C×2 | [C] | [A] — **en uso:** Registro ×2 |
-| No hay otro nombre | [C] · [D] · [G] | C | 3 | Tono original no registrado | [C] | [D] · [G] |
-| No yo, sino Cristo | [B] · [E] | B | 3 | Tono original no registrado | [B] | [E] |
-| Nombre sobre todo nombre | [C] · [Eb] | C | 2 | C×1, E×1 · empate: el más reciente | [C] (Registro ×2) | [Eb] |
-| Nuestra prioridad | [A] · [C] | A | 3 | Tono original no registrado | [A] | [C] |
-| Quién más | [Ab] · [G] | Ab | 3 | Tono original no registrado | [Ab] | [G] |
-| Rey de gloria | [C] · [E] | C | 2 | C×1, D×1 · empate: el más reciente | [C] (Registro ×2) | [E] |
-| Roca firme | [Bb] · [C] | Bb | 3 | Tono original no registrado | [Bb] | [C] |
-| Santo por siempre | [E] · [G] | E | 3 | Tono original no registrado | [E] | [G] |
-| Solo hay uno | [B] · [Bb] | B | 3 | Tono original no registrado | [B] | [Bb] |
-| Te doy gloria | [A] · [C] | A | 2 | A×1, F×1 · empate: el más reciente | [A] (Registro ×2) | [C] |
-| Te doy gloria | [D] · [F] | D | 3 | Tono original no registrado | [D] | [F] |
-| Temprano yo te buscaré | [F] · [G] | F | 3 | Tono original no registrado | [F] | [G] |
-| Tu mirada | [A] · [F] · [F#] | A | 3 | Tono original no registrado | [A] | [F] · [F#] |
-| Tumbas a Jardines | [B] · [C] | C | 2 | C×2, B×1, D×1 | [C] | [B] — **en uso:** Registro ×4 |
-
-Notas:
-- Empates en el Registro: se toma el más reciente; como casi todos los usos vienen de la planilla vieja (sin fecha), en la práctica queda el tono del primer Word.
-- "La sangre de Jesus [A]": el nombre del archivo dice A pero el Word dice E.
-- "Te doy gloria" forma dos grupos: [A]/[C] y [D]/[F] tienen distinta cantidad de partes (ver dudosos).
-
-## Casos dudosos (no se agrupan con el criterio estricto)
-
-Misma canción, letra igual o casi igual, pero con alguna diferencia. Muchos parecen errores de tipeo del Word o nombres de parte escritos distinto ("Verso"/"Estrofa", "Pre"/"Precoro", "Coro 2"/"Coro2"). Las "diferencias" de acordes son las primeras que aparecen y pueden estar corridas.
-
-| Canción | Word | Qué cambia | Primeras diferencias de acordes |
+| Canción | Word | Tipo | Error a corregir en el Word |
 |---|---|---|---|
-| Agnus Dei | [A] vs [F] | letra casi igual (96%); acordes casi transporte (92%) | D→BbDm, DF#m→BbDm |
-|  | [A] vs [G] | letra casi igual (95%); acordes casi transporte (90%) | A5→C, A4/D→G5, E→G4/C |
-| Alaba | [A] vs [F] | nombres o cantidad de partes; letra casi igual (98%) |  |
-|  | [A] vs [G] | nombres o cantidad de partes; letra casi igual (98%) |  |
-|  | [F] vs [G] | nombres o cantidad de partes; letra casi igual (98%) |  |
-| Alabaré al Señor | [A] (Anástasis) vs [C] (Anástasis) | acordes casi transporte (98%) | B→F, Bm→G, E→C |
-| Anclado en la roca | [B] (YAHWEH) vs [C] (YAHWEH) | acordes casi transporte (95%) | Eb/B→C/E, Eb/B→C/E |
-| Aquí estoy | [A] vs [F] | letra casi igual (96%) |  |
-| Aqui te esperaré | [A] vs [C] | acordes casi transporte (95%) | E→G2, D/B→G, E2→C/E |
-|  | [Bb] vs [C] | acordes casi transporte (95%) | F→G2, Eb/C→G, F2→C/E |
-| Because He lives | [A] vs [E] | acordes casi transporte (98%) | Bm7→F#m |
-| Deseo Eterno | [A] vs [E] | nombres o cantidad de partes |  |
-| Digno | [C] (Elevation) vs [D] (Elevation) | nombres o cantidad de partes; acordes casi transporte (97%) | C→Bm, F→D, C→G |
-|  | [C] (Elevation) vs [Eb] (Elevation) | nombres o cantidad de partes; acordes casi transporte (92%) | C→Bb, G4→Eb, G→Bb4 |
-|  | [D] (Elevation) vs [Eb] (Elevation) | acordes casi transporte (95%) | D→Bb, A4→Eb, A→Bb4 |
-| Digno es el Señor | [A] vs [C] | nombres o cantidad de partes; letra casi igual (95%) |  |
-| El Dios que adoramos | [F] vs [F#] | nombres o cantidad de partes; letra casi igual (96%); acordes casi transporte (92%) | Dm→F#, Bb→Db, Bb→Ebm |
-|  | [F] vs [G] | letra casi igual (97%); acordes casi transporte (96%) | C→G, Dm→D, Bb→Em |
-|  | [F#] vs [G] | nombres o cantidad de partes; letra casi igual (96%); acordes casi transporte (94%) | Db→G, F#→D, Db→Em |
-| El nombre de Jesús | [C] vs [C#] | nombres o cantidad de partes; letra casi igual (97%) |  |
-| Él nos ama | [A] vs [C] | letra casi igual (99%) |  |
-| El victorioso | [Am] vs [Dm] | letra casi igual (96%); acordes casi transporte (95%) | Baja→Baja, Baja→Baja |
-| Es Él | [A] vs [Bb] |  |  |
-| Este es el reino | [A] vs [C] | nombres o cantidad de partes |  |
-| Hermoso - No volveré atrás | [A] vs [A] | acordes casi transporte (98%) |  |
-|  | [A] vs [D] | acordes casi transporte (98%) |  |
-| Hermoso nombre | [A] vs [C] | nombres o cantidad de partes |  |
-|  | [A] vs [D] | nombres o cantidad de partes |  |
-| Levanto un aleluya | [D] vs [D] | nombres o cantidad de partes; letra casi igual (99%); acordes casi transporte (89%) | A→G, Bm→Bm7, G→D |
-| Nada mas | [Eb] vs [G] | nombres o cantidad de partes; letra casi igual (99%); acordes casi transporte (90%) | Ab→Am, Fm→C, Eb→D |
-| No hay lugar más alto | [A] vs [C] | acordes casi transporte (98%) | F#m→A |
-| No voy a caer | [A] vs [C] | nombres o cantidad de partes; letra casi igual (97%); acordes casi transporte (91%) | A9/Db→C/E, F#mA9→AmC9 |
-| Oh tu fidelidad | [B] (Majo Solis) vs [C] (Majo Solis) | letra casi igual (97%) |  |
-| Por su gracia | [A] vs [G] | nombres o cantidad de partes; acordes casi transporte (96%) | A/F#→C, E→G/E, A→C |
-| Roca firme | [A] vs [Bb] | acordes casi transporte (99%) | A/Db→BbM7/D |
-|  | [A] vs [C] | acordes casi transporte (99%) | A/Db→CM7/E |
-|  | [A] vs [G] | nombres o cantidad de partes; letra casi igual (97%); acordes casi transporte (97%) | A→C2, D2→D, D→G |
-|  | [Bb] vs [G] | nombres o cantidad de partes; letra casi igual (97%); acordes casi transporte (98%) | Bb→C2, BbM7/D→G/E, Eb2→D |
-|  | [C] vs [G] | nombres o cantidad de partes; letra casi igual (97%); acordes casi transporte (98%) | C→C2, CM7/E→G/E, F2→D |
-| Santo | [B] vs [C] | letra casi igual (98%); acordes casi transporte (89%) | E→F/A, F→G4, C→C |
-|  | [B] vs [D] | letra casi igual (98%); acordes casi transporte (89%) | E→G/B, F→A4, C→D |
-|  | [C] vs [D] | letra casi igual (97%) |  |
-| Santo por siempre | [C] vs [E] | nombres o cantidad de partes; acordes casi transporte (99%) | G→Dbm7, C→B, F→E |
-|  | [C] vs [G] | nombres o cantidad de partes; acordes casi transporte (99%) | G→Em7, C→D, F→G |
-| Solo Cristo | [A] vs [B] | letra casi igual (98%); acordes casi transporte (91%) | D/B→Dbm7, D/B→Dbm7, D/B→Dbm |
-|  | [A] vs [C] | letra casi igual (97%); acordes casi transporte (91%) | D/B→Dm7, D/B→Dm7, D/B→Dm |
-|  | [B] vs [C] | letra casi igual (98%) |  |
-| Solo hay uno | [B] vs [G] | letra casi igual (99%) |  |
-|  | [B] vs [C] | acordes casi transporte (97%) | F#→Em/G, C→Dm7, Dbm7→C |
-|  | [Bb] vs [G] | letra casi igual (99%) |  |
-|  | [Bb] vs [C] | acordes casi transporte (97%) | F→Em/G, B→Dm7, Cm7→C |
-|  | [G] vs [C] | acordes casi transporte (97%) | D→Em/G, Ab→Dm7, Am7→C |
-| Te doy gloria | [A] vs [D] | nombres o cantidad de partes |  |
-|  | [A] vs [F] | nombres o cantidad de partes |  |
-|  | [C] vs [D] | nombres o cantidad de partes |  |
-|  | [C] vs [F] | nombres o cantidad de partes |  |
-| Toma tu lugar | [Bb] vs [C] | acordes casi transporte (96%) | Bb→F/A, Cm→C, Bb/D→Dm |
-| Tu mirada + Temprano | [F] vs [F#] | nombres o cantidad de partes |  |
-| Tumbas a Jardines | [B] vs [E] | nombres o cantidad de partes |  |
-|  | [C] vs [E] | nombres o cantidad de partes |  |
-| Una vez | [C] vs [G] | acordes casi transporte (98%) | C/E→D, Am7→G/B, F/D→Em7 |
-| Ven ante Su trono | [A] vs [Eb] | acordes casi transporte (98%) | G→Ab, D→Eb |
-| Ya no soy esclavo | [Bb] vs [C] | letra casi igual (98%) |  |
-| Yo sé quien soy yo | [A] vs [D] | nombres o cantidad de partes |  |
+| A ti me rindo | [Eb] · [F] | Confirmado |  |
+| Agnus Dei | [A] · [F] · [G] | Acorde distinto por error del Word | `agnus-dei-2` (contra `agnus-dei`): D→Bb(Dm), D(F#m)→Bb(Dm); `agnus-dei-3` (contra `agnus-dei`): (sobra)→C, D→C/E, D(F#m)→C/E |
+| Al único que es digno | [A] · [D] | Confirmado |  |
+| Alaba | [A] · [F] · [G] | Nombres de parte distintos |  |
+| Alabaré al Señor (Anástasis) | [A] · [C] | Acorde distinto por error del Word | `alabare-al-senor-anastasis-2` (contra `alabare-al-senor-anastasis`): B→(falta), Bm→F |
+| Anclado en la roca (YAHWEH) | [B] · [C] | Acorde distinto por error del Word | `anclado-en-la-roca-yahweh-2` (contra `anclado-en-la-roca-yahweh`): D#/B→C/E, D#/B→C/E |
+| Aquí estoy | [A] · [F] | Confirmado |  |
+| Aqui te esperaré | [A] · [Bb] | Confirmado |  |
+| Because He lives | [A] · [E] | Acorde distinto por error del Word | `because-he-lives-2` (contra `because-he-lives`): Bm7→F#m |
+| Con mis manos levantadas (Simple) | [E] · [G] | Confirmado |  |
+| Cuánto vales Cristo | [A] · [C] | Confirmado |  |
+| Cuanto vales, Cristo + Si vale la pena | [A] · [C] | Confirmado |  |
+| Deseo Eterno | [A] · [E] | Nombres de parte distintos |  |
+| Digno (Elevation) | [C] · [D] | Acorde distinto por error del Word | `digno-elevation-2` (contra `digno-elevation`): A→G |
+| Digno es el Señor | [A] · [C] | Acorde distinto por error del Word | `digno-es-el-senor-2` (contra `digno-es-el-senor`): D(E)→F(G) |
+| El Cordero y el León | [C] · [D] | Confirmado |  |
+| El infinito Dios | [C] · [G] | Confirmado |  |
+| El nombre | [C] · [Eb] | Confirmado |  |
+| El nombre de Jesús | [C] · [C#] | Nombres de parte distintos |  |
+| Eres Rey de los cielos | [A] · [F] | Confirmado |  |
+| Es Él | [A] · [Bb] | Confirmado |  |
+| Este es el reino | [A] · [C] | Nombres de parte distintos |  |
+| Gracia sobre gracia | [Am] · [Em] · [Fm] | Confirmado |  |
+| Hay poder | [E-F-F#-G-A] · [G-Ab-A-Bb-C] | Confirmado |  |
+| Hermoso - No volveré atrás | [A] · [A] · [D] | Acorde distinto por error del Word | `hermoso-no-volvere-atras-2` (contra `hermoso-no-volvere-atras`): A/F#→A/C#; `hermoso-no-volvere-atras-3` (contra `hermoso-no-volvere-atras`): A/F#→D/F# |
+| Hermoso nombre | [A] · [C] · [D] | Nombres de parte distintos |  |
+| Infinito Dios | [C] · [G] | Confirmado |  |
+| Jesús | [D] · [F] | Confirmado |  |
+| Jesús en el centro | [C] · [F] | Confirmado |  |
+| La sangre de Jesus | [A] · [C] | Confirmado |  |
+| Lo haras otra vez | [Bb] · [C] · [D] | Confirmado |  |
+| Lo único que quiero | [C] · [F#] · [G] | Confirmado |  |
+| Mi plenitud | [A] · [C] | Confirmado |  |
+| No hay lugar más alto | [A] · [C] | Acorde distinto por error del Word | `no-hay-lugar-mas-alto-2` (contra `no-hay-lugar-mas-alto`): F#m→A |
+| No hay otro nombre | [C] · [D] · [G] | Confirmado |  |
+| No yo, sino Cristo | [B] · [E] | Confirmado |  |
+| Nombre sobre todo nombre | [C] · [Eb] | Confirmado |  |
+| Nuestra prioridad | [A] · [C] | Confirmado |  |
+| Oh tu fidelidad (Majo Solis) | [B] · [C] | Acorde distinto por error del Word | `oh-tu-fidelidad-majo-solis-2` (contra `oh-tu-fidelidad-majo-solis`): F#7dim→G7dim, F#7dim→G7dim |
+| Quién más | [Ab] · [G] | Confirmado |  |
+| Rey de gloria | [C] · [E] | Confirmado |  |
+| Roca firme | [A] · [Bb] · [C] | Acorde distinto por error del Word | `roca-firme-2` (contra `roca-firme`): A/C#→BbM7/D; `roca-firme-3` (contra `roca-firme`): A/C#→CM7/E |
+| Santo | [C] · [D] | Confirmado |  |
+| Santo por siempre | [C] · [E] · [G] | Nombres de parte distintos |  |
+| Solo Cristo | [B] · [C] | Confirmado |  |
+| Solo hay uno | [B] · [Bb] · [C] · [G] | Acorde distinto por error del Word | `solo-hay-uno-3` (contra `solo-hay-uno`): F#→Em/G, C→(falta), (F#))→(falta) |
+| Te doy gloria | [A] · [C] · [D] · [F] | Nombres de parte distintos |  |
+| Temprano yo te buscaré | [F] · [G] | Confirmado |  |
+| Toma tu lugar | [Bb] · [C] | Acorde distinto por error del Word | `toma-tu-lugar-2` (contra `toma-tu-lugar`): (sobra)→F/A, (sobra)→F/A, (sobra)→F/A |
+| Tu mirada | [A] · [F] · [F#] | Confirmado |  |
+| Tu mirada + Temprano | [F] · [F#] | Acorde distinto por error del Word | `tu-mirada-temprano-2` (contra `tu-mirada-temprano`): (Intro)→(falta) |
+| Tumbas a Jardines | [B] · [C] · [E] | Nombres de parte distintos |  |
+| Una vez | [C] · [G] | Acorde distinto por error del Word | `una-vez-3` (contra `una-vez-2`): (sobra)→D |
+| Ven ante Su trono | [A] · [Eb] | Acorde distinto por error del Word | `ven-ante-su-trono-2` (contra `ven-ante-su-trono`): G→G#, D→D#, (sobra)→D# |
+| Ya no soy esclavo | [Bb] · [C] | Confirmado |  |
+| Yo sé quien soy yo | [A] · [D] | Nombres de parte distintos |  |
 
-Versiones distintas (otra letra, otra estructura u otro intérprete) no figuran: siguen por separado (por ejemplo, Tus cuerdas de amor de Julio y de Lowsan, Océanos de Evan Craft y de Hillsong, Digno de Elevation y de Marcos Brunet).
+## Letra casi igual: siguen separados (falta tu sí/no)
+Diferencia exacta de letra, una línea por canción (palabras sin acentos ni signos).
+- **Aquí estoy** [A] y [D]: después de "me acerco a ti": "que puedo hacer que puedo decir te ofrezco mi corazon completamente a ti" / ""
+- **Con tu sangre** [D-Eb] y [D]: después de "corde ero de dios": "padre eterno corde ero de dios sube a" / ""
+- **El Dios que adoramos** [F] y [F#]: después de "para los muertos levantar": "nadie es como tu" / "pre coro nadie es como el"
+- **El Dios que adoramos** [F] y [G]: después de "levantar nadie es como": "tu" / "el"
+- **El Dios que adoramos** [F#] y [G]: después de "para los muertos levantar": "pre coro" / ""
+- **Él nos ama** [A] y [C]: después de "y la tierra se": "unen" / "unan"
+- **El victorioso** [Am] y [Dm]: después de "la victoria del senor": "c am" / "f dm"
+- **Levanto un aleluya** [D] (New) y [D]: después de "": "solo" / ""
+- **No voy a caer** [A] y [C]: después de "una bandera alzare jesus": "jesus jesus jesus" / ""
+- **Por siempre** [Ab] y [G]: después de "vivo esta vivo esta": "la tierra retumbo la piedra el quito su amor perfecto siempre vencera el rey …" / ""
+
+## Misma letra pero muchos acordes distintos: siguen separados
+Más de 3 acordes no siguen el transporte, así que no se agrupan (no se adivina). Pueden ser arreglos distintos o acordes que el conversor no lee bien.
+- **Aqui te esperaré** [A] y [C]: 4 acordes distintos (35 y 39): (sobra)→F/D, (sobra)→G2, (sobra)→C/E, (sobra)→F2
+- **Digno (Elevation)** [C] y [Eb]: 7 acordes distintos (68 y 73): (sobra)→Bb, (sobra)→Bb, (sobra)→Bb, (sobra)→Bb, (sobra)→Eb …
+- **El Cordero y el León** [A] y [C]: 18 acordes distintos (28 y 46): (sobra)→C9, (sobra)→Dm, (sobra)→F, (sobra)→C9, (sobra)→Dm …
+- **En el nombre de Jesus (Paz)** [D] y [D]: 13 acordes distintos (35 y 35): (sobra)→D, (sobra)→C, (sobra)→D, G→(falta), Em→(falta) …
+- **Más el Dios de toda gracia** [A] y [Bb]: 16 acordes distintos (38 y 33): A→(falta), G→(falta), D/F#→(falta), A/E→(falta), E→(falta) …
+- **Más que vencedor** [Am] y [Dm]: 11 acordes distintos (41 y 41): D→Gm, (sobra)→C, (sobra)→A, D→Dm, (sobra)→Bb …
+- **No hay otro nombre** [C-D] y [C]: 42 acordes distintos (135 y 132): C→(falta), G/B→(falta), C→(falta), Dm→C, C→G/B …
+- **Oh tu fidelidad (Himno)** [C] y [B]: 19 acordes distintos (82 y 87): (sobra)→B9, C→F#7dim, (sobra)→E7/F#, (sobra)→E°7/F#, F/G→F#/E …
+- **Por su gracia** [A] y [G]: 4 acordes distintos (67 y 69): (sobra)→C, E→C, (sobra)→C, E→C
+- **Santo** [B] y [C]: 7 acordes distintos (62 y 63): E→F/A, F→G4, C→C, G#m→C/A, G#m→C/A …
+- **Solo Cristo** [A] y [B]: 6 acordes distintos (75 y 75): D/B→C#m7, D/B→C#m7, D/B→C#m, D/B→C#m, D/B→C#m7 …
+- **Tus cuerdas de amor** [F] (Julio) y [F] (Lowsan): 20 acordes distintos (70 y 75): F/E→(falta), F/E→(falta), Gsus/C→Bb, (sobra)→C, (sobra)→F/D …

@@ -74,6 +74,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Gana lo editado en la app. Si después el archivo trae otro valor, aparece como conflicto en "Revisar cambios en la carpeta" y el admin elige.
   - El BPM cargado desde la app cuenta como confirmado (tiene nombre, historial y "deshacer"), sin importar la columna Confianza.
 - Puede haber varias versiones de una misma canción, con distinto ID e intérprete.
+- **Agrupación por tono (solo en la app):** los Word que son la misma canción en otro tono (lista fija en `js/grupos.js`, criterio en `referencia/agrupacion-por-tono.md`) aparecen una sola vez en la lista y en los buscadores; la búsqueda mira todos los Word del grupo. Tono que se muestra: 1) tono original registrado; 2) el más usado en el Registro (empate: el más reciente); 3) el del primer Word, con "Tono original no registrado". El historial suma todos los Word del grupo. Cada Word conserva su id: reuniones y Registro no cambian.
 - **Canción base:** es el Word de la iglesia (la versión de la casa, no la original del intérprete).
   - Todo bloque del Word es válido aunque no exista en la original. Por ejemplo, el [Final] en F# de "Al estar aquí" lo agregó la iglesia y es parte de la base.
   - Cambiar el arreglo de una reunión nunca modifica la canción base.

@@ -4,7 +4,8 @@ import { ApiDataSource } from './apidatasource.js';
 import { CONFIG } from './config.js';
 import { demoSeed } from './demo.js';
 import { KEYS, keyAt, shiftTo, keyOption, showKey, transposer, tonosDelItem, tonoMas, intervalo, enTonos, CHORD } from './music.js';
-import { prepare, blocksOf, contenidoDe, SUBA, defArr, isDefArr, blockText, base, rOf, labOf, summary, search, fmt, isoOf } from './songs.js';
+import { prepare, blocksOf, contenidoDe, SUBA, defArr, isDefArr, blockText, base, rOf, labOf, summary, historyOf, search, fmt, isoOf } from './songs.js';
+import { GRUPOS } from './grupos.js';
 
 // Motor real si hay iglesia (?c= o config) y no se pidió ?demo=1; si no, modo demo local.
 const qs = new URLSearchParams(location.search);
@@ -28,8 +29,27 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const $ = s => app.querySelector(s), $$ = s => [...app.querySelectorAll(s)];
 const songBy = id => SONGS.find(s => s.id === id);
 const sesBy = id => SES.find(r => r.id === id);
-// Versiones del mismo título (otro tono, otro archivo) comparten historial.
-const versiones = id => { const s = songBy(id); return s ? SONGS.filter(x => x.titulo.toLowerCase() === s.titulo.toLowerCase()).map(x => x.id) : [id]; };
+// Grupos por tono (js/grupos.js): GR = id → ids del grupo; REP = id → { id que se muestra en la lista, regla del tono }.
+let GR = {}, REP = {};
+function armarGrupos() {
+  GR = {}; REP = {};
+  GRUPOS.forEach(g => {
+    const ids = g.filter(songBy); if (ids.length < 2) return; ids.forEach(id => { GR[id] = ids; });
+    // Regla 2: el tono más usado en el Registro (empate: el más reciente). Regla 3: el del primer Word.
+    const n = {}, ult = {}, porId = {};
+    historyOf(ids, REG, SES, songBy).forEach(x => { const t = String(x.t || '').split(/\s*[-→]\s*/)[0]; if (!t) return;
+      n[t] = (n[t] || 0) + 1; porId[x.id] = (porId[x.id] || 0) + 1; if ((x.f || '') >= (ult[t] || '')) ult[t] = x.f || ''; });
+    const T = Object.keys(n).sort((a, b) => n[b] - n[a] || (ult[b] || '').localeCompare(ult[a] || ''))[0];
+    const rep = !T ? ids[0] : ids.find(id => songBy(id).tono === T) || [...ids].sort((a, b) => (porId[b] || 0) - (porId[a] || 0))[0];
+    ids.forEach(id => { REP[id] = { id: rep, regla: T ? 2 : 3 }; });
+  });
+}
+// Búsqueda sobre todos los Word; cada grupo aparece una sola vez, con su Word representativo.
+const buscar = q => { const vistos = new Set(); return search(SONGS, q, perOf).map(x => REP[x.s.id] ? { ...x, s: songBy(REP[x.s.id].id) } : x)
+  .filter(x => !vistos.has(x.s.id) && vistos.add(x.s.id)); };
+// Versiones del mismo título o del mismo grupo (otro tono, otro archivo) comparten historial.
+const versiones = id => { const s = songBy(id); if (!s) return [id]; const t = s.titulo.toLowerCase();
+  return [...new Set([...SONGS.filter(x => x.titulo.toLowerCase() === t).map(x => x.id), ...(GR[id] || [])])]; };
 const perOf = id => summary(versiones(id), REG, SES, songBy).per;
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const interp = s => s.interprete && s.interprete !== '-' ? s.interprete : '';
@@ -234,7 +254,7 @@ function songList() {
   const paint = () => {
     const had = !!lastQ; lastQ = q.value;
     if (!!lastQ !== had && $('#next')) $('#next').hidden = !!lastQ;
-    const f = search(SONGS, q.value, perOf);
+    const f = buscar(q.value);
     res.innerHTML = f.map(x => songItem(x, 'data-id')).join('') || '<li class="empty">No hay canciones con ese nombre, frase ni director. Probá con otra palabra.</li>';
     if (!reduced()) res.animate([{ opacity: .35 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' });
   };
@@ -250,7 +270,7 @@ function pickMode(s) {
        <div class="hist-row"><span>Tono última vez</span><b class="kc">${esc(last.t)}</b></div>` : ''}
        ${names.length ? `<div class="hist-row pp"><label><span>Tono por persona</span> <select id="pp"><option value="">Elegir…</option>${names.map(p => `<option>${esc(p)}</option>`).join('')}</select></label><span id="ppo" aria-live="polite"></span></div>` : ''}</div>`;
   app.innerHTML = `${back('Canciones', '#/canciones')}
-  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${esc(interp(s))}</p></div>${stamp(s.tono, 'Tono original')}</header>
+  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${esc(interp(s))}</p></div>${stamp(s.tono, !REP[s.id] ? 'Tono original' : REP[s.id].regla === 2 ? 'Tono más usado' : 'Tono original no registrado')}</header>
   <p class="ask">¿Cómo la vas a usar?</p>${modeChooser()}${hist}`;
   $$('[data-mode]').forEach(b => b.onclick = () => go(`#/cancion/${s.id}/${b.dataset.mode}`));
   const pp = $('#pp');
@@ -675,7 +695,7 @@ function editSes(r) {
   const ad = $('#ad'), sg = $('#sg');
   // Al tocar el buscador aparece la lista completa; al escribir se va filtrando.
   const showSg = () => {
-    const f = search(SONGS, ad.value.trim(), perOf);
+    const f = buscar(ad.value.trim());
     sg.innerHTML = f.map(x => songItem(x, 'data-a')).join('') || '<li class="empty">Sin resultados. Probá con otra palabra.</li>';
   };
   ad.oninput = showSg;
@@ -702,7 +722,7 @@ function editSes(r) {
   $('#mbc').onclick = () => { med.length = 0; tonoElegido = false; mbq.value = ''; mbs.innerHTML = ''; mbx.hidden = true; $('#mb').setAttribute('aria-expanded', 'false'); };
   mbt.onchange = () => { tonoElegido = true; };
   const showMb = () => {
-    const f = search(SONGS, mbq.value.trim(), perOf);
+    const f = buscar(mbq.value.trim());
     mbs.innerHTML = f.map(x => songItem(x, 'data-mb')).join('') || '<li class="empty">Sin resultados. Probá con otra palabra.</li>';
   };
   mbq.oninput = showMb;
@@ -1042,6 +1062,7 @@ async function load(force) {
   if (force) await ds.refresh();
   SONGS = prepare(await ds.getSongs());
   [REG, SES, PERS] = await Promise.all([ds.getRegistro(), ds.listReuniones(), ds.getPersonas()]);
+  armarGrupos();
 }
 
 (async () => {
