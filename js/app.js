@@ -780,9 +780,15 @@ function hojaDatos(r) {
 const esAdmin = () => !DEMO && !!ADMIN && ADMIN.exp * 1000 > Date.now() + 60000;
 function editSes(r) {
   setTabs(null);
+  // Medley: un renglón por canción ("Digno de adorar  Medley" / "+ Hermoso nombre"); los nombres largos se cortan con "…".
+  const nombreFila = c => {
+    if (c.tipo !== 'medley') return `<span class="edt">${esc(tituloItem(c))}</span>`;
+    const N = (c.canciones || []).map(x => (songBy(x.id) || {}).titulo).filter(Boolean);
+    return `<span class="edt med"><span class="l1"><span class="nm">${esc(N[0] || '')}</span><small class="medtag">Medley</small></span>${N.slice(1).map(n => `<span class="nm">+ ${esc(n)}</span>`).join('')}</span>`;
+  };
   const rows = r.canciones.map((c, i) => { if (!itemOk(c)) return '';
     // Tocar el nombre abre el editor de partes (el renglón de tono y Dirige no abre nada).
-    return `<li class="ed"><div class="edh"><button type="button" class="edn" data-pa="${i}" aria-label="${esc(tituloItem(c))}: ordenar partes"><span class="num">${i + 1}</span><span class="edt">${esc(tituloItem(c))}</span>${c.tipo === 'medley' ? '<small class="medtag">Medley</small>' : ''}${ICON.chev}</button><span class="tools">
+    return `<li class="ed"><div class="edh"><button type="button" class="edn" data-pa="${i}" aria-label="${esc(tituloItem(c))}: ordenar partes"><span class="num">${i + 1}</span>${nombreFila(c)}${ICON.chev}</button><span class="tools">
       <button type="button" data-up="${i}" aria-label="Subir"${i ? '' : ' disabled'}>▲</button><button type="button" data-dn="${i}" aria-label="Bajar"${i < r.canciones.length - 1 ? '' : ' disabled'}>▼</button><button type="button" data-rm="${i}" aria-label="Quitar">✕</button></span></div>
       <div class="edr una"><label>Tono<select data-k="${i}">${KEYS.map(k => `<option${k === c.tono ? ' selected' : ''}>${k}</option>`).join('')}</select></label>
       <label>Dirige${personSelect(`data-q="${i}"`, c.quien)}</label></div></li>`; }).join('');

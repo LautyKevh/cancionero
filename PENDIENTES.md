@@ -1,6 +1,6 @@
 # Pendientes
 
-Estado al 27-11-2026 (rama `desarrollo`, app v46; motor de PRUEBA: implementación @29). Nada en `main` ni en IBSI.
+Estado al 27-11-2026 (rama `desarrollo`, app v47; motor de PRUEBA: implementación @29). Nada en `main` ni en IBSI.
 
 ## Hecho hoy (en desarrollo)
 - Aprobado en el celular: etapa C (tono por parte, Modulante, guardado, sin conexión), medley (etapa D), variantes de una parte.
@@ -8,7 +8,7 @@ Estado al 27-11-2026 (rama `desarrollo`, app v46; motor de PRUEBA: implementaci�
 - Editor de partes rediseñado (tarjetas, manija, chips de repeticiones y tono, hoja de tono, ⋯) y deslizar a la izquierda para borrar con "Deshacer" (también en "Crear medley").
 - Ajustes → Pantalla: Automático / Claro / Oscuro, solo en el dispositivo.
 - Ajustes → Administración: botón "Iniciar sesión" (sin cartel emergente de Google) y "Cerrar sesión" en el mismo lugar.
-- Encabezado de la canción en tres renglones; en Editar reunión, tocar el nombre de la canción (›) abre sus partes, y Tono y Dirige van en una línea.
+- Encabezado de la canción en tres renglones; en Editar reunión, tocar el nombre de la canción (›) abre sus partes (un medley, un renglón por canción), y Tono y Dirige van en una línea.
 - Medley: crear, ordenar canciones arrastrando (al crearlo y en el editor), nombre según el orden.
 - Agrupación por tono solo en la app (`js/grupos.js`, 56 grupos; ver `referencia/agrupacion-por-tono.md`).
 - Variantes de una parte: Músico elige "es el Coro 2" con un toque, sin clave ni nombre, compartido (motor `elegirVariante`).
