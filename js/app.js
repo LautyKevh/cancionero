@@ -389,7 +389,9 @@ function drawSheet(anim) {
       ${Nx ? `<button type="button" id="nx" class="nx"><small>Siguiente →</small><b>${t(Nx)}</b></button>`
            : `<button type="button" id="fin" class="nx"><small>Fin de la reunión</small><b>Volver a la lista</b></button>`}</nav>`;
   }
-  const meta = [ctx ? `<b>Dirige ${esc(ctx.quien)}</b>` : '', esc(interp(s)), s.medley ? 'Medley' : `Tono original ${esc(s.tono)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ');
+  // Encabezado: intérprete · tono original (y BPM) en un renglón; "Dirige X" abajo, solo si hay director.
+  const meta = [esc(interp(s)), s.medley ? 'Medley' : `Tono original ${esc(s.tono)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')
+    + (ctx && ctx.quien ? `</p><p class="meta"><b>Dirige ${esc(ctx.quien)}</b>` : '');
   app.innerHTML = `${r ? back(nombreSes(r), '#/reunion/' + r.id) : back('Canciones', '#/canciones')}
   <article class="sheet">
     <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${meta}</p></div>
@@ -642,8 +644,8 @@ let toastT; function toast(msg) { const t = document.getElementById('toast'); t.
 
 function editSes(r) {
   setTabs(null);
-  const rows = r.canciones.map((c, i) => { const s = songBy(c.id); if (!s) return '';
-    return `<li class="ed"><div class="edh"><b><span class="num">${i + 1}</span>${esc(s.titulo)}</b><span class="tools">
+  const rows = r.canciones.map((c, i) => { if (!itemOk(c)) return '';
+    return `<li class="ed"><div class="edh"><b><span class="num">${i + 1}</span>${esc(tituloItem(c))}${c.tipo === 'medley' ? '<small class="medtag">Medley</small>' : ''}</b><span class="tools">
       <button type="button" data-up="${i}" aria-label="Subir"${i ? '' : ' disabled'}>▲</button><button type="button" data-dn="${i}" aria-label="Bajar"${i < r.canciones.length - 1 ? '' : ' disabled'}>▼</button><button type="button" data-rm="${i}" aria-label="Quitar">✕</button></span></div>
       <div class="edr una"><label>Tono<select data-k="${i}">${KEYS.map(k => `<option${k === c.tono ? ' selected' : ''}>${k}</option>`).join('')}</select></label>
       <label>Dirige${personSelect(`data-q="${i}"`, c.quien)}</label>
@@ -651,7 +653,17 @@ function editSes(r) {
   app.innerHTML = `${back(nombreSes(r), '#/reunion/' + r.id)}<h2 class="title">Editar reunión</h2><p class="meta">${esc(nombreSes(r))} · Dirige ${esc(r.director)}</p>
   <ol class="list">${rows || '<li class="empty">Agregá la primera canción con el buscador.</li>'}</ol>
   <div class="form"><label>Agregar canción<input id="ad" type="search" autocomplete="off" placeholder="Buscar por nombre, frase o director"></label>
-    <ul class="list sugg" id="sg"></ul><button type="button" class="primary" id="ok">Listo</button></div>`;
+    <ul class="list sugg" id="sg"></ul>
+    <button type="button" id="mb" aria-expanded="false">Crear medley</button>
+    <div class="medbox" id="mbx" hidden>
+      <p class="hint">Elegí dos o más canciones, en el orden en que se cantan.</p>
+      <ol class="medsel" id="mbl"></ol>
+      <label>Agregar canción al medley<input id="mbq" type="search" autocomplete="off" placeholder="Buscar por nombre o frase"></label>
+      <ul class="list sugg" id="mbs"></ul>
+      <div class="edr"><label>Tono de inicio<select id="mbt"></select></label>
+        <button type="button" class="primary" id="mbok" disabled>Crear y ordenar partes</button><button type="button" id="mbc">Cancelar</button></div>
+    </div>
+    <button type="button" class="primary" id="ok">Listo</button></div>`;
   const re = () => { persist(r); const y = scrollY; editSes(r); scrollTo(0, y); };
   const swap = (a, b) => { [r.canciones[a], r.canciones[b]] = [r.canciones[b], r.canciones[a]]; re(); };
   $$('[data-up]').forEach(b => b.onclick = () => swap(+b.dataset.up - 1, +b.dataset.up));
@@ -672,18 +684,55 @@ function editSes(r) {
   sg.onmousedown = e => e.preventDefault(); // que tocar una opción no cierre la lista antes del click
   sg.onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; const s = songBy(b.dataset.a);
     r.canciones.push({ id: s.id, tono: keyOption(s), quien: r.director, arr: defArr(s) }); re(); $('#ad')?.focus(); };
+  // ---- Crear medley: canciones (búsqueda en vivo) y tono de inicio; después se abre el editor de partes.
+  const med = [], mbx = $('#mbx'), mbq = $('#mbq'), mbs = $('#mbs'), mbt = $('#mbt');
+  let tonoElegido = false;
+  const pintaMed = () => {
+    $('#mbl').innerHTML = med.map((s, k) => `<li><span class="num">${k + 1}</span><b>${esc(s.titulo)}</b><span class="key">${esc(keyOption(s))}</span>
+      <button type="button" data-mq="${k}" aria-label="Quitar ${esc(s.titulo)} del medley">✕</button></li>`).join('');
+    $$('[data-mq]').forEach(b => b.onclick = () => { med.splice(+b.dataset.mq, 1); pintaMed(); });
+    if (!tonoElegido) { const t = med[0] ? keyOption(med[0]) : ''; mbt.innerHTML = KEYS.map(k => `<option${k === t ? ' selected' : ''}>${k}</option>`).join(''); }
+    $('#mbok').disabled = med.length < 2;
+  };
+  $('#mb').onclick = () => { const abre = mbx.hidden; mbx.hidden = !abre; $('#mb').setAttribute('aria-expanded', String(abre)); if (abre) { pintaMed(); mbq.focus(); } };
+  $('#mbc').onclick = () => { med.length = 0; tonoElegido = false; mbq.value = ''; mbs.innerHTML = ''; mbx.hidden = true; $('#mb').setAttribute('aria-expanded', 'false'); };
+  mbt.onchange = () => { tonoElegido = true; };
+  const showMb = () => {
+    const f = search(SONGS, mbq.value.trim(), perOf);
+    mbs.innerHTML = f.map(x => songItem(x, 'data-mb')).join('') || '<li class="empty">Sin resultados. Probá con otra palabra.</li>';
+  };
+  mbq.oninput = showMb;
+  mbq.onfocus = mbq.onclick = () => { if (mbs.innerHTML) return; showMb(); openAnim(mbs); };
+  mbq.onblur = () => setTimeout(() => { if (document.activeElement !== mbq) mbs.innerHTML = ''; }, 150);
+  mbs.onmousedown = e => e.preventDefault();
+  mbs.onclick = e => { const b = e.target.closest('[data-mb]'); if (!b) return; const s = songBy(b.dataset.mb); if (!s) return;
+    med.push(s); mbq.value = ''; showMb(); pintaMed(); };
+  $('#mbok').onclick = () => {
+    if (med.length < 2) return;
+    // Un medley es siempre modulante; sus partes son las de todas las canciones, en orden, cada una con su canción.
+    r.canciones.push({ tipo: 'medley', tono: mbt.value, quien: r.director, canciones: med.map(s => ({ id: s.id })),
+      arr: [].concat(...med.map(s => defArr(s).map(e => ({ ...e, cancion: s.id })))) });
+    persist(r); go(`#/reunion/${r.id}/editar/${r.canciones.length - 1}`);
+  };
   $('#ok').onclick = async () => { const b = $('#ok'); b.disabled = true; b.textContent = 'Guardando…'; await colaGuardar; go('#/reunion/' + r.id, 'back'); };
 }
 
 // ---------- Partes ----------
 function parts(r, i, abrirTono) {
-  const c = r.canciones[i], s = c && songBy(c.id); if (!s) return editSes(r);
+  const c = r.canciones[i]; if (!c || !itemOk(c)) return editSes(r);
   setTabs(null);
-  const AB = blocksOf(s), B = AB.filter(b => b.has);
+  // Canción o medley: SG = id → canción. En un medley cada parte dice de qué canción es (e.cancion).
+  const medley = c.tipo === 'medley', ids = medley ? (c.canciones || []).map(x => x.id) : [c.id];
+  const SG = {}; ids.forEach(id => { const x = songBy(id); if (x) SG[id] = x; });
+  const idDe = e => medley ? e.cancion : c.id, AB_ = {}, ABde = id => AB_[id] || (AB_[id] = SG[id] ? blocksOf(SG[id]) : []);
+  const blq = e => ABde(idDe(e))[e.src];
+  const primera = SG[ids.find(id => SG[id])];
   // Letra de una parte para el resumen: sin "(Sube a X)"; si el bloque solo trae esa indicación, la del bloque que repite.
-  const letra = id => blockText(contenidoDe(s, id)).filter(t => !SUBA.test(t));
+  const letraDe = (id, src) => SG[id] ? blockText(contenidoDe(SG[id], src)).filter(t => !SUBA.test(t)) : [];
+  const letra = e => letraDe(idDe(e), e.src);
+  const baseArr = () => medley ? [].concat(...ids.filter(id => SG[id]).map(id => defArr(SG[id]).map(e => ({ ...e, cancion: id })))) : defArr(SG[c.id]);
   // Tono de cada parte, calculado igual que en la hoja (tonosDelItem).
-  const TD = tonosDelItem(c, { [s.id]: s }), modul = TD.modulante, PT = TD.partes;
+  const TD = tonosDelItem(c, SG), modul = TD.modulante, PT = TD.partes;
   const antI = j => { for (let k = j - 1; k >= 0; k--) if (!PT[k].transicion) return k; return -1; };
   const ant = j => { const k = antI(j); return k < 0 ? null : PT[k]; };
   const sig = j => { for (let k = j + 1; k < PT.length; k++) if (!PT[k].transicion) return PT[k]; return null; };
@@ -700,33 +749,39 @@ function parts(r, i, abrirTono) {
   };
   const nota = j => { const o = PT[j]; return o.transicion && modul ? `<div class="x">Toma el tono de la parte siguiente${o.ver ? ` · <i>${esc(o.tono)}</i>` : ''}</div>` : ''; };
   // "Mostrar igual": en las transiciones y en las partes con acordes puente o [ ], cuando la siguiente queda en el mismo tono.
-  const conPuente = e => { const b = AB[e.src]; return !!(b && b.lines.some(l => l.puente || l.modula)); };
+  const conPuente = e => { const b = blq(e); return !!(b && b.lines.some(l => l.puente || l.modula)); };
   const mostrarDe = (e, j) => {
     const o = PT[j]; if (!sig(j) || !(o.transicion || conPuente(e)) || (o.cambia && !e.mostrar)) return '';
     return `<label><input type="checkbox" data-mi="${j}"${e.mostrar ? ' checked' : ''}> Mostrar igual ${o.transicion ? 'esta transición' : 'los acordes puente'}</label>`;
   };
-  const secciones = c.arr.map((e, j) => [e, j]).filter(([e, j]) => !PT[j].transicion && AB[e.src])
-    .filter(([e], k, a) => a.findIndex(([x]) => x.src === e.src) === k);
+  const secciones = c.arr.map((e, j) => [e, j]).filter(([e, j]) => !PT[j].transicion && blq(e))
+    .filter(([e], k, a) => a.findIndex(([x]) => x.src === e.src && idDe(x) === idDe(e)) === k);
+  // En un medley, el nombre de la canción va arriba de su primera parte (y cada vez que cambia de canción).
+  const tituloDe = id => (SG[id] || {}).titulo || '';
+  const cancionDe = j => medley && (j === 0 || idDe(c.arr[j - 1]) !== idDe(c.arr[j])) ? `<div class="so">${esc(tituloDe(idDe(c.arr[j])))}</div>` : '';
+  const agregar = medley
+    ? ids.filter(id => SG[id]).map(id => `<optgroup label="${esc(tituloDe(id))}">${ABde(id).filter(b => b.has).map(b => `<option value="${esc(id)}|${b.id}">${esc((b.label || '(inicio)') + ' — ' + (letraDe(id, b.id)[0] || 'instrumental'))}</option>`).join('')}</optgroup>`).join('')
+    : ABde(c.id).filter(b => b.has).map(b => `<option value="${esc(c.id)}|${b.id}">${esc((b.label || '(inicio)') + ' — ' + (letraDe(c.id, b.id)[0] || 'instrumental'))}</option>`).join('');
   const MANIJA = '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 5h12M3 9h12M3 13h12"/></svg>';
-  app.innerHTML = `${back('Editar reunión', '#/reunion/' + r.id + '/editar')}<h2 class="title">${esc(s.titulo)}</h2><p class="meta">Orden de las partes</p>
-  <div class="modbox"><label class="sw"><input type="checkbox" id="mo"${modul ? ' checked' : ''}> Modulante</label><p class="hint">Permite cambiar de tono entre partes</p>
-    <div class="edr"><label>Tono de inicio<select id="ti">${opts(c.tono || keyOption(s), '')}</select></label></div></div>
-  <ol class="pl">${c.arr.map((e, j) => `<li class="pc${PT[j].transicion ? ' tr' : ''}">
+  app.innerHTML = `${back('Editar reunión', '#/reunion/' + r.id + '/editar')}<h2 class="title">${esc(tituloItem(c))}</h2><p class="meta">${medley ? 'Medley · ' : ''}Orden de las partes</p>
+  <div class="modbox"><label class="sw"><input type="checkbox" id="mo"${modul ? ' checked' : ''}${medley ? ' disabled' : ''}> Modulante</label><p class="hint">${medley ? 'Un medley siempre permite cambiar de tono entre partes' : 'Permite cambiar de tono entre partes'}</p>
+    <div class="edr"><label>Tono de inicio<select id="ti">${opts(c.tono || keyOption(primera), '')}</select></label></div></div>
+  <ol class="pl">${c.arr.map((e, j) => `<li class="pc${PT[j].transicion ? ' tr' : ''}">${cancionDe(j)}
     <button type="button" class="h" data-h="${j}" aria-label="Mover ${esc(nom(e))} (flechas arriba y abajo)">${MANIJA}</button>
     <div class="t"><b>${esc(nom(e))}</b><button type="button" class="rp${rOf(e) > 1 ? ' mas' : ''}" data-r="${j}" aria-haspopup="true" aria-expanded="false" aria-label="Repeticiones: ${rOf(e)}">x${rOf(e)}</button></div>
     ${chip(j)}<button type="button" class="m" data-o="${j}" aria-haspopup="true" aria-expanded="false" aria-label="Más opciones de ${esc(nom(e))}">⋯</button>
-    <button type="button" class="pv" data-v="${j}" aria-expanded="false">${esc(letra(e.src)[0] || 'Sin letra (instrumental)')}</button>
+    <button type="button" class="pv" data-v="${j}" aria-expanded="false">${esc(letra(e)[0] || 'Sin letra (instrumental)')}</button>
     ${nota(j)}
-    <div class="pvb" hidden><div class="pvb-in">${letra(e.src).map(t => `<div>${esc(t)}</div>`).join('') || '<div>Sin letra (instrumental)</div>'}</div></div></li>`).join('')}</ol>
-  <div class="form"><label>Agregar parte<select id="ap"><option value="">Elegir…</option>${B.map(b => `<option value="${b.id}">${esc((b.label || '(inicio)') + ' — ' + (letra(b.id)[0] || 'instrumental'))}</option>`).join('')}</select></label>
+    <div class="pvb" hidden><div class="pvb-in">${letra(e).map(t => `<div>${esc(t)}</div>`).join('') || '<div>Sin letra (instrumental)</div>'}</div></div></li>`).join('')}</ol>
+  <div class="form"><label>Agregar parte<select id="ap"><option value="">Elegir…</option>${agregar}</select></label>
     ${modul ? `<label>+ Agregar sección (copia de una parte, con tono nuevo)<select id="as"><option value="">Elegir…</option>${secciones.map(([e, j]) => `<option value="${j}">${esc(nom(e) + ' — ' + PT[j].tono)}</option>`).join('')}</select></label>` : ''}
     <button type="button" id="rs">Volver al orden original</button><button type="button" class="primary" id="ok">Listo</button></div>`;
   const re = abrir => { persist(r); const y = scrollY; parts(r, i, abrir); scrollTo(0, y); };
-  $('#rs').onclick = () => { c.arr = defArr(s); re(); };
+  $('#rs').onclick = () => { c.arr = baseArr(); re(); };
   $('#ok').onclick = async () => { await colaGuardar; go('#/reunion/' + r.id + '/editar', 'back'); };
   // La copia va sin pid: el motor le da uno nuevo (y la app lo toma al guardar).
   const copia = j => { const x = { ...c.arr[j] }; delete x.pid; return x; };
-  $('#mo').onchange = e => { c.modulante = e.target.checked; re(); };
+  $('#mo').onchange = e => { if (medley) return; c.modulante = e.target.checked; re(); };
   $('#ti').onchange = e => { cambiarInicio(c, e.target.value); re(); };
   // "+ Agregar sección": copia de la parte elegida al final, medio tono arriba de la última parte.
   if ($('#as')) $('#as').onchange = e => { const j = +e.target.value; if (e.target.value === '' || !c.arr[j]) return;
@@ -740,7 +795,8 @@ function parts(r, i, abrirTono) {
     const a = box.animate(open ? [{ height: 0, opacity: 0 }, { height: h + 'px', opacity: 1 }] : [{ height: h + 'px', opacity: 1 }, { height: 0, opacity: 0 }], { duration: 220, easing: 'cubic-bezier(.2,.7,.2,1)' });
     a.onfinish = () => { box.hidden = !li.classList.contains('open'); };
   });
-  $('#ap').onchange = e => { const b = AB[+e.target.value]; if (b) { c.arr.push({ src: b.id, label: b.label, rep: 1 }); re(); } };
+  $('#ap').onchange = e => { const [id, n] = e.target.value.split('|'), b = ABde(id)[+n];
+    if (b) { const x = { src: b.id, label: b.label, rep: 1 }; if (medley) x.cancion = id; c.arr.push(x); re(); } };
 
   // ---- Menús chicos (repeticiones y ⋯): flotan junto al botón; se cierran al tocar afuera, con Escape o al desplazar.
   let cerrarPop = null, popDe = null;
@@ -786,7 +842,7 @@ function parts(r, i, abrirTono) {
     const a = PT[k], e = c.arr[j], d = intervalo(a.tono, o.tono);
     // Tono original: el que tendría la parte sin tono elegido.
     const sinTono = c.arr.map((x, n) => { if (n !== j) return x; const y = { ...x }; delete y.tono; return y; });
-    const orig = tonosDelItem({ ...c, arr: sinTono }, { [s.id]: s }).partes[j].tono;
+    const orig = tonosDelItem({ ...c, arr: sinTono }, SG).partes[j].tono;
     const doce = [...Array(12)].map((_, n) => tonoMas(/m$/.test(o.tono) ? 'Cm' : 'C', n));
     const w = document.createElement('div'); w.className = 'tsheetw';
     w.innerHTML = `<div class="veil"></div><div class="tsheet" role="dialog" aria-modal="true" aria-labelledby="sh-t"><div class="bar"></div>

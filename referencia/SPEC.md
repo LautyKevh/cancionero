@@ -285,7 +285,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Las dos marcas conviven con "Mostrar igual" y con el modo Modulante. Con Modulante apagado no hay cambios de tono, así que se ven los `{ }` y los `[ ]` se ocultan siempre, también en la última parte.
   - Si la transición original no sirve para el nuevo salto, en esa reunión los músicos pueden editar sus acordes (ver "Arreglo compartido"). Si el arreglo de la base está mal, lo corrige el admin (ver 5).
 
-**Medley (fase posterior; todavía sin implementar):**
+**Medley (etapa D, en prueba):**
 - Es un ítem dentro de una reunión que combina 2 o más canciones. Usa exactamente el mismo mecanismo de tono por parte.
 - Crear: Editar reunión → "Crear medley" → elegir canciones (búsqueda en vivo) → elegir tono de inicio. Se abre directo el editor de partes, con las partes de todas las canciones: reordenar, xN, duplicar, quitar y tono por parte.
 - Un medley es Modulante siempre: el interruptor viene encendido.
