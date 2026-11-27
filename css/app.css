@@ -304,6 +304,16 @@ input[type=search]::placeholder { color: var(--mute); }
 .tsheet .orig-n { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: var(--mute); }
 .tsheet .orig-n::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--sec); }
 .tsheet .ok { width: 100%; margin-top: 14px; }
+.tsheet .vars { display: grid; gap: 6px; }
+.tsheet .vars button { display: grid; gap: 2px; text-align: left; min-height: 52px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.tsheet .vars button b { font-weight: 600; }
+.tsheet .vars button small { font: 500 13px "JetBrains Mono", monospace; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tsheet .vars button[aria-pressed="true"] { background: #0474c4; border-color: #0474c4; color: #fff; }
+.tsheet .vars button[aria-pressed="true"] small { color: #fff; opacity: .85; }
+.tsheet .vq { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 14px; }
+.tsheet .vq select { flex: 1; }
+.varc { font: inherit; color: inherit; background: none; border: 0; border-bottom: 1.5px dashed currentColor; padding: 2px 0; min-height: 32px; cursor: pointer; }
+.varq { margin-left: 8px; font-size: 11px; font-weight: 500; color: var(--mute); text-transform: none; letter-spacing: 0; }
 
 .pvb { overflow: hidden; }
 .pvb-in { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--sec); background: var(--bg); border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.45; }

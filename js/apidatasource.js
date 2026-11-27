@@ -62,6 +62,8 @@ export class ApiDataSource {
     return this._post('editarReunion', { id, clave, cambios: { nombre, fecha, director, canciones } });
   }
   async deleteReunion(id, clave) { await this._post('borrarReunion', { id, clave }); }
+  /** Músicos, sin clave: otra variante de una parte del arreglo. Devuelve la parte guardada. */
+  elegirVariante({ id, item, parte, src, label, quien }) { return this._post('elegirVariante', { id, item, parte, src, label, quien }); }
   registrarUso(id, clave) { return this._post('registrarUso', { id, clave }); }
 
   info() { return this._get('info'); }

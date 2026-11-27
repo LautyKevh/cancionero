@@ -39,6 +39,37 @@ export function blocksOf(s) {
   return (s._b = B);
 }
 
+/**
+ * Variantes de una parte: bloques de la canción con la misma letra y distintos acordes (ej. Coro, Coro 1, Coro 2).
+ * Devuelve los bloques (uno por cada juego de acordes distinto, empezando por el de `src`); [] si no tiene variantes.
+ */
+export function variantesDe(s, src) {
+  const B = blocksOf(s), huella = b => {
+    let ly = '', ch = '';
+    b.lines.forEach(l => {
+      if (l.t === 'pair') { ly += l.segs.map(x => x[1]).join(''); ch += ' ' + l.segs.map(x => x[0]).filter(Boolean).join(' '); }
+      else if (l.t === 'ly') { if (!SUBA.test(l.v.trim())) ly += ' ' + l.v; }
+      else if (l.t === 'ch' || l.t === 'mix') ch += ' ' + l.v;
+    });
+    return { ly: norm(ly).replace(/[^a-z]/g, ''), ch: ch.replace(/\s+/g, ' ').trim() };
+  };
+  if (!s._var) s._var = B.map(b => b.has ? huella(b) : null);
+  const H = s._var, h = H[src];
+  if (!h || !h.ly) return [];
+  // Los mismos acordes en otro tono no son una variante: es la parte repetida después de modular.
+  const PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  const ac = t => { const m = /^([A-G])([#b]?)(.*)$/.exec(t); return m ? [(PC[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? 11 : 0)) % 12, m[3].replace(/\/([A-G])([#b]?)/, '/')] : null; };
+  const transporte = (a, b) => {
+    const A = a.split(' ').map(ac), Z = b.split(' ').map(ac);
+    if (!a || A.length !== Z.length || A.some(x => !x) || Z.some(x => !x)) return false;
+    const d = (Z[0][0] - A[0][0] + 12) % 12;
+    return d !== 0 && A.every((x, i) => x[1] === Z[i][1] && (Z[i][0] - x[0] + 12) % 12 === d);
+  };
+  const out = [B[src]], vistos = new Set([h.ch]);
+  B.forEach((b, k) => { const x = H[k]; if (x && x.ly === h.ly && !vistos.has(x.ch) && !out.some(o => transporte(H[o.id].ch, x.ch))) { vistos.add(x.ch); out.push(b); } });
+  return out.length > 1 ? out : [];
+}
+
 // "(Sube a A)" / "(Baja a F#)": indicación de cambio de tono (la vista la reemplaza por el indicador).
 export const SUBA = /^\(?\s*(sube|baja|subida|bajada)\s+(?:a|al)\s+([A-G][#b]?m?)\s*\)?\.?$/i;
 const soloIndicacion = b => { const r = b.lines.filter(l => l.t !== 'blank'); return r.length > 0 && r.every(l => l.t === 'ly' && SUBA.test(l.v.trim())); };

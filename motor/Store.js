@@ -255,6 +255,10 @@ function limpiarItem_(x, previo, pidsItems) {
     if (a.tono) p.tono = String(a.tono).slice(0, 8);
     if (a.mostrar) p.mostrar = true;
     const ant = a.pid && previo[a.pid];
+    // Variante elegida por un músico: se respeta salvo que el director cambie esa misma parte.
+    if (ant && ant.variante && String(a.pid) === pid && !p.nueva && (p.src === ant.variante.de || p.src === ant.src)) {
+      p.src = ant.src; p.label = ant.label; p.variante = ant.variante;
+    }
     if (ant && String(a.pid) === pid) {
       // Parte existente: los acordes los editan los músicos (editarAcordes); el director no los pisa.
       ['lineas', 'cambios', 'editado'].forEach(k => { if (ant[k] != null) p[k] = ant[k]; });
@@ -308,6 +312,28 @@ function editarAcordes_(ig, r, itemPid, partePid, lineas, quien) {
     .concat(p.cambios || []).slice(0, LIM_ACORDES_.cambios);
   if (nuevas == null) delete p.lineas; else p.lineas = nuevas;
   p.editado = { quien, fecha };
+  guardarReunion_(ig, r);
+  cache.put(k1, String(n1 + 1), 120); cache.put(k2, String(n2 + 1), 120);
+  return p;
+}
+
+/** Otra variante de una parte (misma letra, otros acordes), elegida por un músico (sin clave). */
+function elegirVariante_(ig, r, itemPid, partePid, src, label, quien) {
+  quien = String(quien || '').trim().slice(0, 40);
+  if (!quien) throw apiError_('Elegí tu nombre para guardar el cambio.', 'nombre');
+  src = +src; if (!(src >= 0 && src < 500)) throw apiError_('Variante inválida.', 'formato');
+  const cache = CacheService.getScriptCache(), min = Math.floor(Date.now() / 60000);
+  const k1 = 'acordes:' + ig.rootId + ':' + min, k2 = k1 + ':' + norm_(quien);
+  const n1 = +(cache.get(k1) || 0), n2 = +(cache.get(k2) || 0);
+  if (n1 >= LIM_ACORDES_.porMinuto || n2 >= LIM_ACORDES_.porPersonaMinuto) throw apiError_('Demasiados cambios seguidos. Esperá un minuto.', 'limite');
+  const it = (r.canciones || []).find(x => x.pid === itemPid);
+  const p = it && (it.arr || []).find(x => x.pid === partePid);
+  if (!p || p.nueva) throw apiError_('Esa parte ya no está en la reunión. Recargá.', 'no-existe');
+  const de = p.variante ? p.variante.de : p.src;
+  // Los acordes editados eran de la otra variante: quedan en el historial.
+  if (p.lineas != null) { p.cambios = [{ quien: p.editado ? p.editado.quien : '', fecha: p.editado ? p.editado.fecha : '', lineas: p.lineas }].concat(p.cambios || []).slice(0, LIM_ACORDES_.cambios); delete p.lineas; delete p.editado; }
+  p.src = src; p.label = label == null ? null : String(label).slice(0, 80);
+  if (src === de) delete p.variante; else p.variante = { de: de, quien: quien, fecha: new Date().toISOString() };
   guardarReunion_(ig, r);
   cache.put(k1, String(n1 + 1), 120); cache.put(k2, String(n2 + 1), 120);
   return p;

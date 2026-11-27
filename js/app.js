@@ -4,7 +4,7 @@ import { ApiDataSource } from './apidatasource.js';
 import { CONFIG } from './config.js';
 import { demoSeed } from './demo.js';
 import { KEYS, keyAt, shiftTo, keyOption, showKey, transposer, tonosDelItem, tonoMas, intervalo, enTonos, CHORD } from './music.js';
-import { prepare, blocksOf, contenidoDe, SUBA, defArr, isDefArr, blockText, base, rOf, labOf, summary, historyOf, search, fmt, isoOf } from './songs.js';
+import { prepare, blocksOf, contenidoDe, SUBA, defArr, isDefArr, variantesDe, blockText, base, rOf, labOf, summary, historyOf, search, fmt, isoOf } from './songs.js';
 import { GRUPOS } from './grupos.js';
 
 // Motor real si hay iglesia (?c= o config) y no se pidió ?demo=1; si no, modo demo local.
@@ -15,7 +15,7 @@ const ds = DEMO ? new LocalDataSource({ seedFn: demoSeed }) : new ApiDataSource(
 
 // ---------- Estado ----------
 const prefs = (() => { try { return JSON.parse(localStorage.getItem('cancionero:prefs') || '{}'); } catch (e) { return {}; } })();
-const P = { not: prefs.not || 0, adj: prefs.adj || 0, sadj: prefs.sadj || 0, modos: prefs.modos || {} };
+const P = { not: prefs.not || 0, adj: prefs.adj || 0, sadj: prefs.sadj || 0, modos: prefs.modos || {}, yo: prefs.yo || '' };
 const savePrefs = () => { try { localStorage.setItem('cancionero:prefs', JSON.stringify(P)); } catch (e) {} };
 
 let SONGS = [], REG = [], SES = [], PERS = [], INFO = {};
@@ -313,7 +313,7 @@ const xpose = (T, tok) => tok.split(/([-–|\s])/).map(p => CHORD.test(p.replace
  * transiciones, [ ] / { } e indicador de cambio de tono. Lo usan la vista y la impresión.
  * item: { id | tipo: 'medley', canciones, tono, arr?, modulante? }.
  */
-function sheetRows(item, mus) {
+function sheetRows(item, mus, vari) {
   const songs = {}; (item.tipo === 'medley' ? (item.canciones || []).map(c => c.id) : [item.id]).forEach(id => { const s = songBy(id); if (s) songs[id] = s; });
   const R = tonosDelItem(item, songs), medley = item.tipo === 'medley';
   const TR = (tono, sh) => transposer({ tono: tono || item.tono || 'C' }, sh || 0, P.not);
@@ -381,7 +381,11 @@ function sheetRows(item, mus) {
     // Una parte de un solo renglón de acordes (Intro, Inter, Final) los muestra al lado del título; con 2 o más, abajo.
     if (label && ls.length === 1 && L.length === 1 && (ls[0].t === 'ch' || (ls[0].t === 'mix' && ls[0].at == null)))
       return `${sep}<section class="parte"><div class="sec inl"><span>${esc(label)}</span>${ind}<span class="${ls[0].t}">${esc(textoCh(ls[0]))}</span></div></section>`;
-    const head = label || ind ? `<div class="sec${ind ? ' inl' : ''}"><span>${esc(label)}</span>${ind}</div>` : '';
+    // Variantes (Músico, en una reunión): el nombre de la parte es un chip para elegir otra ("es el Coro 2").
+    const nv = vari && e.src != null && !e.nueva ? variantesDe(s, e.src).length : 0;
+    const quien = e.variante && e.variante.quien ? `<small class="varq">elegida por ${esc(e.variante.quien)}</small>` : '';
+    const nomP = nv ? `<button type="button" class="varc" data-var="${k}" aria-haspopup="dialog" aria-label="${esc(label || 'Parte')}: elegir otra variante (hay ${nv})">${esc(label || 'Parte')} <span aria-hidden="true">▾</span></button>${quien}` : `<span>${esc(label)}</span>`;
+    const head = label || ind || nv ? `<div class="sec${ind ? ' inl' : ''}">${nomP}${ind}</div>` : '';
     return `${sep}<section class="parte">${head}${L.join('')}</section>`;
   }).join('');
   return { rows, kd };
@@ -391,7 +395,9 @@ function drawSheet(anim) {
   const { song: s, mode, shift, ctx } = view, mus = mode === 'm';
   const c = ctx && ctx.item;
   const item = c ? conDelta(c, shift - shiftTo(s, c.tono)) : { id: s.id, tono: keyAt(s, shift), arr: defArr(s) };
-  const { rows, kd } = sheetRows(item, mus);
+  // Variantes: solo en Músico dentro de una reunión, si el orden difiere del Word o es un medley.
+  const vari = !!(mus && c && (c.tipo === 'medley' || ((c.arr || []).length && !isDefArr(s, c.arr))));
+  const { rows, kd } = sheetRows(item, mus, vari);
 
   const ctl = (mus ? `<button type="button" id="dn" aria-label="Bajar medio tono">−½</button>
       <span class="now" id="now" title="Tono actual" aria-live="polite">${esc(kd)}</span>
@@ -443,11 +449,55 @@ function drawSheet(anim) {
     else replaceHash(`#/cancion/${s.id}/${view.mode}`), transition(() => drawSheet());
   };
   $('#pr').onclick = () => imprimir(hojaImpresa(item, mus), s.titulo);
+  if (vari) $$('[data-var]').forEach(b => b.onclick = () => hojaVariante(r, i, +b.dataset.var));
   if (r) {
     $('#pv') && ($('#pv').onclick = () => go(`#/reunion/${r.id}/${i - 1}`, 'back'));
     $('#nx') && ($('#nx').onclick = () => go(`#/reunion/${r.id}/${i + 1}`));
     $('#fin') && ($('#fin').onclick = () => go(`#/reunion/${r.id}`, 'back'));
   }
+}
+
+/**
+ * Hoja para que el músico elija otra variante de una parte (sin clave). El cambio queda en el arreglo de la reunión,
+ * con su nombre, y lo ven todos los dispositivos.
+ */
+function hojaVariante(r, i, k) {
+  const c = r.canciones[i], e = c && c.arr[k]; if (!e) return;
+  const s = songBy(c.tipo === 'medley' ? e.cancion : c.id); if (!s) return;
+  const V = variantesDe(s, e.src); if (!V.length) return;
+  // Acordes de cada variante desde el primero en que se diferencian (así se reconoce cuál es).
+  const acs = b => [].concat(...b.lines.map(l => l.t === 'pair' ? l.segs.map(y => y[0]).filter(Boolean) : l.t === 'ch' || l.t === 'mix' ? l.v.split(/\s+/).filter(Boolean) : []));
+  const AC = V.map(acs); let n0 = 0; while (n0 < AC[0].length && AC.every(a => a[n0] === AC[0][n0])) n0++;
+  const primerAcorde = b => { const a = AC[V.indexOf(b)]; return a.length ? (n0 ? '… ' : '') + a.slice(n0, n0 + 6).join(' ') + (a.length > n0 + 6 ? ' …' : '') : ''; };
+  const w = document.createElement('div'); w.className = 'tsheetw';
+  w.innerHTML = `<div class="veil"></div><div class="tsheet" role="dialog" aria-modal="true" aria-labelledby="vh-t"><div class="bar"></div>
+    <h3 id="vh-t">¿Qué ${esc(labOf(e) || 'parte')} es?</h3><p>Misma letra, otros acordes. El cambio queda en la reunión para todos.</p>
+    <div class="vars">${V.map(b => `<button type="button" data-vs="${b.id}" aria-pressed="${b.id === e.src}"><b>${esc(b.label || '(inicio)')}</b><small>${esc(primerAcorde(b)) || 'sin acordes'}</small></button>`).join('')}</div>
+    <label class="vq">Tu nombre <select id="vq"><option value="">Elegir…</option>${PERS.map(p => `<option${p === P.yo ? ' selected' : ''}>${esc(p)}</option>`).join('')}<option value="__new">+ Agregar otro nombre…</option></select></label>
+    <p class="err" id="ve" hidden></p>
+    <button type="button" class="ok">Cancelar</button></div>`;
+  app.append(w);
+  const cerrar = () => { w.remove(); document.removeEventListener('keydown', tecla); const b = $(`[data-var="${k}"]`); if (b) b.focus(); };
+  const tecla = ev => { if (ev.key === 'Escape') cerrar(); };
+  document.addEventListener('keydown', tecla);
+  w.querySelector('.veil').onclick = cerrar; w.querySelector('.ok').onclick = cerrar;
+  const vq = w.querySelector('#vq'); wirePerson(vq, v => { P.yo = v; savePrefs(); });
+  const err = m => { const x = w.querySelector('#ve'); x.textContent = m; x.hidden = !m; };
+  w.querySelectorAll('[data-vs]').forEach(b => b.onclick = async () => {
+    const src = +b.dataset.vs; if (src === e.src) return cerrar();
+    const quien = P.yo || ''; if (!quien) return err('Elegí tu nombre para guardar el cambio.');
+    const nb = blocksOf(s)[src], antes = { src: e.src, label: e.label, variante: e.variante };
+    // Se ve enseguida; si el servidor no lo guarda, vuelve como estaba.
+    const de = e.variante ? e.variante.de : e.src;
+    e.src = src; e.label = nb.label; if (src === de) delete e.variante; else e.variante = { de, quien, fecha: new Date().toISOString() };
+    cerrar(); const y = scrollY; drawSheet(); scrollTo(0, y);
+    try { const p = await ds.elegirVariante({ id: r.id, i, k, item: c.pid, parte: e.pid, src, label: nb.label, quien });
+      if (p) { e.src = p.src; e.label = p.label; if (p.variante) e.variante = p.variante; else delete e.variante; } }
+    catch (x) { Object.assign(e, antes); if (!antes.variante) delete e.variante; const y2 = scrollY; drawSheet(); scrollTo(0, y2); toast(x.message || 'No se pudo guardar.'); }
+  });
+  (w.querySelector('[aria-pressed="true"]') || w.querySelector('.ok')).focus({ preventScroll: true });
+  if (!reduced()) { w.querySelector('.tsheet').animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.7,.2,1)' });
+                    w.querySelector('.veil').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 }); }
 }
 
 function anchorMixes() {

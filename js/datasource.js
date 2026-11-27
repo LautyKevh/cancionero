@@ -124,6 +124,16 @@ export class LocalDataSource {
     return strip(list[i]);
   }
 
+  /** Músicos, sin clave: otra variante de una parte (en el demo, por posición del ítem y de la parte). */
+  async elegirVariante({ id, i, k, src, label, quien }) {
+    const list = this._all(), r = list.find(x => x.id === id && !x.borrada), p = r && r.canciones[i] && (r.canciones[i].arr || [])[k];
+    if (!p) throw new ClaveError('Esa parte ya no está en la reunión. Recargá.', 'no-existe');
+    const de = p.variante ? p.variante.de : p.src;
+    p.src = src; p.label = label; if (src === de) delete p.variante; else p.variante = { de, quien, fecha: new Date().toISOString() };
+    if (quien) await this.addPersona(quien);
+    this._save(list); return structuredClone(p);
+  }
+
   async deleteReunion(id, clave) {
     await this.checkClave(id, clave);
     const list = this._all(), r = list.find(x => x.id === id);

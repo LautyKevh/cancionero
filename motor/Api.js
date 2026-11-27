@@ -15,6 +15,7 @@
 //   a=borrarReunion  { id, clave }                       (borrado lógico)
 //   a=registrarUso   { id, clave }                       (agrega filas a Registro, una sola vez; también se hace solo al día siguiente de la reunión)
 //   a=editarAcordes  { id, item, parte, lineas|null, quien } (sin clave; músicos; null = volver a la base)
+//   a=elegirVariante { id, item, parte, src, label, quien }   (sin clave; músicos; otra variante de la parte)
 //   a=importar       { idToken }                         (admin)
 //   a=corregir       { idToken, cancion, correccion|null } (admin; Datos/correcciones.json)
 //
@@ -81,6 +82,10 @@ function doPost(e) {
       case 'editarAcordes': return conLock_(() => {
         const r = buscar();
         return editarAcordes_(ig, r, String(b.item || ''), String(b.parte || ''), b.lineas == null ? null : b.lineas, b.quien);
+      });
+      case 'elegirVariante': return conLock_(() => {
+        const r = buscar();
+        return elegirVariante_(ig, r, String(b.item || ''), String(b.parte || ''), b.src, b.label, b.quien);
       });
       // Admin: corrección de la canción base → Datos/correcciones.json (SPEC §5).
       case 'corregir': verificarAdmin_(ig, b.idToken); return conLock_(() => corregirCancion_(ig, String(b.cancion || ''), b.correccion));
