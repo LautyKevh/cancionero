@@ -285,8 +285,8 @@ function gruposAcordes(toks, puente) {
   const esPuente = !!(puente && ult) && g.slice(ult[1] + 1).every((x, j) => x === 'm' || x === 'r' || !/[A-G]/.test(toks[ult[1] + 1 + j] || ''));
   return g.map((x, i) => x === '(' ? (esPuente && i >= ult[0] && i <= ult[1] ? 'p' : null) : x);
 }
-/** Transporta un "token" de acordes ("[B/C#-E/C#", "{A", "(D/F#"): solo las partes que son acordes. */
-const xpose = (T, tok) => tok.split(/([-–|])/).map(p => CHORD.test(p.replace(/[{}]/g, '')) ? T.chord(p) : p).join('');
+/** Transporta un "token" de acordes ("[B/C#-E/C#", "{A", "(D/F#", "(Para repetir coro: C#/F)"): solo las partes que son acordes. */
+const xpose = (T, tok) => tok.split(/([-–|\s])/).map(p => CHORD.test(p.replace(/[{}]/g, '')) ? T.chord(p) : p).join('');
 
 /**
  * Hoja de un ítem (canción o medley) en HTML: cada parte en su tono (SPEC §7, tono por parte), con puentes,
@@ -339,7 +339,9 @@ function sheetRows(item, mus) {
       if (l.t === 'pair') {
         if (!mus) return `<div>${esc(l.segs.map(x => x[1]).join('').trim())}</div>`;
         const g = l.puente || l.modula || l.repite ? gruposAcordes(l.segs.map(x => x[0]), l.puente) : [];
-        const segs = l.segs.map(([c, t], i) => [!c ? '' : g[i] ? (VER[g[i]] ? TG[g[i]].chord(c) : '') : T.chord(c), t]);
+        // Una nota con palabras ("(Para repetir coro: C#/F)") va entera; se transportan solo sus acordes.
+        const ac = (X, c) => /\s/.test(c) ? xpose(X, c) : X.chord(c);
+        const segs = l.segs.map(([c, t], i) => [!c ? '' : g[i] ? (VER[g[i]] ? ac(TG[g[i]], c) : '') : ac(T, c), t]);
         const it = []; segs.forEach(([c, t]) => t.split(/(\s+)/).forEach((x, j) => { if (j === 0 || x) it.push({ c: j === 0 ? c : '', t: x }); }));
         const words = []; let cur = [];
         it.forEach(o => { if (/^\s+$/.test(o.t) && !o.c) { if (cur.length) words.push(cur); words.push([o]); cur = []; } else cur.push(o); });
@@ -377,8 +379,7 @@ function drawSheet(anim) {
       <button type="button" id="orig" title="Volver al tono original"${shift ? '' : ' disabled'}>Orig.</button>
       <button type="button" id="not" title="Cambiar cifrado: C / Do / grados">${['C', 'Do', 'I'][P.not]}</button><span class="sp"></span>` : '<span class="sp"></span>')
     + `<button type="button" id="sm" aria-label="Achicar letra">A−</button><button type="button" id="bg" aria-label="Agrandar letra">A+</button>
-       <button type="button" id="sw">${mus ? 'Cantante' : 'Músico'}</button>
-       <button type="button" id="pr" title="Imprimir o guardar como PDF">Imprimir</button>`;
+       <button type="button" id="sw">${mus ? 'Cantante' : 'Músico'}</button>`;
 
   const r = ctx && ctx.ses, i = ctx && ctx.i;
   let nav = '';
@@ -395,6 +396,7 @@ function drawSheet(anim) {
       ${mus ? stamp(kd, shift ? 'Ahora' : 'Tono') : ''}</header>
     <div class="ctl" role="toolbar" aria-label="Controles">${ctl}</div>
     <div class="lines ${mus ? '' : 'singer'}">${rows}</div>
+    <div class="sheetend"><button type="button" id="pr">Imprimir o guardar PDF</button></div>
   </article>${nav}`;
 
   if (mus) fitSheet(); else fitSinger();

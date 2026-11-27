@@ -19,7 +19,7 @@ Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesi
 - "Inter (E B/G#m B)(…)": el bajo "G#m" no es un acorde válido, así que esa línea no se toma como título con acordes. Probable error de tipeo en el archivo.
 - "En el monte calvario", "Nos unimos al cielo" y "Ven ante su trono" (x2) no tienen títulos de parte visibles: Lautaro los corrige en el Word.
 - "Interlude 2" + "(Chorus)" en "Because He Lives" y "Coro 2" + "(final)" en "Jesucristo basta": el paréntesis queda como aclaración del título de arriba, no como parte nueva. Confirmar que es lo que se quiere.
-- "Al estar aquí": el segundo "Verso 1" no trae solo "(Baja a F#)": también trae el último renglón con otros acordes ("Te adoro a Tí, te adoro a Tí" con B/Ab, C#sus4 y el puente B/Eb - C#/F). Por eso no entra en la regla de "solo la indicación" y se muestra tal cual (sin el resto de la letra). Ningún otro bloque del cancionero trae solo la indicación. Falta decidir: ¿se muestra el Verso 1 anterior completo con ese último renglón reemplazado, o se corrige el Word?
+- "Al estar aquí": el segundo "Verso 1" no trae solo "(Baja a F#)": también trae el último renglón con otros acordes ("Te adoro a Tí, te adoro a Tí" con B/Ab, C#sus4 y el puente B/Eb - C#/F). Por eso no entra en la regla de "solo la indicación" y se muestra tal cual (sin el resto de la letra). Ningún otro bloque del cancionero trae solo la indicación. Decidido: Lautaro lo corrige en el Word más adelante; la app no tiene una regla especial para este caso.
 - Confirmar en el diálogo real de impresión (compu y celular) que no salen encabezado ni pie del navegador.
 
 ## Para una fase posterior

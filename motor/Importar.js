@@ -46,7 +46,7 @@ function nombreArchivo_(n, conocidos) {
 // Apps Script corta cada ejecución a los 6 min: la importación avanza por tandas.
 // El progreso queda en Datos/import-estado.json; los Word que no cambiaron no se vuelven a convertir.
 const TANDA_MS = 4.5 * 60 * 1000;
-const CONV_V = 7;   // subir cuando cambia Convertir.js: fuerza a reconvertir todo
+const CONV_V = 8;   // subir cuando cambia Convertir.js: fuerza a reconvertir todo
 
 function importarCanciones_(ig, desdeCero) {
   if (!ig.letrasId) throw apiError_('Falta configurar la carpeta "Letra y Acordes" de esta iglesia.', 'config');

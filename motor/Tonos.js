@@ -55,8 +55,9 @@ function arrBase_(song) { return bloques_(song.lineas).map(b => ({ src: b.has ? 
 // ---------- Acordes ----------
 const ACORDE_RE_ = /^\(?([A-G])([#b]?)((?:maj|min|m|sus|add|dim|aug|M|º|°)?)[^/()]*?(?:\/[A-G][#b]?)?\)?[,.]?$/;
 const textoAcordes_ = l => l.t === 'pair' ? l.segs.map(s => s[0]).filter(Boolean).join(' ') : (l.t === 'ch' || l.t === 'mix') ? String(l.v) : '';
-// [ ] (puente para modular) y { } (cierre para repetir) no cuentan para decidir el tono de la parte.
-const sinGrupos_ = t => t.replace(/\[[^\]]*\]|\{[^}]*\}/g, ' ');
+// [ ] (puente para modular), { } (cierre para repetir) y las notas entre paréntesis ("(Para repetir coro: C#/F)")
+// no cuentan para decidir el tono de la parte ni como acordes puente.
+const sinGrupos_ = t => sinNotas_(t).replace(/\[[^\]]*\]|\{[^}]*\}/g, ' ');
 function acordesDe_(l) {
   const toks = sinGrupos_(textoAcordes_(l)).split(/[\s\-–|]+/).filter(Boolean);
   const out = [];
@@ -158,7 +159,7 @@ function analizarTonos_(song, tonoCrudo) {
   // [ ] al final = acordes para modular (se muestran si la parte siguiente cambia de tono);
   // { } al final = cierre para repetir en el mismo tono (se muestran si la siguiente queda igual). SPEC §6.
   song.lineas.forEach(l => {
-    const t = textoAcordes_(l);
+    const t = sinNotas_(textoAcordes_(l));
     if (/\[[^\]]*\]/.test(t)) l.modula = true; else delete l.modula;
     if (/\{[^}]*\}/.test(t)) l.repite = true; else delete l.repite;
   });

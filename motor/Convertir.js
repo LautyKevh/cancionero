@@ -80,6 +80,25 @@ function chordy_(t) {
   const toks = t.replace(/[()[\]{}]/g, '').replace(/\/\//g, '').split(/[\s\-–|]+/).filter(Boolean);
   return toks.length > 0 && toks.every(x => CH_RE.test(x));
 }
+// Nota entre paréntesis con palabras dentro de una línea de acordes: "(Para repetir coro: C#/F)", "(bajada cromática)",
+// "(BAJO: Eb G Bb E F)", "(Intro)", "[(2da vez A/B – B)]". No es un acorde, pero no impide que la línea sea de acordes:
+// se guarda entera, en su lugar, como un acorde más (la app transporta los acordes que tenga adentro).
+// "(Sube a X)" no es una nota: es la indicación de cambio de tono.
+const NOTA_RE = /[\[{]?\([^()]*\)[\]}]?/g;
+function esNota_(m) {
+  const x = m.replace(/^[\[{]?\(|\)[\]}]?$/g, '').trim();
+  if (/^(sube|baja|subida|bajada|pasa|modula)\s+(a|al)\s/i.test(x)) return false;
+  return x.split(/[\s:,;.]+/).some(w => /[A-Za-zÀ-ÿ]{3,}/.test(w) && !CH_RE.test(w));
+}
+/** La línea con cada nota reemplazada por espacios (mismo largo). */
+const sinNotas_ = t => String(t).replace(NOTA_RE, m => esNota_(m) ? ' '.repeat(Array.from(m).length) : m);
+/** Línea de acordes, aunque tenga notas entre paréntesis (necesita al menos un acorde fuera de las notas). */
+function chordyNota_(t) {
+  if (chordy_(t)) return true;
+  const s = sinNotas_(t); return s !== t && /\S/.test(s) && chordy_(s);
+}
+// Renglón con solo una flecha ("↓"): es una marca del Word, no se muestra (el indicador de tono lo pone la app).
+const FLECHA_RE = /^[↓↑⇩⇧⬇⬆]+$/;
 function starts_(w) {
   const S = new Set([0]), chars = Array.from(w);
   for (let k = 1; k < chars.length; k++) {
@@ -174,6 +193,7 @@ function convertirParrafos_(ps) {
     if (mm) { mod = mm[1].toUpperCase(); p = cortarRuns_(p, Array.from(mm[0]).length); ps[i] = p; t = texto_(p).replace(/\s+$/, ''); }
     const s = t.trim();
     if (!s) { L.push({ t: 'blank' }); i++; continue; }
+    if (FLECHA_RE.test(s.replace(/\s+/g, ''))) { i++; continue; }
     const m = LAB_RE.exec(t), lab = m ? m[1] : '';
     const rest = m ? t.slice(lab.length) : t;
     if (m && !rest.trim()) { secs(lab); i++; continue; }
@@ -181,11 +201,11 @@ function convertirParrafos_(ps) {
       const tl = tituloLibre_(s) || tituloSuelto_(s, ultima_(L));
       if (tl) { secs('[' + tl.v + ']'); if (tl.ch) L.push({ t: 'ch', v: tl.ch }); i++; continue; }
     }
-    if (chordy_(rest)) {
+    if (chordyNota_(rest)) {
       const nxt = i + 1 < ps.length ? ps[i + 1] : null;
       const nt = nxt ? texto_(nxt).replace(/\s+$/, '') : '';
       const nm = LAB_RE.exec(nt), nlab = nm ? nm[1] : '';
-      if (nxt && nt.trim() && !chordy_(nt.slice(nlab.length)) && nt.slice(nlab.length).trim() && !(!nlab && (tituloLibre_(nt) || tituloSuelto_(nt, null)))) {
+      if (nxt && nt.trim() && !chordyNota_(nt.slice(nlab.length)) && nt.slice(nlab.length).trim() && !(!nlab && (tituloLibre_(nt) || tituloSuelto_(nt, null)))) {
         if (lab) secs(lab);
         if (nlab) secs(nlab);
         const cx = xs_(p), lx = xs_(nxt);
@@ -193,11 +213,14 @@ function convertirParrafos_(ps) {
         const off = Array.from(nlab).length + (Array.from(lyr).length - Array.from(lyr.replace(/^\s+/, '')).length);
         lyr = lyr.trim();
         const lyrC = Array.from(lyr), pos = [], tc = Array.from(t), labLen = Array.from(lab).length;
-        // tokens \S+ con su índice de carácter
+        // tokens \S+ con su índice de carácter; cada nota entre paréntesis es un solo token
+        const notas = [];
+        if (!chordy_(rest)) for (const mn of t.matchAll(NOTA_RE)) if (esNota_(mn[0])) { const a = Array.from(t.slice(0, mn.index)).length; notas.push([a, a + Array.from(mn[0]).length]); }
         let k = 0;
         while (k < tc.length) {
           if (/\s/.test(tc[k])) { k++; continue; }
-          const st = k; while (k < tc.length && !/\s/.test(tc[k])) k++;
+          const st = k, nn = notas.find(n => n[0] === st);
+          if (nn) k = nn[1]; else while (k < tc.length && !/\s/.test(tc[k])) k++;
           if (st < labLen) continue;
           const tok = tc.slice(st, k).join(''), x = cx[st];
           let j = 0; for (let q = 1; q < lx.length; q++) if (Math.abs(lx[q] - x) < Math.abs(lx[j] - x)) j = q;
