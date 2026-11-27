@@ -15,7 +15,15 @@ const ds = DEMO ? new LocalDataSource({ seedFn: demoSeed }) : new ApiDataSource(
 
 // ---------- Estado ----------
 const prefs = (() => { try { return JSON.parse(localStorage.getItem('cancionero:prefs') || '{}'); } catch (e) { return {}; } })();
-const P = { not: prefs.not || 0, adj: prefs.adj || 0, sadj: prefs.sadj || 0, modos: prefs.modos || {} };
+const P = { not: prefs.not || 0, adj: prefs.adj || 0, sadj: prefs.sadj || 0, modos: prefs.modos || {}, tema: prefs.tema || '' };
+/** Modo claro / oscuro de este dispositivo ('' = el del sistema). Lo aplica también index.html antes de pintar. */
+function aplicarTema() {
+  const t = P.tema === 'light' || P.tema === 'dark' ? P.tema : '';
+  if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+  const metas = document.querySelectorAll('meta[name="theme-color"]');
+  metas.forEach((m, k) => { m.content = t === 'dark' ? '#1c2031' : t === 'light' ? '#f2f5fa' : (k ? '#1c2031' : '#f2f5fa'); });
+}
+aplicarTema();
 const savePrefs = () => { try { localStorage.setItem('cancionero:prefs', JSON.stringify(P)); } catch (e) {} };
 
 let SONGS = [], REG = [], SES = [], PERS = [], INFO = {};
@@ -1145,7 +1153,12 @@ function settings() {
   const st = ds.status();
   app.innerHTML = `${back('Canciones', '#/canciones')}<h2 class="title">Ajustes</h2>
     <p class="meta">${esc(INFO.nombre || (DEMO ? 'Modo demo' : ''))}${INFO.actualizado ? ' · canciones importadas el ' + esc(fmt(INFO.actualizado.slice(0, 10))) : ''}</p>
+    <section class="adm"><h3>Pantalla</h3><p class="hint">Solo en este dispositivo.</p>
+      <div class="seg" role="radiogroup" aria-label="Modo de pantalla">${[['', 'Automático'], ['light', 'Claro'], ['dark', 'Oscuro']].map(([v, t]) =>
+        `<button type="button" role="radio" data-tema="${v}" aria-checked="${(P.tema || '') === v}">${t}</button>`).join('')}</div></section>
     <section class="adm"><h3>Administración</h3><div id="adm"></div></section>`;
+  $$('[data-tema]').forEach(b => b.onclick = () => { P.tema = b.dataset.tema; savePrefs(); aplicarTema();
+    $$('[data-tema]').forEach(x => x.setAttribute('aria-checked', String(x === b))); });
   const box = $('#adm');
   if (DEMO || !ds.importar) { box.innerHTML = '<p class="hint">En modo demo no hay acciones de administrador.</p>'; return; }
   if (!CONFIG.googleClientId) { box.innerHTML = '<p class="hint">El ingreso de administrador todavía no está configurado.</p>'; return; }

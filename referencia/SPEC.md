@@ -344,6 +344,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - La PWA (service worker) cachea la app y el `cancionero.json`. Al abrir con internet, pide los cambios y actualiza.
 - Línea de estado: "Actualizado hoy 10:32" / "Sin conexión · datos del 22-11", más un botón "Actualizar". "Actualizar" solo vuelve a pedir los datos al motor; los cambios de la carpeta entran con la importación (Ajustes, admin).
 - Ajustes se abre desde el engranaje del encabezado (y el link del pie, que no aparece dentro de Ajustes).
+- **Pantalla (Ajustes):** Automático (el del sistema) / Claro / Oscuro. Es personal, como A+ / A−: se guarda solo en el dispositivo (`cancionero:prefs` → `tema`) y se aplica antes de pintar (script en `index.html`), también al color de la barra del celular.
 - **Navegación por niveles** (atrás del celular, flecha del navegador y "←" de la app hacen lo mismo):
   - 0 = Canciones / Reuniones; 1 = una canción, una reunión, Ajustes; 2 = Cantante / Músico, edición; 3 = partes en la edición.
   - Entrar más profundo agrega un paso; mismo nivel (Anterior/Siguiente, modo, pestañas) reemplaza; volver baja un nivel y "adelante" no hace nada.

@@ -1,11 +1,12 @@
 # Pendientes
 
-Estado al 27-11-2026 (rama `desarrollo`, app v43; motor de PRUEBA: implementación @29). Nada en `main` ni en IBSI.
+Estado al 27-11-2026 (rama `desarrollo`, app v44; motor de PRUEBA: implementación @29). Nada en `main` ni en IBSI.
 
 ## Hecho hoy (en desarrollo)
 - Aprobado en el celular: etapa C (tono por parte, Modulante, guardado, sin conexión), medley (etapa D), variantes de una parte.
 - Imprimir / PDF (A4 por defecto, sin tamaño fijo); resumen de parte sin "(Sube a X)"; la versión nueva se activa sola.
 - Editor de partes rediseñado (tarjetas, manija, chips de repeticiones y tono, hoja de tono, ⋯) y deslizar a la izquierda para borrar con "Deshacer" (también en "Crear medley").
+- Ajustes → Pantalla: Automático / Claro / Oscuro, solo en el dispositivo.
 - Encabezado de la canción en tres renglones; Editar reunión con Tono, Dirige y Editar en una línea.
 - Medley: crear, ordenar canciones arrastrando (al crearlo y en el editor), nombre según el orden.
 - Agrupación por tono solo en la app (`js/grupos.js`, 56 grupos; ver `referencia/agrupacion-por-tono.md`).
