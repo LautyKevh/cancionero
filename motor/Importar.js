@@ -30,7 +30,7 @@ function nombreArchivo_(n) {
 // Apps Script corta cada ejecución a los 6 min: la importación avanza por tandas.
 // El progreso queda en Datos/import-estado.json; los Word que no cambiaron no se vuelven a convertir.
 const TANDA_MS = 4.5 * 60 * 1000;
-const CONV_V = 2;   // subir cuando cambia Convertir.js: fuerza a reconvertir todo
+const CONV_V = 3;   // subir cuando cambia Convertir.js: fuerza a reconvertir todo
 
 function importarCanciones_(ig, desdeCero) {
   if (!ig.letrasId) throw apiError_('Falta configurar la carpeta "Letra y Acordes" de esta iglesia.', 'config');
@@ -63,9 +63,11 @@ function importarCanciones_(ig, desdeCero) {
       const song = { id, titulo: c.titulo || titulo, interprete: c.interprete || '-', tono: conv.tono || tonoArchivo || c.tono,
                      lineas: conv.lineas, bpm, estado: c.estado || 'oficial', fuente: nombre };
       if (!song.lineas.length) throw new Error('El documento no tiene letra.');
+      // Tono por parte, transiciones, puentes y Modulante (SPEC §6). song.tono pasa a ser el tono de inicio.
+      const dudas = analizarTonos_(song, song.tono);
       escribirJson_(dirCanciones, id + '.json', song);
       estado.canciones[id] = song;
-      estado.archivos[fid] = { upd, v: CONV_V, nombre, id, enPlanilla: !!c.titulo };
+      estado.archivos[fid] = { upd, v: CONV_V, nombre, id, enPlanilla: !!c.titulo, dudas };
     } catch (e) {
       estado.archivos[fid] = { upd, v: CONV_V, nombre, error: String(e && e.message || e) };
     }
@@ -81,10 +83,17 @@ function importarCanciones_(ig, desdeCero) {
   const ok = A.filter(a => a.id), fallidas = A.filter(a => a.error).map(a => ({ archivo: a.nombre, error: a.error }));
   const res = { completo: pendientes === 0, hechosEnEstaTanda: hechos, pendientes, importadas: ok.length, fallidas };
   if (res.completo) {
-    const canciones = ok.map(a => estado.canciones[a.id]).filter(Boolean).sort((x, y) => x.titulo.localeCompare(y.titulo, 'es'));
+    // Correcciones del admin sobre la base (Datos/correcciones.json): se aplican después de cada importación.
+    const corr = leerJson_(datos, 'correcciones.json', {});
+    const canciones = ok.map(a => estado.canciones[a.id]).filter(Boolean).map(s => {
+      if (!corr[s.id]) return s;
+      const c = aplicarCorreccion_(s, corr[s.id]); escribirJson_(dirCanciones, s.id + '.json', c); return c;
+    }).sort((x, y) => x.titulo.localeCompare(y.titulo, 'es'));
+    const dudas = [].concat(...ok.filter(a => a.dudas && a.dudas.length && !corr[a.id]).map(a => a.dudas.map(d => Object.assign({ archivo: a.nombre, id: a.id }, d))));
     escribirJson_(datos, 'cancionero.json', canciones);
     const fecha = new Date().toISOString();
-    escribirJson_(datos, 'import-log.json', { fecha, ok: ok.map(a => ({ archivo: a.nombre, id: a.id, enPlanilla: a.enPlanilla })), fallidas });
+    escribirJson_(datos, 'import-log.json', { fecha, ok: ok.map(a => ({ archivo: a.nombre, id: a.id, enPlanilla: a.enPlanilla })), fallidas, dudas });
+    res.dudas = dudas;
     registrarIglesia_(ig.rootId, { importado: fecha });
     cacheDel_(ck_(ig, 'cancionero')); cacheDel_(ck_(ig, 'registro'));
   }
@@ -102,4 +111,25 @@ function importarPrueba() {
   }
   Logger.log('Importación completa. Canciones: ' + r.importadas + ' · Fallidas: ' + r.fallidas.length);
   r.fallidas.forEach(x => Logger.log('FALLÓ ' + x.archivo + ': ' + x.error));
+  (r.dudas || []).forEach(x => Logger.log('REVISAR ' + x.archivo + ' · ' + x.parte + ': ' + x.motivo));
+}
+
+/** Admin: guarda (o borra, con null) la corrección de una canción y la aplica ya, sin reimportar. */
+function corregirCancion_(ig, id, correccion) {
+  const datos = datos_(ig), corr = leerJson_(datos, 'correcciones.json', {});
+  const estado = leerJson_(datos, 'import-estado.json', { canciones: {} });
+  const base = estado.canciones[id];
+  if (!base) throw apiError_('No existe esa canción.', 'no-existe');
+  if (correccion == null) delete corr[id];
+  else {
+    if (typeof correccion !== 'object' || JSON.stringify(correccion).length > 50000) throw apiError_('Corrección inválida.', 'formato');
+    corr[id] = { modulante: correccion.modulante == null ? undefined : !!correccion.modulante, partes: correccion.partes || {} };
+  }
+  escribirJson_(datos, 'correcciones.json', corr);
+  const song = corr[id] ? aplicarCorreccion_(base, corr[id]) : base;
+  escribirJson_(subcarpeta_(datos, 'canciones'), id + '.json', song);
+  const todas = leerJson_(datos, 'cancionero.json', []).map(s => s.id === id ? song : s);
+  escribirJson_(datos, 'cancionero.json', todas);
+  cacheDel_(ck_(ig, 'cancionero'));
+  return song;
 }

@@ -113,6 +113,8 @@ function hojaReuniones_(ss, crear) {
 }
 function filaAReunion_(r, i) {
   let canciones = []; try { canciones = JSON.parse(r[5] || '[]'); } catch (e) {}
+  // Reuniones guardadas antes de los pid: ids deterministas hasta que se vuelvan a guardar.
+  canciones.forEach((it, k) => { if (!it.pid) it.pid = 'i' + k; (it.arr || []).forEach((p, j) => { if (!p.pid) p.pid = it.pid + 'p' + j; }); });
   return { _row: i + 2, id: String(r[0]), nombre: String(r[1]), fecha: isoDe_(r[2]) || String(r[2]), director: String(r[3]),
            clave: String(r[4]), canciones, borrada: !!r[6], registrada: !!r[7] };
 }
@@ -175,11 +177,11 @@ function registrarUso_(ig, r) {
   const titulo = {}; try { cancionero_(ig).forEach(s => titulo[s.id] = s.titulo); } catch (e) {}
   const usaId = cC >= 0 && /\bid\b/.test(norm_(H[cC]));
   const [y, m, d] = r.fecha.split('-').map(Number);
-  const filas = itemsPlanos_(r).map(c => {
+  const filas = itemsPlanos_(ig, r).map(c => {
     const f = new Array(n).fill('');
     if (cF >= 0) f[cF] = new Date(y, m - 1, d);
     if (cC >= 0) f[cC] = usaId ? c.id : (titulo[c.id] || c.id);
-    if (cT >= 0) f[cT] = c.tono; if (cQ >= 0) f[cQ] = c.quien || ''; if (cO >= 0) f[cO] = 'reunión';
+    if (cT >= 0) f[cT] = c.tono; if (cQ >= 0) f[cQ] = c.quien || ''; if (cO >= 0) f[cO] = c.ref;
     return f;
   });
   if (!filas.length) return 0;
@@ -194,7 +196,7 @@ function registrarUso_(ig, r) {
 function anotarPasadas_(ig) {
   try {
     const hoy = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
-    const pend = l => l.filter(r => !r.borrada && !r.registrada && itemsPlanos_(r).length && r.fecha < hoy);
+    const pend = l => l.filter(r => !r.borrada && !r.registrada && (r.canciones || []).length && r.fecha < hoy);
     if (!pend(reuniones_(ig)).length) return;          // chequeo barato contra la caché
     const lock = LockService.getScriptLock();
     if (!lock.tryLock(5000)) return;                    // otro pedido ya lo está haciendo
@@ -204,35 +206,111 @@ function anotarPasadas_(ig) {
   } catch (e) { console.error(e && e.stack || e); }
 }
 
-// ---------- Ítems de reunión: canción o medley ----------
-// Canción: { id, tono, quien, arr: [{ src, label, rep }] }
-// Medley:  { tipo: 'medley', nombre, tono, quien, canciones: [{ id, quien }], arr: [{ cancion, src, label, rep, tono? }] }
-//          (en arr, `tono` cambia el tono desde esa parte en adelante)
-function limpiarItem_(x) {
+// ---------- Ítems de reunión: arreglo completo (SPEC §5 "Reuniones") ----------
+// Canción: { pid, id, tono, quien, modulante?, desde?, arr: [Parte] }
+// Medley:  { pid, tipo: 'medley', nombre, tono, quien, canciones: [{ id, quien }], arr: [Parte] }
+// Parte:   { pid, src | nueva, cancion?, label, rep, tono?, mostrar?, lineas?, cambios?, editado? }
+const LIM_ACORDES_ = { bytes: 20000, lineas: 200, cambios: 30, porMinuto: 30, porPersonaMinuto: 10 };
+const nuevoPid_ = () => Math.random().toString(36).slice(2, 9);
+const TIPOS_LINEA_ = ['pair', 'ch', 'mix', 'ly', 'blank', 'sec'];
+
+/** Valida líneas con el mismo formato que la canción. Devuelve una copia limpia o lanza error. */
+function limpiarLineas_(L) {
+  if (!Array.isArray(L)) throw apiError_('Formato de acordes inválido.', 'formato');
+  if (L.length > LIM_ACORDES_.lineas || JSON.stringify(L).length > LIM_ACORDES_.bytes) throw apiError_('La parte es demasiado larga.', 'tamano');
+  return L.map(l => {
+    if (!l || TIPOS_LINEA_.indexOf(l.t) < 0) throw apiError_('Formato de acordes inválido.', 'formato');
+    if (l.t === 'pair') {
+      if (!Array.isArray(l.segs)) throw apiError_('Formato de acordes inválido.', 'formato');
+      const o = { t: 'pair', segs: l.segs.map(sg => [String(sg[0] || '').slice(0, 30), String(sg[1] || '').slice(0, 300)]) };
+      if (l.puente) o.puente = true; return o;
+    }
+    if (l.t === 'blank') return { t: 'blank' };
+    const o = { t: l.t, v: String(l.v || '').slice(0, 300) }; if (l.puente) o.puente = true; return o;
+  });
+}
+
+/** Limpia un ítem que manda el director. `previo` (pid → parte guardada) conserva acordes e historial de los músicos. */
+function limpiarItem_(x, previo, pidsItems) {
+  previo = previo || {};
+  const usados = {};
   const parte = a => {
-    const p = { src: a.src == null ? null : +a.src, label: a.label == null ? null : String(a.label), rep: Math.max(1, Math.min(9, +a.rep || 1)) };
+    const p = { label: a.label == null ? null : String(a.label).slice(0, 80), rep: Math.max(1, Math.min(9, +a.rep || 1)) };
+    let pid = a.pid ? String(a.pid).slice(0, 20) : '';
+    if (!pid || usados[pid]) pid = nuevoPid_();       // sin pid, o duplicada (⧉): parte nueva
+    usados[pid] = 1; p.pid = pid;
+    if (a.nueva) p.nueva = true; else p.src = a.src == null ? null : +a.src;
     if (a.cancion != null) p.cancion = String(a.cancion);
-    if (a.tono) p.tono = String(a.tono);
+    if (a.tono) p.tono = String(a.tono).slice(0, 8);
+    if (a.mostrar) p.mostrar = true;
+    const ant = a.pid && previo[a.pid];
+    if (ant && String(a.pid) === pid) {
+      // Parte existente: los acordes los editan los músicos (editarAcordes); el director no los pisa.
+      ['lineas', 'cambios', 'editado'].forEach(k => { if (ant[k] != null) p[k] = ant[k]; });
+    } else if (a.lineas != null) {
+      p.lineas = limpiarLineas_(a.lineas);              // parte nueva, copia (⧉) o "Como la última vez"
+    }
     return p;
   };
   const arr = Array.isArray(x.arr) ? x.arr.map(parte) : [];
+  let pid = x.pid ? String(x.pid).slice(0, 20) : '';
+  if (!pid || (pidsItems && pidsItems[pid])) pid = nuevoPid_();
+  if (pidsItems) pidsItems[pid] = 1;
+  const desde = x.desde ? String(x.desde).slice(0, 60) : undefined;
   if (x.tipo === 'medley') {
     const canciones = (Array.isArray(x.canciones) ? x.canciones : []).filter(c => c && c.id).map(c => ({ id: String(c.id), quien: String(c.quien || '') }));
     if (canciones.length < 2) throw apiError_('Un medley necesita al menos 2 canciones.', 'formato');
-    return { tipo: 'medley', nombre: String(x.nombre || ''), tono: String(x.tono || ''), quien: String(x.quien || ''), canciones, arr };
+    return { pid, tipo: 'medley', nombre: String(x.nombre || ''), tono: String(x.tono || ''), quien: String(x.quien || ''), canciones, arr };
   }
-  return { id: String(x.id), tono: String(x.tono || ''), quien: String(x.quien || ''), arr };
+  const o = { pid, id: String(x.id), tono: String(x.tono || ''), quien: String(x.quien || ''), arr };
+  if (x.modulante != null) o.modulante = !!x.modulante;
+  if (desde) o.desde = desde;
+  return o;
 }
 
-/** Lista plana { id, tono, quien } para Registro y Personas: cada canción de un medley va por separado,
- *  con el tono vigente en su primera parte (tono del medley o la última modulación anterior). */
-function itemsPlanos_(r) {
+/** pid → parte, de todas las partes guardadas de una reunión. */
+function partesPorPid_(r) {
+  const m = {}; (r.canciones || []).forEach(it => (it.arr || []).forEach(p => { if (p.pid) m[p.pid] = p; })); return m;
+}
+
+/** Edición de acordes de una parte por un músico (sin clave). lineas null = volver a la base. */
+function editarAcordes_(ig, r, itemPid, partePid, lineas, quien) {
+  quien = String(quien || '').trim().slice(0, 40);
+  if (!quien) throw apiError_('Escribí tu nombre para guardar los acordes.', 'nombre');
+  const cache = CacheService.getScriptCache(), min = Math.floor(Date.now() / 60000);
+  const k1 = 'acordes:' + ig.rootId + ':' + min, k2 = k1 + ':' + norm_(quien);
+  const n1 = +(cache.get(k1) || 0), n2 = +(cache.get(k2) || 0);
+  if (n1 >= LIM_ACORDES_.porMinuto || n2 >= LIM_ACORDES_.porPersonaMinuto) throw apiError_('Demasiadas ediciones seguidas. Esperá un minuto.', 'limite');
+  const it = (r.canciones || []).find(x => x.pid === itemPid);
+  // Ítem en el orden original (arr vacío): se materializa el arreglo base, con pids, para poder editar una parte.
+  if (it && !(it.arr || []).length && it.tipo !== 'medley') {
+    const s = cancionero_(ig).find(x => x.id === it.id);
+    if (s) it.arr = arrBase_(s).map((p, j) => Object.assign({ pid: it.pid + 'p' + j }, p));
+  }
+  const p = it && (it.arr || []).find(x => x.pid === partePid);
+  if (!p) throw apiError_('Esa parte ya no está en la reunión. Recargá.', 'no-existe');
+  const nuevas = lineas == null ? null : limpiarLineas_(lineas);
+  if (nuevas == null && p.nueva) throw apiError_('Una parte nueva no tiene versión base.', 'formato');
+  const fecha = new Date().toISOString();
+  // La versión anterior queda en el historial (gana el último guardado; lo anterior se puede restaurar).
+  p.cambios = [{ quien: p.editado ? p.editado.quien : '', fecha: p.editado ? p.editado.fecha : '', lineas: p.lineas == null ? null : p.lineas }]
+    .concat(p.cambios || []).slice(0, LIM_ACORDES_.cambios);
+  if (nuevas == null) delete p.lineas; else p.lineas = nuevas;
+  p.editado = { quien, fecha };
+  guardarReunion_(ig, r);
+  cache.put(k1, String(n1 + 1), 120); cache.put(k2, String(n2 + 1), 120);
+  return p;
+}
+
+/** Filas para Registro y Personas: { id, quien, tono: 'G→Ab→A', ref } (cada canción de un medley por separado). */
+function itemsPlanos_(ig, r) {
+  const songs = {}; try { cancionero_(ig).forEach(s => { songs[s.id] = s; }); } catch (e) {}
   const out = [];
   (r.canciones || []).forEach(x => {
-    if (x.tipo !== 'medley') { out.push({ id: x.id, tono: x.tono, quien: x.quien }); return; }
-    const tonoDe = {}; let t = x.tono;
-    (x.arr || []).forEach(a => { if (a.tono) t = a.tono; if (a.cancion && !(a.cancion in tonoDe)) tonoDe[a.cancion] = t; });
-    x.canciones.forEach(c => out.push({ id: c.id, tono: tonoDe[c.id] || x.tono, quien: c.quien || x.quien }));
+    let tt;
+    try { tt = tonosTocados_(x, songs); }
+    catch (e) { tt = (x.tipo === 'medley' ? x.canciones : [x]).map(c => ({ id: c.id, quien: c.quien || x.quien, tonos: [x.tono] })); }
+    tt.forEach(t => out.push({ id: t.id, quien: t.quien, tono: t.tonos.filter(Boolean).join('→'), ref: 'reunión ' + r.id + '#' + (x.pid || '') }));
   });
   return out;
 }

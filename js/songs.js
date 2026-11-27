@@ -25,7 +25,7 @@ export function blocksOf(s) {
   if (s._b) return s._b;
   const B = []; let cur = { label: '', lines: [] };
   s.lineas.forEach(l => {
-    if (l.t === 'sec') { if (cur.label || cur.lines.some(x => x.t !== 'blank')) B.push(cur); cur = { label: l.v, lines: [] }; }
+    if (l.t === 'sec') { if (cur.label || cur.lines.some(x => x.t !== 'blank')) B.push(cur); cur = { label: l.v, sec: l, lines: [] }; }
     else cur.lines.push(l);
   });
   B.push(cur);
@@ -40,7 +40,7 @@ export function blocksOf(s) {
 }
 
 export const defArr = s => blocksOf(s).map(b => ({ src: b.has ? b.id : b.ref, label: b.label, rep: repOf(b.label) }));
-export const isDefArr = (s, arr) => JSON.stringify(arr) === JSON.stringify(defArr(s));
+export const isDefArr = (s, arr) => JSON.stringify((arr || []).map(e => ({ src: e.src, label: e.label, rep: e.rep }))) === JSON.stringify(defArr(s)) && !(arr || []).some(e => e.tono || e.nueva || e.lineas);
 
 /** Líneas a mostrar según el arreglo. En modo músico los bloques repetidos se muestran solo con su título. */
 export function arrLines(s, arr, musician) {
@@ -63,34 +63,59 @@ export const isoOf = t => t.getFullYear() + '-' + String(t.getMonth() + 1).padSt
 /** ISO (AAAA-MM-DD) → DD-MM-AAAA */
 export const fmt = f => f ? f.split('-').reverse().join('-') : '';
 
-/** Ítems de una reunión como lista plana { id, tono, quien }: cada canción de un medley va por separado,
- *  con el tono vigente en su primera parte. Igual que itemsPlanos_ del motor. */
-export function itemsPlanos(r) {
-  const out = [];
-  (r.canciones || []).forEach(x => {
-    if (x.tipo !== 'medley') { out.push({ id: x.id, tono: x.tono, quien: x.quien }); return; }
-    const tonoDe = {}; let t = x.tono;
-    (x.arr || []).forEach(a => { if (a.tono) t = a.tono; if (a.cancion && !(a.cancion in tonoDe)) tonoDe[a.cancion] = t; });
-    (x.canciones || []).forEach(c => out.push({ id: c.id, tono: tonoDe[c.id] || x.tono, quien: c.quien || x.quien }));
+// ---------- Tonos tocados (igual que tonosTocados_ de motor/Tonos.js) ----------
+const PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+const MAY = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'], MEN = ['Cm', 'C#m', 'Dm', 'Ebm', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'Bbm', 'Bm'];
+const tpc = t => { const m = /^([A-G])([#b]?)(m?)$/.exec(String(t || '').trim()); return m ? { pc: (PC[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + 12) % 12, m: !!m[3] } : null; };
+const tmas = (t, n) => { const k = tpc(t); if (!k) return t; const pc = ((k.pc + n) % 12 + 12) % 12; return k.m ? MEN[pc] : MAY[pc]; };
+const tint = (a, b) => { const x = tpc(a), y = tpc(b); if (!x || !y) return 0; let d = ((y.pc - x.pc) % 12 + 12) % 12; return d > 5 ? d - 12 : d; };
+const sinRep = a => a.filter((t, i) => t && (i === 0 || t !== a[i - 1]));
+
+/** Secuencia de tonos por canción de un ítem de reunión (canción o medley). songById: id → canción. */
+export function tonosTocados(item, songById) {
+  const medley = item.tipo === 'medley';
+  const ids = medley ? (item.canciones || []).map(c => c.id) : [item.id];
+  const quienDe = id => medley ? (((item.canciones || []).find(c => c.id === id) || {}).quien || item.quien) : item.quien;
+  const s0 = songById(ids[0]);
+  const modul = medley || (item.modulante != null ? !!item.modulante : !!(s0 && s0.modulante));
+  if (!modul) return [{ id: item.id, quien: item.quien, tonos: [item.tono || (s0 && s0.tono) || ''] }];
+  const B = {}; ids.forEach(id => { const s = songById(id); if (s) B[id] = blocksOf(s); });
+  let arr = item.arr && item.arr.length ? item.arr : [];
+  if (!arr.length) arr = medley ? [].concat(...ids.map(id => (B[id] || []).map(b => ({ cancion: id, src: b.id })))) : (B[item.id] || []).map(b => ({ src: b.id }));
+  const por = {}; ids.forEach(id => { por[id] = []; });
+  let toc = null, esc = null, ant = null;
+  arr.forEach(p => {
+    const id = medley ? p.cancion : item.id, b = p.src != null && B[id] ? B[id][p.src] : null;
+    const sec = b && b.sec, e = sec && sec.tono || (songById(id) || {}).tono || null;
+    if (sec && sec.transicion) return;
+    const t = p.tono ? p.tono : toc == null ? (item.tono || e) : (id === ant && e && esc) ? tmas(toc, tint(esc, e)) : toc;
+    toc = t; if (e) esc = e; ant = id; if (por[id]) por[id].push(t);
   });
+  return ids.map(id => ({ id, quien: quienDe(id), tonos: sinRep(por[id] || []).length ? sinRep(por[id]) : [item.tono || ''] }));
+}
+
+/** Ítems de una reunión como lista plana { id, tono: 'G→Ab→A', quien }: cada canción de un medley por separado. */
+export function itemsPlanos(r, songById = () => null) {
+  const out = [];
+  (r.canciones || []).forEach(x => tonosTocados(x, songById).forEach(t => out.push({ id: t.id, tono: t.tonos.filter(Boolean).join('→'), quien: t.quien })));
   return out;
 }
 
 /** Registros de una canción (id o lista de ids: versiones del mismo título en otros tonos)
  *  = registro histórico + canciones de reuniones. */
-export function historyOf(id, registro, reuniones) {
+export function historyOf(id, registro, reuniones, songById) {
   const ids = new Set([].concat(id)), has = x => ids.has(x);
   const a = registro.filter(x => has(x.id)).map(x => ({ ...x }));
   // Las reuniones ya volcadas a Registro no se cuentan dos veces (si Registro todavía no
   // trae esa fecha, p. ej. porque se anotó durante esta misma carga, se cuenta la reunión).
-  reuniones.filter(r => !r.registrada || !registro.some(x => x.f === r.fecha)).forEach(r => itemsPlanos(r).forEach(c => { if (has(c.id)) a.push({ f: r.fecha, id: c.id, t: c.tono, q: c.quien }); }));
+  reuniones.filter(r => !r.registrada || !registro.some(x => x.f === r.fecha)).forEach(r => itemsPlanos(r, songById).forEach(c => { if (has(c.id)) a.push({ f: r.fecha, id: c.id, t: c.tono, q: c.quien }); }));
   return a.sort((x, y) => (x.f || '').localeCompare(y.f || ''));
 }
 
 /** Última vez y tono por persona. Solo cuentan fechas hasta hoy (o sin fecha). */
-export function summary(id, registro, reuniones) {
+export function summary(id, registro, reuniones, songById) {
   const T = todayISO();
-  const a = historyOf(id, registro, reuniones).filter(x => !x.f || x.f <= T);
+  const a = historyOf(id, registro, reuniones, songById).filter(x => !x.f || x.f <= T);
   const last = [...a].reverse().find(x => x.f), per = {};
   a.forEach(x => { if (x.q) per[x.q] = { t: x.t, f: x.f || (per[x.q] || {}).f, n: ((per[x.q] || {}).n || 0) + 1 }; });
   return { last, per };

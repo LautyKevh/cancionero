@@ -30,7 +30,7 @@ const songBy = id => SONGS.find(s => s.id === id);
 const sesBy = id => SES.find(r => r.id === id);
 // Versiones del mismo título (otro tono, otro archivo) comparten historial.
 const versiones = id => { const s = songBy(id); return s ? SONGS.filter(x => x.titulo.toLowerCase() === s.titulo.toLowerCase()).map(x => x.id) : [id]; };
-const perOf = id => summary(versiones(id), REG, SES).per;
+const perOf = id => summary(versiones(id), REG, SES, songBy).per;
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const interp = s => s.interprete && s.interprete !== '-' ? s.interprete : '';
 
@@ -45,6 +45,7 @@ function transition(fn) {
   let done = false;
   const once = () => { if (!done) { done = true; fn(); } };
   const vt = document.startViewTransition(once);
+  vt.ready.catch(() => {}); vt.finished.catch(() => {});   // saltearla no es un error
   setTimeout(() => { if (!done) { vt.skipTransition?.(); once(); } }, 300);
 }
 
@@ -166,7 +167,7 @@ function songList() {
 
 function pickMode(s) {
   setTabs(null);
-  const { last, per } = summary(versiones(s.id), REG, SES), names = Object.keys(per);
+  const { last, per } = summary(versiones(s.id), REG, SES, songBy), names = Object.keys(per);
   const hist = !last && !names.length ? '<div class="hist empty">Sin registros todavía.</div>'
     : `<div class="hist">${last ? `<div class="hist-row"><span>Última vez</span><b>${esc(fmt(last.f))}</b> · ${last.q ? esc(last.q) : '<i>sin registrar quién</i>'}</div>
        <div class="hist-row"><span>Tono última vez</span><b class="kc">${esc(last.t)}</b></div>` : ''}

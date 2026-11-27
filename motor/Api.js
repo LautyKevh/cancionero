@@ -14,7 +14,9 @@
 //   a=editarReunion  { id, clave, cambios: { nombre?, fecha?, director?, canciones? } }
 //   a=borrarReunion  { id, clave }                       (borrado lógico)
 //   a=registrarUso   { id, clave }                       (agrega filas a Registro, una sola vez; también se hace solo al día siguiente de la reunión)
+//   a=editarAcordes  { id, item, parte, lineas|null, quien } (sin clave; músicos; null = volver a la base)
 //   a=importar       { idToken }                         (admin)
+//   a=corregir       { idToken, cancion, correccion|null } (admin; Datos/correcciones.json)
 //
 // Respuesta: { ok: true, data } | { ok: false, error, code }
 
@@ -70,11 +72,18 @@ function doPost(e) {
         if (c.nombre != null) r.nombre = String(c.nombre).trim() || r.nombre;
         if (c.fecha != null && /^\d{4}-\d{2}-\d{2}$/.test(c.fecha)) r.fecha = c.fecha;
         if (c.director != null) r.director = String(c.director).trim();
-        if (Array.isArray(c.canciones)) r.canciones = c.canciones.map(limpiarItem_);
+        if (Array.isArray(c.canciones)) { const prev = partesPorPid_(r), pids = {}; r.canciones = c.canciones.map(x => limpiarItem_(x, prev, pids)); }
         guardarReunion_(ig, r);
-        agregarPersonas_(ig, [r.director].concat(itemsPlanos_(r).map(x => x.quien)));
+        agregarPersonas_(ig, [r.director].concat(itemsPlanos_(ig, r).map(x => x.quien)));
         return publica_(r);
       });
+      // Músicos, sin clave: acordes de una parte del arreglo (SPEC §7 "Arreglo compartido").
+      case 'editarAcordes': return conLock_(() => {
+        const r = buscar();
+        return editarAcordes_(ig, r, String(b.item || ''), String(b.parte || ''), b.lineas == null ? null : b.lineas, b.quien);
+      });
+      // Admin: corrección de la canción base → Datos/correcciones.json (SPEC §5).
+      case 'corregir': verificarAdmin_(ig, b.idToken); return conLock_(() => corregirCancion_(ig, String(b.cancion || ''), b.correccion));
       case 'borrarReunion': return conLock_(() => { const r = buscar(); verificarPin_(ig, r, b.clave); r.borrada = true; guardarReunion_(ig, r); return true; });
       case 'registrarUso': return conLock_(() => {
         const r = buscar(); verificarPin_(ig, r, b.clave);

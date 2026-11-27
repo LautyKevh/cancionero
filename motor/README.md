@@ -15,11 +15,12 @@ Un solo motor multi-iglesia publicado como Web App. Cada iglesia se identifica p
 | `Store.js` | Datos/ (JSON), planilla, CacheService (lecturas) y LockService (escrituras) |
 | `Seguridad.js` | PIN de 4 dígitos con hash SHA‑256 + sal, bloqueo 10 min tras 5 intentos, verificación de admin con Google |
 | `Convertir.js` | Port de `referencia/convert.py`: lee el `.docx` como ZIP, sin archivos temporales |
+| `Tonos.js` | Tono por parte, transiciones, acordes puente, Modulante, correcciones del admin y tonos tocados por ítem de reunión (se puede probar con Node) |
 | `Importar.js` | Word de "Letra y Acordes" → `Datos/canciones/<id>.json` + `Datos/cancionero.json` + `Datos/import-log.json` |
 
 ## Qué escribe en el Drive de la iglesia
 
-- `Datos/` (la crea si falta): JSON de canciones, log de importación y `Respaldos/`.
+- `Datos/` (la crea si falta): JSON de canciones, log de importación (con las canciones de tono dudoso), `correcciones.json` (solo correcciones de la base hechas por el admin) y `Respaldos/`.
 - Planilla: crea la pestaña **Reuniones** y **agrega filas al final** de **Registro** y **Personas**.
   Nunca modifica ni borra filas existentes, fórmulas ni validaciones. Antes de la primera escritura
   copia la planilla a `Datos/Respaldos/` (la iglesia de prueba no se respalda: ya es una copia).
