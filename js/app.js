@@ -784,7 +784,7 @@ function editSes(r) {
   const nombreFila = c => {
     if (c.tipo !== 'medley') return `<span class="edt">${esc(tituloItem(c))}</span>`;
     const N = (c.canciones || []).map(x => (songBy(x.id) || {}).titulo).filter(Boolean);
-    return `<span class="edt med"><span class="l1"><span class="nm">${esc(N[0] || '')}</span><small class="medtag">Medley</small></span>${N.slice(1).map(n => `<span class="nm">+ ${esc(n)}</span>`).join('')}</span>`;
+    return `<span class="edt med">${N.map((n, k) => `<span class="nm">${k ? '+ ' : ''}${esc(n)}</span>`).join('')}<small class="medtag">Medley</small></span>`;
   };
   const rows = r.canciones.map((c, i) => { if (!itemOk(c)) return '';
     // Tocar el nombre abre el editor de partes (el renglón de tono y Dirige no abre nada).
