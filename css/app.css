@@ -259,23 +259,24 @@ input[type=search]::placeholder { color: var(--mute); }
 .pop.step button { width: 44px; height: 44px; border: 0; border-radius: 8px; background: none; font-size: 20px; font-weight: 600; }
 .pop.step b { min-width: 40px; text-align: center; font-size: 16px; color: var(--ch); }
 /* Hoja de abajo: tono de una parte */
-.sheetw .veil { position: fixed; inset: 0; z-index: 30; background: rgba(20, 24, 40, .38); }
-.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-width: 560px; margin: 0 auto; background: var(--card); border-radius: 20px 20px 0 0; padding: 8px var(--gut) calc(18px + env(safe-area-inset-bottom)); }
-.sheet .bar { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 12px; }
-.sheet h3 { margin: 0; font: 600 20px/1.2 Fraunces, Georgia, serif; }
-.sheet p { margin: 2px 0 12px; color: var(--mute); font-size: 13px; }
-.sheet h4 { margin: 16px 0 6px; font-size: 13px; font-weight: 600; color: var(--mute); }
-.rel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.keys { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
-.rel button, .keys button { font: 700 15px/1 "JetBrains Mono", monospace; height: 46px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); display: grid; place-items: center; align-content: center; gap: 3px; padding: 0; }
-.keys button { height: 42px; position: relative; }
-.rel button small { font: 500 10.5px Inter, sans-serif; color: var(--mute); }
-.rel button[aria-pressed="true"], .keys button[aria-pressed="true"] { background: #0474c4; border-color: #0474c4; color: #fff; }
-.rel button[aria-pressed="true"] small { color: #fff; opacity: .85; }
-.keys button.orig::after { content: ""; position: absolute; bottom: 5px; left: 50%; margin-left: -2px; width: 4px; height: 4px; border-radius: 50%; background: var(--sec); }
-.sheet .orig-n { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: var(--mute); }
-.sheet .orig-n::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--sec); }
-.sheet .ok { width: 100%; margin-top: 14px; }
+/* (.tsheet y no .sheet: .sheet es la hoja de la canción) */
+.tsheetw .veil { position: fixed; inset: 0; z-index: 30; background: rgba(20, 24, 40, .38); }
+.tsheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-width: 560px; margin: 0 auto; background: var(--card); border-radius: 20px 20px 0 0; padding: 8px var(--gut) calc(18px + env(safe-area-inset-bottom)); }
+.tsheet .bar { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 12px; }
+.tsheet h3 { margin: 0; font: 600 20px/1.2 Fraunces, Georgia, serif; }
+.tsheet p { margin: 2px 0 12px; color: var(--mute); font-size: 13px; }
+.tsheet h4 { margin: 16px 0 6px; font-size: 13px; font-weight: 600; color: var(--mute); }
+.tsheet .rel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.tsheet .keys { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.tsheet .rel button, .tsheet .keys button { font: 700 15px/1 "JetBrains Mono", monospace; height: 46px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); display: grid; place-items: center; align-content: center; gap: 3px; padding: 0; }
+.tsheet .keys button { height: 42px; position: relative; }
+.tsheet .rel button small { font: 500 10.5px Inter, sans-serif; color: var(--mute); }
+.tsheet .rel button[aria-pressed="true"], .tsheet .keys button[aria-pressed="true"] { background: #0474c4; border-color: #0474c4; color: #fff; }
+.tsheet .rel button[aria-pressed="true"] small { color: #fff; opacity: .85; }
+.tsheet .keys button.orig::after { content: ""; position: absolute; bottom: 5px; left: 50%; margin-left: -2px; width: 4px; height: 4px; border-radius: 50%; background: var(--sec); }
+.tsheet .orig-n { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: var(--mute); }
+.tsheet .orig-n::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--sec); }
+.tsheet .ok { width: 100%; margin-top: 14px; }
 
 .pvb { overflow: hidden; }
 .pvb-in { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--sec); background: var(--bg); border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.45; }

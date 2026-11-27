@@ -788,8 +788,8 @@ function parts(r, i, abrirTono) {
     const sinTono = c.arr.map((x, n) => { if (n !== j) return x; const y = { ...x }; delete y.tono; return y; });
     const orig = tonosDelItem({ ...c, arr: sinTono }, { [s.id]: s }).partes[j].tono;
     const doce = [...Array(12)].map((_, n) => tonoMas(/m$/.test(o.tono) ? 'Cm' : 'C', n));
-    const w = document.createElement('div'); w.className = 'sheetw';
-    w.innerHTML = `<div class="veil"></div><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-t"><div class="bar"></div>
+    const w = document.createElement('div'); w.className = 'tsheetw';
+    w.innerHTML = `<div class="veil"></div><div class="tsheet" role="dialog" aria-modal="true" aria-labelledby="sh-t"><div class="bar"></div>
       <h3 id="sh-t">Tono de ${esc(nom(e))}</h3><p>Respecto de la parte anterior (${esc(nom(c.arr[k]))}, en ${esc(a.tono)})</p>
       <div class="rel">${DIF.map(([n, t]) => `<button type="button" data-n="${n}" aria-pressed="${d === n}">${t}<small>${n ? esc(tonoMas(a.tono, n)) : 'igual'}</small></button>`).join('')}</div>
       <h4>O elegí el tono</h4>
@@ -806,8 +806,8 @@ function parts(r, i, abrirTono) {
     w.querySelector('.veil').onclick = cerrar; w.querySelector('.ok').onclick = cerrar;
     w.querySelectorAll('[data-n]').forEach(b => b.onclick = () => poner(tonoMas(a.tono, +b.dataset.n)));
     w.querySelectorAll('[data-tk]').forEach(b => b.onclick = () => poner(b.dataset.tk));
-    (w.querySelector('.sheet [aria-pressed="true"]') || w.querySelector('.ok')).focus({ preventScroll: true });
-    if (!reduced()) { w.querySelector('.sheet').animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: sinAnim ? 0 : 240, easing: 'cubic-bezier(.2,.7,.2,1)' });
+    (w.querySelector('.tsheet [aria-pressed="true"]') || w.querySelector('.ok')).focus({ preventScroll: true });
+    if (!reduced()) { w.querySelector('.tsheet').animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: sinAnim ? 0 : 240, easing: 'cubic-bezier(.2,.7,.2,1)' });
                       w.querySelector('.veil').animate([{ opacity: 0 }, { opacity: 1 }], { duration: sinAnim ? 0 : 200 }); }
   };
   $$('[data-k]').forEach(b => b.onclick = () => hoja(+b.dataset.k));
