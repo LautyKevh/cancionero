@@ -11,7 +11,8 @@
 // POST body (text/plain con JSON, evita el preflight de CORS): { iglesia, a, ... }
 //   a=crearReunion   { nombre, fecha, director, clave }
 //   a=verificarClave { id, clave }
-//   a=editarReunion  { id, clave, cambios: { nombre?, fecha?, director?, canciones? } }
+//   a=editarReunion  { id, clave | idToken, cambios: { nombre?, fecha?, director?, canciones? } }  (idToken: admin, sin clave)
+//   a=adminReunion   { id, idToken, clave?, director? } → { reunion, historial }  (admin: nueva clave / otro director; sin cambios, solo lee el historial)
 //   a=borrarReunion  { id, clave }                       (borrado lógico)
 //   a=registrarUso   { id, clave }                       (agrega filas a Registro, una sola vez; también se hace solo al día siguiente de la reunión)
 //   a=editarAcordes  { id, item, parte, lineas|null, quien } (sin clave; músicos; null = volver a la base)
@@ -66,12 +67,20 @@ function doPost(e) {
         guardarReunion_(ig, r); agregarPersonas_(ig, [director]);
         return publica_(r);
       });
-      case 'verificarClave': { const r = buscar(); verificarPin_(ig, r, b.clave); return true; }
+      case 'verificarClave': { const r = buscar(); autorizar_(ig, r, b); return true; }
       case 'editarReunion': return conLock_(() => {
-        const r = buscar(); verificarPin_(ig, r, b.clave);
-        const c = b.cambios || {};
+        const r = buscar(), c = b.cambios || {};
+        const datos = (c.nombre != null && String(c.nombre).trim() !== r.nombre) || (c.fecha != null && c.fecha !== r.fecha) || (c.director != null && String(c.director).trim() !== r.director);
+        autorizar_(ig, r, b, datos ? 'editó los datos' : 'editó las canciones');
         if (c.nombre != null) r.nombre = String(c.nombre).trim() || r.nombre;
-        if (c.fecha != null && /^\d{4}-\d{2}-\d{2}$/.test(c.fecha)) r.fecha = c.fecha;
+        if (c.fecha != null && c.fecha !== r.fecha) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(c.fecha)) throw apiError_('Fecha inválida.', 'formato');
+          // El Registro no se modifica nunca: una reunión ya anotada conserva su fecha.
+          if (r.registrada) throw apiError_('Esta reunión ya está anotada en el Registro con su fecha: no se puede cambiar.', 'registrada');
+          const otra = reunionesTodas_(ig).find(x => !x.borrada && x.id !== r.id && x.fecha === c.fecha);
+          if (otra) throw apiError_('Ya hay una reunión el ' + nombreDeFecha_(c.fecha) + ' (“' + otra.nombre + '”). No se cambió la fecha.', 'fecha-ocupada');
+          r.fecha = c.fecha;
+        }
         if (c.director != null) r.director = String(c.director).trim();
         if (Array.isArray(c.canciones)) { const prev = partesPorPid_(r), pids = {}; r.canciones = c.canciones.map(x => limpiarItem_(x, prev, pids)); }
         guardarReunion_(ig, r);
@@ -89,9 +98,17 @@ function doPost(e) {
       });
       // Admin: corrección de la canción base → Datos/correcciones.json (SPEC §5).
       case 'corregir': verificarAdmin_(ig, b.idToken); return conLock_(() => corregirCancion_(ig, String(b.cancion || ''), b.correccion));
-      case 'borrarReunion': return conLock_(() => { const r = buscar(); verificarPin_(ig, r, b.clave); r.borrada = true; guardarReunion_(ig, r); return true; });
+      case 'borrarReunion': return conLock_(() => { const r = buscar(); autorizar_(ig, r, b, 'borró la reunión'); r.borrada = true; guardarReunion_(ig, r); return true; });
+      case 'adminReunion': return conLock_(() => {
+        const r = buscar(), email = verificarAdmin_(ig, b.idToken);
+        const dir = b.director != null ? String(b.director).trim() : '';
+        if (dir && dir !== r.director) { anotarAdmin_(r, email, 'reasignó la reunión de ' + r.director + ' a ' + dir); r.director = dir; agregarPersonas_(ig, [dir]); }
+        if (b.clave) { r.clave = nuevaClave_(b.clave); anotarAdmin_(r, email, 'cambió la clave'); }
+        if (dir || b.clave) guardarReunion_(ig, r);
+        return { reunion: publica_(r), historial: r.historial || [] };
+      });
       case 'registrarUso': return conLock_(() => {
-        const r = buscar(); verificarPin_(ig, r, b.clave);
+        const r = buscar(); autorizar_(ig, r, b);
         if (r.registrada) return 0;
         const n = registrarUso_(ig, r); r.registrada = true; guardarReunion_(ig, r); return n;
       });

@@ -110,7 +110,7 @@ function personas_(ig) {
 }
 
 // ---------- Reuniones (pestaña creada por el motor) ----------
-const REU_HEAD = ['id', 'nombre', 'fecha', 'director', 'clave (sal:hash)', 'canciones (JSON)', 'borrada', 'registrada', 'actualizada'];
+const REU_HEAD = ['id', 'nombre', 'fecha', 'director', 'clave (sal:hash)', 'canciones (JSON)', 'borrada', 'registrada', 'actualizada', 'historial admin (JSON)'];
 
 function hojaReuniones_(ss, crear) {
   let sh = ss.getSheetByName('Reuniones');
@@ -124,8 +124,9 @@ function filaAReunion_(r, i) {
   const fecha = isoDe_(r[2]) || String(r[2]);
   // Reuniones guardadas antes del arreglo: Hojas pudo haber convertido el nombre en fecha.
   const nombre = r[1] instanceof Date ? nombreDeFecha_(isoDe_(r[1]) || fecha) : String(r[1]);
+  let historial = []; try { historial = JSON.parse(r[9] || '[]'); } catch (e) {}
   return { _row: i + 2, id: String(r[0]), nombre, fecha, director: String(r[3]),
-           clave: String(r[4]), canciones, borrada: !!r[6], registrada: !!r[7] };
+           clave: String(r[4]), canciones, borrada: !!r[6], registrada: !!r[7], historial };
 }
 function reunionesTodas_(ig) {
   const sh = hojaReuniones_(planilla_(ig), false);
@@ -170,7 +171,9 @@ function agregarPersonas_(ig, nombres) {
 function guardarReunion_(ig, r) {
   respaldar_(ig);
   const sh = hojaReuniones_(planilla_(ig), true);
-  const fila = [r.id, r.nombre, r.fecha, r.director, r.clave, JSON.stringify(r.canciones || []), r.borrada ? new Date() : '', r.registrada ? 'sí' : '', new Date()];
+  const fila = [r.id, r.nombre, r.fecha, r.director, r.clave, JSON.stringify(r.canciones || []), r.borrada ? new Date() : '', r.registrada ? 'sí' : '', new Date(), JSON.stringify(r.historial || [])];
+  // Hojas creadas antes de la columna del historial: se agrega el encabezado.
+  if (sh.getLastColumn() < REU_HEAD.length) sh.getRange(1, REU_HEAD.length).setValue(REU_HEAD[REU_HEAD.length - 1]);
   // Texto plano ANTES de escribir: si no, Hojas convierte "2026-11-29" o "Domingo 29-11-2026" en fecha con hora.
   const fil = r._row || sh.getLastRow() + 1;
   sh.getRange(fil, 1, 1, 4).setNumberFormat('@');

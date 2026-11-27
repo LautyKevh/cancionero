@@ -49,6 +49,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - **Alta autoservicio:** "Crear el cancionero de mi iglesia" → Google Sign-In → queda como admin → comparte su carpeta con el email del motor → el motor crea la estructura e importa. Se puede exigir un código de invitación (activable).
 - **Clave de director:** exactamente 4 dígitos numéricos. En la planilla se guarda solo el hash con sal (nunca la clave). Se verifica en el servidor y nunca se envía al cliente. Después de 5 intentos fallidos, bloqueo de 10 minutos por reunión.
 - **Admin:** el ID token de Google se verifica en Apps Script, y el email tiene que estar en la lista de admins de esa iglesia.
+- **Admin sobre las reuniones:** con la sesión de Google iniciada, el admin edita o borra cualquier reunión sin la clave de 4 números (el motor acepta `idToken` en lugar de `clave`). En Editar reunión ve además un panel "Admin" (solo él): cambiar el director (reasignar) y/o poner una clave nueva, que escribe el director nuevo. Todo lo que hace queda en el historial de la reunión (columna "historial admin (JSON)" de Reuniones: fecha, email, qué hizo; las ediciones seguidas cuentan una vez cada 10 min), visible solo en ese panel. Los demás no ven nada de esto.
 - **Edición de acordes sin clave:** queda abierta a cualquiera que tenga el link de la iglesia. El motor valida:
   - nombre obligatorio;
   - un límite de tamaño por parte;
@@ -243,20 +244,23 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Dirige: desplegable más "+ Agregar otro nombre…".
   - Clave de 4 dígitos.
 - Al entrar a una reunión se pregunta una sola vez Cantante / Músico. El botón "Modo: Músico ⇄" está en la lista. La elección se recuerda por reunión.
-- Las canciones se abren en el tono y el orden de la reunión, con "Dirige X" en el encabezado.
+- Las canciones se abren en el tono y el orden de la reunión.
+- **Encabezado de la canción** (en la reunión y en la lista), tres renglones: título / intérprete · Tono original X (· BPM) / Dirige X. Sin director, sin el tercer renglón; sin intérprete, solo "Tono original X"; en un medley, "Medley".
 - Al final de cada canción, botones grandes "← Anterior · título" / "Siguiente → título"; en la última, "Fin de la reunión".
 - **Editar (con clave):**
   - Agregar canción con buscador en vivo (título, letra, director). Al elegirla hay dos opciones:
     - **"Como la última vez":** copia el arreglo de la última reunión donde se tocó.
     - **"Versión base":** la canción como está en el Word.
   - Subir, bajar o quitar canciones.
-  - Tono y "Dirige" por canción (por defecto, el director de la reunión).
-- **Partes:**
-  - Lista de bloques con vista previa (primera línea; al tocar se despliega la letra completa).
-  - Contador de repeticiones `− x2 +` (1–9).
-  - Subir, bajar, duplicar (⧉) y quitar.
-  - Agregar parte (las opciones muestran su primera línea).
-  - Volver al orden original.
+  - Tono, "Dirige" y "Editar" (partes) de cada canción en una sola línea (por defecto, Dirige = director de la reunión).
+  - **Fecha, nombre y director** (desplegable arriba, con la misma clave): se cambian como al crearla y se conservan canciones, tonos y arreglos. El id de la reunión no depende de la fecha, así que links, historial y Registro siguen apuntando bien. Si la fecha nueva ya tiene otra reunión, avisa ("Ya hay una reunión el …") y no cambia nada. Una reunión ya anotada en el Registro no puede cambiar de fecha (el Registro no se modifica nunca). Si el nombre era el automático de la fecha, sigue a la fecha nueva.
+- **Partes (editor, pensado para el celular):**
+  - Una tarjeta por parte: manija ≡ para arrastrar (o flechas arriba/abajo con la manija enfocada), título, chip de repeticiones (`x2`, popover 1–9), chip de tono y ⋯ (Duplicar, Mostrar igual cuando corresponde, Quitar).
+  - Chip de tono (con Modulante): abre una hoja con `=` / `+½` / `+1` / `−½` respecto de la parte anterior o uno de los 12 tonos (el original marcado; elegirlo quita el tono elegido).
+  - Primer renglón de la letra (al tocar se despliega completa), sin "(Sube a X)"; nota de transición cuando corresponde.
+  - **Deslizar hacia la izquierda borra** la parte, sin diálogo: "Parte borrada · Deshacer" unos segundos.
+  - Agregar parte (las opciones muestran su primera línea; en un medley, agrupadas por canción) y volver al orden original.
+  - Las clases de la hoja de tono son `.tsheet`/`.tsheetw` (`.sheet` es la hoja de la canción; no reutilizar).
 - **Letra (con clave):** el director puede editar la letra de cualquier parte del arreglo de su reunión, igual que los acordes. Solo vale para esa reunión; nunca toca la base.
 - **"Proponer para todas las versiones":** convierte los cambios de esa reunión en una sugerencia de corrección de la base (ver 9). No reescribe nada: la sugerencia queda pendiente de revisión.
 - **Borrar (con clave):** con confirmación dentro de la página.
@@ -286,11 +290,11 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Las dos marcas conviven con "Mostrar igual" y con el modo Modulante. Con Modulante apagado no hay cambios de tono, así que se ven los `{ }` y los `[ ]` se ocultan siempre, también en la última parte.
   - Si la transición original no sirve para el nuevo salto, en esa reunión los músicos pueden editar sus acordes (ver "Arreglo compartido"). Si el arreglo de la base está mal, lo corrige el admin (ver 5).
 
-**Medley (etapa D, en prueba):**
+**Medley (etapa D, aprobada en el celular):**
 - Es un ítem dentro de una reunión que combina 2 o más canciones. Usa exactamente el mismo mecanismo de tono por parte.
 - Crear: Editar reunión → "Crear medley" → elegir canciones (búsqueda en vivo) → elegir tono de inicio. Se abre directo el editor de partes, con las partes de todas las canciones: reordenar, xN, duplicar, quitar y tono por parte.
 - **Borrar deslizando:** en el editor de partes (canción o medley) y en la lista de canciones de "Crear medley", deslizar hacia la izquierda borra, sin diálogo: aparece "Parte borrada · Deshacer" (o "Canción quitada · Deshacer") unos segundos. En la lista del medley ya no hay ✕ (con teclado: Suprimir sobre la manija); en el editor sigue "Quitar" en ⋯.
-- **Variantes de una parte (hecho, en prueba):** partes con la misma letra y distintos acordes (ej. "Digno de adorar": Coro 1 y Coro 2) son variantes (`variantesDe` en `js/songs.js`; los mismos acordes en otro tono no cuentan: es la parte repetida después de modular). El director no ve nada nuevo. En la vista Músico de la reunión, el título de esa parte, sin cambiar su tamaño ni su aspecto, lleva un ▾ chico y al tocarlo se abre una hoja; la hoja muestra cada variante (nombre y acordes desde donde se diferencian). Elegir una es un toque, sin clave ni nombre: el motor (`a=elegirVariante`, sin clave ni nombre, mismo límite por minuto que editarAcordes) cambia `src` y `label` de esa parte y guarda `variante: { de, fecha }` (historial solo con fecha y hora); lo ven todos. Si el director guarda después, se respeta (su `src` es el anterior o el nuevo); si cambia esa misma parte a otra, gana el director. Si la parte tenía acordes editados por un músico, pasan al historial (`cambios`). Solo aparece si el orden de la reunión difiere del Word, o en un medley. Cantante no cambia.
+- **Variantes de una parte (aprobadas):** partes con la misma letra y distintos acordes (ej. "Digno de adorar": Coro 1 y Coro 2) son variantes (`variantesDe` en `js/songs.js`; los mismos acordes en otro tono no cuentan: es la parte repetida después de modular). El director no ve nada nuevo. En la vista Músico de la reunión, el título de esa parte, sin cambiar su tamaño ni su aspecto, lleva un ▾ chico y al tocarlo se abre una hoja; la hoja muestra cada variante (nombre y acordes desde donde se diferencian). Elegir una es un toque, sin clave ni nombre: el motor (`a=elegirVariante`, sin clave ni nombre, mismo límite por minuto que editarAcordes) cambia `src` y `label` de esa parte y guarda `variante: { de, fecha }` (historial solo con fecha y hora); lo ven todos. Si el director guarda después, se respeta (su `src` es el anterior o el nuevo); si cambia esa misma parte a otra, gana el director. Si la parte tenía acordes editados por un músico, pasan al historial (`cambios`). Solo aparece si el orden de la reunión difiere del Word, o en un medley. Cantante no cambia.
 - Un medley es Modulante siempre: el interruptor viene encendido.
 - Requiere la clave del director, igual que el resto de la edición de reuniones.
 
@@ -350,6 +354,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - **Reconversión:** los Word nuevos o modificados se bajan y se convierten. Cuando cambia el conversor (sube `CONV_V`), los Word sin cambios se reconvierten desde la copia de sus párrafos (`Datos/import-parrafos.json`, sin volver a bajarlos) y solo se reescriben las canciones cuyo resultado cambió; `import-log.json` lista las reescritas. Si cambia la lectura del Word (sube `LECTOR_V`), se descarta la copia y se vuelve a bajar todo.
 - **Editar reunión:** los cambios se ven al instante y se guardan en segundo plano, en orden; "Listo" espera a que terminen. El botón de cada canción para ordenar sus partes se llama "Editar".
 - Sin conexión se puede ver todo. Editar reuniones requiere conexión.
+- **Versión nueva:** cada cambio de la app sube `VERSION` en `sw.js`; la versión nueva se activa sola al abrir la app o al volver a ella (sin botón).
 
 ## 9. Carga de canciones nuevas
 

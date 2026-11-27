@@ -324,6 +324,11 @@ input[type=search]::placeholder { color: var(--mute); }
 .status button { font-weight: 600; font-size: 13px; min-height: 34px; padding: 0 10px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--card); }
 .status .demo { margin-left: auto; padding: 2px 8px; border-radius: 99px; background: var(--acc-soft); color: var(--acc); font-weight: 600; font-size: 12px; }
 
+details.datos { margin: 4px 0 14px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--card); }
+details.datos > summary { min-height: 44px; display: flex; align-items: center; padding: 0 12px; font-weight: 600; cursor: pointer; }
+details.datos > .form { padding: 0 12px 12px; }
+details.datos h4 { margin: 4px 12px 6px; font-size: 13px; color: var(--mute); }
+.adh { list-style: none; margin: 0; padding: 0 12px 12px; font-size: 13px; display: grid; gap: 4px; }
 .toast button { border: 0; background: none; color: inherit; font: inherit; font-weight: 700; text-decoration: underline; padding: 6px 4px; min-height: 32px; }
 .pl > .pc, .medsel li { touch-action: pan-y; }
 .pc.swipe, .medsel li.swipe { position: relative; z-index: 2; box-shadow: inset -4px 0 0 #c0392b; }

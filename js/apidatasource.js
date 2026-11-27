@@ -5,6 +5,8 @@ import { ClaveError } from './datasource.js';
 
 const CLAVE_CODES = ['clave', 'bloqueo', 'formato', 'no-existe'];
 
+const auth = c => c && typeof c === 'object' ? { idToken: c.idToken } : { clave: c };
+
 export class ApiDataSource {
   constructor({ url, iglesia }) {
     this.url = url; this.c = iglesia; this.P = 'cancionero:api:' + iglesia + ':';
@@ -56,12 +58,15 @@ export class ApiDataSource {
   async addPersona(n) { return String(n || '').trim(); }
 
   createReunion({ nombre, fecha, director, clave }) { return this._post('crearReunion', { nombre, fecha, director, clave }); }
-  async checkClave(id, clave) { await this._post('verificarClave', { id, clave }); }
+  // `clave`: los 4 números del director, o { idToken } con la sesión de admin (sin clave).
+  async checkClave(id, clave) { await this._post('verificarClave', { id, ...auth(clave) }); }
   updateReunion(id, cambios, clave) {
     const { nombre, fecha, director, canciones } = cambios;
-    return this._post('editarReunion', { id, clave, cambios: { nombre, fecha, director, canciones } });
+    return this._post('editarReunion', { id, ...auth(clave), cambios: { nombre, fecha, director, canciones } });
   }
-  async deleteReunion(id, clave) { await this._post('borrarReunion', { id, clave }); }
+  async deleteReunion(id, clave) { await this._post('borrarReunion', { id, ...auth(clave) }); }
+  /** Admin: nueva clave y/o otro director; sin cambios devuelve solo el historial. → { reunion, historial } */
+  adminReunion(id, idToken, { clave, director } = {}) { return this._post('adminReunion', { id, idToken, clave, director }); }
   /** Músicos, sin clave: otra variante de una parte del arreglo. Devuelve la parte guardada. */
   elegirVariante({ id, item, parte, src, label }) { return this._post('elegirVariante', { id, item, parte, src, label }); }
   registrarUso(id, clave) { return this._post('registrarUso', { id, clave }); }

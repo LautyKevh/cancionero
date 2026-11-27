@@ -31,6 +31,24 @@ function verificarPin_(ig, r, pin) {
 }
 
 /** Verifica un ID token de Google y que el email sea admin de la iglesia. Devuelve el email. */
+/**
+ * Permiso para editar una reunión: la clave del director o, con b.idToken, la sesión de admin (Google).
+ * Lo que hace el admin queda en r.historial ({ fecha, quien, que }); devuelve el email del admin o null.
+ */
+function autorizar_(ig, r, b, que) {
+  if (!b.idToken) { verificarPin_(ig, r, b.clave); return null; }
+  const email = verificarAdmin_(ig, b.idToken);
+  if (que) anotarAdmin_(r, email, que);
+  return email;
+}
+function anotarAdmin_(r, email, que) {
+  const h = r.historial || (r.historial = []), ult = h[0], ahora = new Date();
+  // Las ediciones seguidas (cada cambio se guarda solo) cuentan una vez cada 10 minutos.
+  if (ult && ult.quien === email && ult.que === que && ahora - new Date(ult.fecha) < 10 * 60000) { ult.fecha = ahora.toISOString(); return; }
+  h.unshift({ fecha: ahora.toISOString(), quien: email, que: que });
+  if (h.length > 50) h.length = 50;
+}
+
 function verificarAdmin_(ig, idToken) {
   if (!idToken) throw apiError_('Esta acción necesita ingresar con Google como admin.', 'admin');
   const r = UrlFetchApp.fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(idToken), { muteHttpExceptions: true });

@@ -118,6 +118,11 @@ export class LocalDataSource {
     await this.checkClave(id, clave);
     const list = this._all(), i = list.findIndex(x => x.id === id);
     const { id: _i, hash, sal, ...ok } = cambios;
+    Object.keys(ok).forEach(k => ok[k] === undefined && delete ok[k]);
+    if (ok.fecha && ok.fecha !== list[i].fecha) {
+      const otra = list.find(x => !x.borrada && x.id !== id && x.fecha === ok.fecha);
+      if (otra) throw new ClaveError(`Ya hay una reunión ese día (“${otra.nombre}”). No se cambió la fecha.`, 'fecha-ocupada');
+    }
     list[i] = { ...list[i], ...structuredClone(ok) };
     for (const c of list[i].canciones || []) if (c.quien) await this.addPersona(c.quien);
     this._save(list);
