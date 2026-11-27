@@ -70,10 +70,9 @@ function doPost(e) {
         if (c.nombre != null) r.nombre = String(c.nombre).trim() || r.nombre;
         if (c.fecha != null && /^\d{4}-\d{2}-\d{2}$/.test(c.fecha)) r.fecha = c.fecha;
         if (c.director != null) r.director = String(c.director).trim();
-        if (Array.isArray(c.canciones)) r.canciones = c.canciones.map(x => ({ id: String(x.id), tono: String(x.tono || ''), quien: String(x.quien || ''),
-          arr: Array.isArray(x.arr) ? x.arr.map(a => ({ src: a.src == null ? null : +a.src, label: a.label == null ? null : String(a.label), rep: Math.max(1, Math.min(9, +a.rep || 1)) })) : [] }));
+        if (Array.isArray(c.canciones)) r.canciones = c.canciones.map(limpiarItem_);
         guardarReunion_(ig, r);
-        agregarPersonas_(ig, [r.director].concat(r.canciones.map(x => x.quien)));
+        agregarPersonas_(ig, [r.director].concat(itemsPlanos_(r).map(x => x.quien)));
         return publica_(r);
       });
       case 'borrarReunion': return conLock_(() => { const r = buscar(); verificarPin_(ig, r, b.clave); r.borrada = true; guardarReunion_(ig, r); return true; });

@@ -175,7 +175,7 @@ function registrarUso_(ig, r) {
   const titulo = {}; try { cancionero_(ig).forEach(s => titulo[s.id] = s.titulo); } catch (e) {}
   const usaId = cC >= 0 && /\bid\b/.test(norm_(H[cC]));
   const [y, m, d] = r.fecha.split('-').map(Number);
-  const filas = r.canciones.map(c => {
+  const filas = itemsPlanos_(r).map(c => {
     const f = new Array(n).fill('');
     if (cF >= 0) f[cF] = new Date(y, m - 1, d);
     if (cC >= 0) f[cC] = usaId ? c.id : (titulo[c.id] || c.id);
@@ -194,7 +194,7 @@ function registrarUso_(ig, r) {
 function anotarPasadas_(ig) {
   try {
     const hoy = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
-    const pend = l => l.filter(r => !r.borrada && !r.registrada && r.canciones && r.canciones.length && r.fecha < hoy);
+    const pend = l => l.filter(r => !r.borrada && !r.registrada && itemsPlanos_(r).length && r.fecha < hoy);
     if (!pend(reuniones_(ig)).length) return;          // chequeo barato contra la caché
     const lock = LockService.getScriptLock();
     if (!lock.tryLock(5000)) return;                    // otro pedido ya lo está haciendo
@@ -202,4 +202,37 @@ function anotarPasadas_(ig) {
       pend(reunionesTodas_(ig)).forEach(r => { registrarUso_(ig, r); r.registrada = true; guardarReunion_(ig, r); });
     } finally { lock.releaseLock(); }
   } catch (e) { console.error(e && e.stack || e); }
+}
+
+// ---------- Ítems de reunión: canción o medley ----------
+// Canción: { id, tono, quien, arr: [{ src, label, rep }] }
+// Medley:  { tipo: 'medley', nombre, tono, quien, canciones: [{ id, quien }], arr: [{ cancion, src, label, rep, tono? }] }
+//          (en arr, `tono` cambia el tono desde esa parte en adelante)
+function limpiarItem_(x) {
+  const parte = a => {
+    const p = { src: a.src == null ? null : +a.src, label: a.label == null ? null : String(a.label), rep: Math.max(1, Math.min(9, +a.rep || 1)) };
+    if (a.cancion != null) p.cancion = String(a.cancion);
+    if (a.tono) p.tono = String(a.tono);
+    return p;
+  };
+  const arr = Array.isArray(x.arr) ? x.arr.map(parte) : [];
+  if (x.tipo === 'medley') {
+    const canciones = (Array.isArray(x.canciones) ? x.canciones : []).filter(c => c && c.id).map(c => ({ id: String(c.id), quien: String(c.quien || '') }));
+    if (canciones.length < 2) throw apiError_('Un medley necesita al menos 2 canciones.', 'formato');
+    return { tipo: 'medley', nombre: String(x.nombre || ''), tono: String(x.tono || ''), quien: String(x.quien || ''), canciones, arr };
+  }
+  return { id: String(x.id), tono: String(x.tono || ''), quien: String(x.quien || ''), arr };
+}
+
+/** Lista plana { id, tono, quien } para Registro y Personas: cada canción de un medley va por separado,
+ *  con el tono vigente en su primera parte (tono del medley o la última modulación anterior). */
+function itemsPlanos_(r) {
+  const out = [];
+  (r.canciones || []).forEach(x => {
+    if (x.tipo !== 'medley') { out.push({ id: x.id, tono: x.tono, quien: x.quien }); return; }
+    const tonoDe = {}; let t = x.tono;
+    (x.arr || []).forEach(a => { if (a.tono) t = a.tono; if (a.cancion && !(a.cancion in tonoDe)) tonoDe[a.cancion] = t; });
+    x.canciones.forEach(c => out.push({ id: c.id, tono: tonoDe[c.id] || x.tono, quien: c.quien || x.quien }));
+  });
+  return out;
 }

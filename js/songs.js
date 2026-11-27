@@ -63,6 +63,19 @@ export const isoOf = t => t.getFullYear() + '-' + String(t.getMonth() + 1).padSt
 /** ISO (AAAA-MM-DD) → DD-MM-AAAA */
 export const fmt = f => f ? f.split('-').reverse().join('-') : '';
 
+/** Ítems de una reunión como lista plana { id, tono, quien }: cada canción de un medley va por separado,
+ *  con el tono vigente en su primera parte. Igual que itemsPlanos_ del motor. */
+export function itemsPlanos(r) {
+  const out = [];
+  (r.canciones || []).forEach(x => {
+    if (x.tipo !== 'medley') { out.push({ id: x.id, tono: x.tono, quien: x.quien }); return; }
+    const tonoDe = {}; let t = x.tono;
+    (x.arr || []).forEach(a => { if (a.tono) t = a.tono; if (a.cancion && !(a.cancion in tonoDe)) tonoDe[a.cancion] = t; });
+    (x.canciones || []).forEach(c => out.push({ id: c.id, tono: tonoDe[c.id] || x.tono, quien: c.quien || x.quien }));
+  });
+  return out;
+}
+
 /** Registros de una canción (id o lista de ids: versiones del mismo título en otros tonos)
  *  = registro histórico + canciones de reuniones. */
 export function historyOf(id, registro, reuniones) {
@@ -70,7 +83,7 @@ export function historyOf(id, registro, reuniones) {
   const a = registro.filter(x => has(x.id)).map(x => ({ ...x }));
   // Las reuniones ya volcadas a Registro no se cuentan dos veces (si Registro todavía no
   // trae esa fecha, p. ej. porque se anotó durante esta misma carga, se cuenta la reunión).
-  reuniones.filter(r => !r.registrada || !registro.some(x => x.f === r.fecha)).forEach(r => r.canciones.forEach(c => { if (has(c.id)) a.push({ f: r.fecha, id: c.id, t: c.tono, q: c.quien }); }));
+  reuniones.filter(r => !r.registrada || !registro.some(x => x.f === r.fecha)).forEach(r => itemsPlanos(r).forEach(c => { if (has(c.id)) a.push({ f: r.fecha, id: c.id, t: c.tono, q: c.quien }); }));
   return a.sort((x, y) => (x.f || '').localeCompare(y.f || ''));
 }
 

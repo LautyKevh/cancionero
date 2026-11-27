@@ -26,7 +26,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 
 ## 3. Entornos y versiones
 
-- **Madre (desarrollo):** rama `desarrollo` → GitHub Pages en otra ruta, más la implementación de prueba de Apps Script (`@HEAD`) y una iglesia de prueba con una copia de datos reales de IBSI.
+- **Madre (desarrollo):** rama `desarrollo` → GitHub Pages en otra ruta, más una implementación de prueba de Apps Script **versionada** que se actualiza en cada cambio (no `@HEAD`: la URL `/dev` solo funciona para editores con sesión iniciada) y una iglesia de prueba con una copia de datos reales de IBSI.
 - **Estable:** rama `estable` → versiones cerradas (v1.0, v1.1…), con implementaciones versionadas de Apps Script.
 - **Modo demo local (obligatorio):** la app tiene que poder correrse en local (`npx serve` o similar) con **datos simulados**, sin Google, para probar la interfaz igual que el prototipo. Es lo que Lautaro usa para ir probando.
 - **Actualizaciones por iglesia, opcionales:** el admin ve "Versión X disponible · Novedades · Actualizar". Al aceptar, el sistema:
@@ -68,12 +68,14 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 **Registro:**
 - Columnas: Fecha, Canción (ID), Tono, Quién, Origen (domingo / reunión / planilla vieja).
 - Se alimenta solo desde las reuniones y desde la lectura de los documentos de `Domingos`.
+- Las reuniones se anotan solas al día siguiente de su fecha, con la última versión guardada de la lista: un activador nocturno (3–4 h) y, como respaldo, la primera lectura de la app. Se anotan una sola vez; los cambios posteriores no se trasladan a Registro (no se modifican filas existentes).
 - "Quién" puede quedar vacío.
 
 **Personas:** lista libre. Los nombres nuevos que se escriben en "Dirige" se agregan solos.
 
 **Reuniones:**
 - Columnas: id, nombre, fecha, director, hash de clave, canciones (JSON: id, tono, quién, arr = [{src, label, rep}]).
+- Un ítem de canciones puede ser un medley: `{ tipo: "medley", nombre?, tono, quien, canciones: [{ id, quien? }], arr: [{ cancion, src, label, rep, tono? }] }`. En `arr`, `cancion` indica de qué canción es la parte y `tono` (opcional) cambia el tono desde esa parte en adelante.
 - Se pueden borrar. El borrado es lógico, con papelera.
 
 ## 6. Conversión Word → canción (reglas probadas en el prototipo; ver `referencia/convert.py`)
@@ -149,6 +151,14 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Agregar parte (las opciones muestran su primera línea).
   - Volver al orden original.
 - **Borrar (con clave):** con confirmación dentro de la página.
+
+**Medley (fase posterior; el modelo de datos ya lo admite, la interfaz todavía no):**
+- Es un ítem dentro de una reunión que combina 2 o más canciones.
+- Crear: en Editar reunión → "Crear medley" → elegir canciones (búsqueda en vivo) → elegir tono destino → se abre directo el editor de partes con las partes de todas las canciones (reordenar, xN, duplicar, quitar).
+- Tono: único para todo el medley; cada canción se transporta desde su tono original. Opción de cambiar el tono desde una parte en adelante (modulación).
+- Vista Músico/Cantante: una sola canción continua, con un separador que muestra el nombre de cada canción al cambiar.
+- Registro: cada canción del medley se registra por separado, con el tono en que se tocó y quién dirigió.
+- Requiere la clave del director, igual que el resto de la edición de reuniones.
 
 ## 8. Sin conexión y actualización
 
