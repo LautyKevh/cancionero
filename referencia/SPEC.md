@@ -289,6 +289,8 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 **Medley (etapa D, en prueba):**
 - Es un ítem dentro de una reunión que combina 2 o más canciones. Usa exactamente el mismo mecanismo de tono por parte.
 - Crear: Editar reunión → "Crear medley" → elegir canciones (búsqueda en vivo) → elegir tono de inicio. Se abre directo el editor de partes, con las partes de todas las canciones: reordenar, xN, duplicar, quitar y tono por parte.
+- **Borrar deslizando:** en el editor de partes (canción o medley) y en la lista de canciones de "Crear medley", deslizar hacia la izquierda borra, sin diálogo: aparece "Parte borrada · Deshacer" (o "Canción quitada · Deshacer") unos segundos. En la lista del medley ya no hay ✕ (con teclado: Suprimir sobre la manija); en el editor sigue "Quitar" en ⋯.
+- **Variantes de una parte (propuesta, falta OK):** partes con la misma letra y distintos acordes (ej. "Digno de adorar": Coro, Coro 1, Coro 2) son variantes. Se detectan comparando la letra sin nombres de parte ni acordes (la misma huella que usa la agrupación por tono). El director no ve nada nuevo. En la vista Músico de la reunión, el nombre de esa parte muestra un chip "Coro ▾"; al tocarlo, una hoja con cada variante (nombre y primer renglón de acordes); elegir una no pide clave, queda en el arreglo de la reunión (`e.src` de esa parte + `e.variante = { quien, fecha }`) y lo ven todos. Si el director después edita la reunión, se respeta salvo que cambie esa misma parte. Solo aparece si la canción tiene variantes y el orden de la reunión difiere del Word, o en un medley. Cantante no cambia.
 - Un medley es Modulante siempre: el interruptor viene encendido.
 - Requiere la clave del director, igual que el resto de la edición de reuniones.
 

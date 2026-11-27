@@ -661,6 +661,12 @@ function persist(r) {
   return colaGuardar;
 }
 let toastT; function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 3500); }
+/** Aviso con "Deshacer" (sin diálogo de confirmación): unos segundos para volver atrás. */
+function avisoDeshacer(msg, deshacer) {
+  const t = document.getElementById('toast'); t.innerHTML = `<span>${esc(msg)}</span> · <button type="button">Deshacer</button>`; t.hidden = false;
+  t.querySelector('button').onclick = () => { clearTimeout(toastT); t.hidden = true; deshacer(); };
+  clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 5000);
+}
 
 function editSes(r) {
   setTabs(null);
@@ -708,10 +714,12 @@ function editSes(r) {
   const med = [], mbx = $('#mbx'), mbq = $('#mbq'), mbs = $('#mbs'), mbt = $('#mbt');
   let tonoElegido = false;
   const pintaMed = () => {
-    $('#mbl').innerHTML = med.map((s, k) => `<li>${med.length > 1 ? `<button type="button" class="sh" data-mh="${k}" aria-label="Mover ${esc(s.titulo)} (flechas arriba y abajo)"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 5h12M3 9h12M3 13h12"/></svg></button>` : ''}<span class="num">${k + 1}</span><b>${esc(s.titulo)}</b><span class="key">${esc(keyOption(s))}</span>
-      <button type="button" data-mq="${k}" aria-label="Quitar ${esc(s.titulo)} del medley">✕</button></li>`).join('');
-    $$('[data-mq]').forEach(b => b.onclick = () => { med.splice(+b.dataset.mq, 1); pintaMed(); });
+    $('#mbl').innerHTML = med.map((s, k) => `<li>${med.length > 1 ? `<button type="button" class="sh" data-mh="${k}" aria-label="Mover ${esc(s.titulo)} (flechas arriba y abajo)"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 5h12M3 9h12M3 13h12"/></svg></button>` : ''}<span class="num">${k + 1}</span><b>${esc(s.titulo)}</b><span class="key">${esc(keyOption(s))}</span></li>`).join('');
     const L = [...$('#mbl').children];
+    // Deslizar a la izquierda (o Suprimir en la manija) la quita; "Deshacer" la vuelve a su lugar.
+    const quitar = k => { const [x] = med.splice(k, 1); pintaMed(); avisoDeshacer('Canción quitada', () => { med.splice(k, 0, x); pintaMed(); }); };
+    deslizar(L, quitar);
+    L.forEach((li, k) => { const h = li.querySelector('[data-mh]'); if (h) h.addEventListener('keydown', e => { if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); quitar(k); } }); });
     arrastrar($('#mbl'), L.map(li => [li]), L.map(li => li.querySelector('[data-mh]')), (a, b, tecla) => {
       const [x] = med.splice(a, 1); med.splice(b, 0, x); pintaMed(); if (tecla) { const f = $(`[data-mh="${b}"]`); if (f) f.focus(); }
     });
@@ -747,6 +755,33 @@ function editSes(r) {
  * o un renglón); handles[k] = su manija. También con las flechas arriba/abajo cuando la manija tiene el foco.
  * onDrop(desde, hasta, conTeclado) recibe índices de grupo.
  */
+/**
+ * Deslizar hacia la izquierda para borrar: items[k] es el elemento; al soltar pasado un tercio del ancho, onBorrar(k).
+ * La manija de arrastre (.h, .sh) no desliza. Si hubo deslizamiento, el toque no cuenta como click.
+ */
+function deslizar(items, onBorrar) {
+  items.forEach((li, k) => {
+    li.addEventListener('pointerdown', ev => {
+      if (ev.button || ev.target.closest('.h, .sh, select, input')) return;
+      const x0 = ev.clientX, y0 = ev.clientY; let dx = 0, activo = false;
+      const mueve = e => {
+        dx = Math.min(0, e.clientX - x0);
+        if (!activo) { if (Math.abs(e.clientY - y0) > 12) return fin(); if (dx > -12) return; activo = true; li.setPointerCapture(e.pointerId); li.classList.add('swipe'); }
+        li.style.translate = `${dx}px 0`; li.style.opacity = String(1 + dx / li.offsetWidth);
+      };
+      const fin = () => {
+        li.removeEventListener('pointermove', mueve); li.removeEventListener('pointerup', suelta); li.removeEventListener('pointercancel', fin);
+        if (!activo) return; li.classList.remove('swipe'); li.style.translate = ''; li.style.opacity = '';
+        // El click que sigue al deslizamiento no abre nada.
+        const tapa = e => { e.stopPropagation(); e.preventDefault(); };
+        li.addEventListener('click', tapa, { capture: true, once: true }); setTimeout(() => li.removeEventListener('click', tapa, { capture: true }), 400);
+      };
+      const suelta = () => { const borra = activo && -dx > li.offsetWidth / 3; fin(); if (borra) onBorrar(k); };
+      li.addEventListener('pointermove', mueve); li.addEventListener('pointerup', suelta); li.addEventListener('pointercancel', fin);
+    });
+  });
+}
+
 function arrastrar(lista, grupos, handles, onDrop) {
   handles.forEach((h, k) => {
     if (!h) return;
@@ -904,12 +939,15 @@ function parts(r, i, abrirTono) {
       pinta();
     });
   });
+  // Borrar una parte (deslizando a la izquierda o desde ⋯): sin confirmación, con "Deshacer".
+  const borrarParte = j => { const [x] = c.arr.splice(j, 1); re(); avisoDeshacer('Parte borrada', () => { c.arr.splice(j, 0, x); re(); }); };
+  deslizar($$('.pl > .pc'), borrarParte);
   // ⋯: Duplicar, Mostrar igual (solo donde corresponde) y Quitar.
   $$('[data-o]').forEach(btn => btn.onclick = () => {
     const j = +btn.dataset.o, e = c.arr[j], mi = mostrarDe(e, j);
     pop(btn, 'menu', `<button type="button" data-a="dup">Duplicar</button>${mi}<div class="sep"></div><button type="button" class="del" data-a="del">Quitar</button>`, (p, cerrar) => {
       p.querySelector('[data-a="dup"]').onclick = () => { cerrar(); c.arr.splice(j + 1, 0, copia(j)); re(); };
-      p.querySelector('[data-a="del"]').onclick = () => { cerrar(); c.arr.splice(j, 1); re(); };
+      p.querySelector('[data-a="del"]').onclick = () => { cerrar(); borrarParte(j); };
       const x = p.querySelector('[data-mi]'); if (x) x.onchange = () => { if (x.checked) e.mostrar = true; else delete e.mostrar; cerrar(); re(); };
     });
   });
