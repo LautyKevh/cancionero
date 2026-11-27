@@ -226,6 +226,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Si la parte siguiente queda en el mismo tono que la actual, el puente y la transición se ocultan por defecto. Hay una opción **"Mostrar igual"**, para quien quiera tocar el interludio aunque no module.
   - **`[ ]` (modular):** se muestran solo si la parte siguiente cambia de tono, transportados según el tono de destino, igual que los puentes entre paréntesis.
   - **`{ }` (repetir):** se muestran solo si la parte siguiente queda en el mismo tono.
+  - **Última parte de la canción:** si tiene `[ ]`, se muestran siempre, transportados al tono de esa parte (es un tag o cierre final).
   - Las dos marcas conviven con "Mostrar igual" y con el modo Modulante. Con Modulante apagado no hay cambios de tono, así que se ven los `{ }` y se ocultan los `[ ]`.
   - Si la transición original no sirve para el nuevo salto, en esa reunión los músicos pueden editar sus acordes (ver "Arreglo compartido"). Si el arreglo de la base está mal, lo corrige el admin (ver 5).
 
