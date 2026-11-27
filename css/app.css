@@ -254,3 +254,28 @@ svg .bk { fill: currentColor; stroke: none; }
 .adm h3 { margin: 0; font-size: 15px; }
 .adm .ok { color: #2f9e5b; font-weight: 600; }
 .adm .fails { margin: 0; padding-left: 18px; font-size: 13px; color: var(--mute); }
+
+/* ---------- Imprimir / PDF ----------
+   Mientras se imprime, la copia limpia (#print) también se ve en pantalla con el ancho de la hoja,
+   así se pueden medir y separar los acordes que chocan antes de abrir el diálogo. */
+#print { display: none; }
+@page { margin: 14mm 12mm; }
+body.imprimiendo > *:not(#print) { display: none !important; }
+body.imprimiendo { background: #fff; color: #000; min-height: 0; display: block; }
+body.imprimiendo #print { display: block; width: 186mm; max-width: 100%; margin: 0 auto; padding: 0 8px; font: 11pt/1.35 Inter, system-ui, sans-serif; color: #000; }
+#print .pses { margin-bottom: 6mm; }
+#print .pses h1 { font: 600 20pt/1.2 Fraunces, Georgia, serif; margin: 0; }
+#print .pses p { margin: 2px 0 0; color: #444; }
+#print .phoja h2 { font: 600 16pt/1.2 Fraunces, Georgia, serif; margin: 0; }
+#print .pmeta { margin: 2px 0 4mm; color: #444; font-size: 9.5pt; }
+#print .lines { font-size: 11pt; overflow: visible; }
+#print .lines.singer { font-size: 12pt; }
+#print .lines .pair { flex-wrap: wrap; }
+#print .lines div { white-space: pre-wrap; }
+#print .sec { color: #000; font-weight: 700; margin-top: 3mm; break-after: avoid; }
+#print .sg > b, #print .ch, #print .mix { color: #0a3d8f; }
+#print .pair, #print .lines > div { break-inside: avoid; }
+@media print {
+  body.imprimiendo #print { width: auto; padding: 0; }
+  #print .phoja + .phoja, #print .pses + .phoja { break-before: page; }
+}

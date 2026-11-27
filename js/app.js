@@ -261,10 +261,10 @@ function openSheet(s, mode, ctx) {
   drawSheet();
 }
 
-function drawSheet(anim) {
-  const { song: s, mode, shift, ctx } = view, mus = mode === 'm';
-  const T = transposer(s, shift, P.not), k = T.key, kd = showKey(k, P.not);
-  const src = arrLines(s, ctx ? ctx.arr : defArr(s), mus)
+/** Líneas de una canción ya transportadas, en HTML. Lo usan la vista y la impresión. */
+function sheetRows(s, shift, mus, arr) {
+  const T = transposer(s, shift, P.not), kd = showKey(T.key, P.not);
+  const src = arrLines(s, arr || defArr(s), mus)
     .filter(l => mus || (l.t !== 'ch' && l.t !== 'mix'))
     .filter((l, i, a) => l.t !== 'blank' || (i > 0 && a[i - 1].t !== 'blank' && a[i - 1].t !== 'sec' && a[i + 1] && a[i + 1].t !== 'sec'));
   const rows = src.map(l => {
@@ -283,6 +283,12 @@ function drawSheet(anim) {
     if (l.t === 'mix') return `<div class="mix${l.at != null ? ' at' : ''}"${l.at != null ? ` data-anchor="${esc(l.at)}"` : ''}>${esc(T.line(l.v, true))}</div>`;
     return `<div>${esc(mus ? l.v : l.v.replace(/\s{2,}/g, ' ').trim())}</div>`;
   }).join('');
+  return { rows, kd };
+}
+
+function drawSheet(anim) {
+  const { song: s, mode, shift, ctx } = view, mus = mode === 'm';
+  const { rows, kd } = sheetRows(s, shift, mus, ctx && ctx.arr);
 
   const ctl = (mus ? `<button type="button" id="dn" aria-label="Bajar medio tono">−½</button>
       <span class="now" id="now" title="Tono actual" aria-live="polite">${esc(kd)}</span>
@@ -290,7 +296,8 @@ function drawSheet(anim) {
       <button type="button" id="orig" title="Volver al tono original"${shift ? '' : ' disabled'}>Orig.</button>
       <button type="button" id="not" title="Cambiar cifrado: C / Do / grados">${['C', 'Do', 'I'][P.not]}</button><span class="sp"></span>` : '<span class="sp"></span>')
     + `<button type="button" id="sm" aria-label="Achicar letra">A−</button><button type="button" id="bg" aria-label="Agrandar letra">A+</button>
-       <button type="button" id="sw">${mus ? 'Cantante' : 'Músico'}</button>`;
+       <button type="button" id="sw">${mus ? 'Cantante' : 'Músico'}</button>
+       <button type="button" id="pr" title="Imprimir o guardar como PDF">Imprimir</button>`;
 
   const r = ctx && ctx.ses, i = ctx && ctx.i;
   let nav = '';
@@ -330,6 +337,7 @@ function drawSheet(anim) {
     if (r) { P.modos[r.id] = view.mode; savePrefs(); drawSheet(); }
     else replaceHash(`#/cancion/${s.id}/${view.mode}`), transition(() => drawSheet());
   };
+  $('#pr').onclick = () => imprimir(hojaImpresa(s, shift, mus, ctx && ctx.arr, ctx && ctx.quien), s.titulo);
   if (r) {
     $('#pv') && ($('#pv').onclick = () => go(`#/reunion/${r.id}/${i - 1}`, 'back'));
     $('#nx') && ($('#nx').onclick = () => go(`#/reunion/${r.id}/${i + 1}`));
@@ -446,11 +454,16 @@ function openSes(r) {
       <small>Dirige ${esc(c.quien)}${isDefArr(s, c.arr) ? '' : ' · orden modificado'}</small></span><span class="key">${esc(c.tono)}</span></button></li>`; }).join('');
   app.innerHTML = `${head}
   <div class="ctl"><button type="button" id="sm2" class="modebtn" title="Cambiar modo">${P.modos[r.id] === 'm' ? ICON.piano : ICON.mic}Modo: ${P.modos[r.id] === 'm' ? 'Músico' : 'Cantante'} ⇄</button><span class="sp"></span>
-    <button type="button" id="ed">Editar</button><button type="button" id="del">Borrar</button></div>
+    <button type="button" id="pr" title="Imprimir o guardar como PDF"${r.canciones.length ? '' : ' disabled'}>Imprimir</button><button type="button" id="ed">Editar</button><button type="button" id="del">Borrar</button></div>
   <div id="ask" class="askwrap"></div>
   <ol class="list setlist">${rows || '<li class="empty">Sin canciones todavía. Tocá “Editar” para agregarlas.</li>'}</ol>
   ${r.registrada ? '<p class="hint reg">✓ Anotada en el historial de la planilla.</p>' : ''}`;
   $$('[data-o]').forEach(b => b.onclick = () => go(`#/reunion/${r.id}/${b.dataset.o}`));
+  $('#pr').onclick = () => {
+    const mus = P.modos[r.id] === 'm';
+    const hojas = r.canciones.map(c => { const s = songBy(c.id); return s ? hojaImpresa(s, shiftTo(s, c.tono), mus, c.arr, c.quien) : ''; }).join('');
+    imprimir(`<header class="pses"><h1>${esc(nombreSes(r))}</h1><p>${esc(fechaLarga(r.fecha))} · Dirige ${esc(r.director)}</p></header>${hojas}`, nombreSes(r));
+  };
   $('#sm2').onclick = () => { P.modos[r.id] = P.modos[r.id] === 'm' ? 'c' : 'm'; savePrefs(); openSes(r); };
   const ask = (what, run) => {
     if (!navigator.onLine) { $('#ask').innerHTML = '<p class="err">Para editar o borrar hace falta conexión.</p>'; return; }
@@ -474,6 +487,25 @@ function openSes(r) {
     $('#n').onclick = () => a.innerHTML = '';
   });
 }
+// ---------- Imprimir / PDF ----------
+// Arma una copia limpia (sin botones) en #print y abre el diálogo del sistema; en el celular ofrece "Guardar como PDF".
+function hojaImpresa(s, shift, mus, arr, quien) {
+  const { rows, kd } = sheetRows(s, shift, mus, arr);
+  const meta = [quien ? 'Dirige ' + quien : '', interp(s), (mus ? 'Tono ' + kd : '') + (s.bpm ? (mus ? ' · ' : '') + s.bpm + ' BPM' : '')].filter(Boolean).map(esc).join(' · ');
+  return `<article class="phoja"><h2>${esc(s.titulo)}</h2><p class="pmeta">${meta}</p><div class="lines ${mus ? '' : 'singer'}">${rows}</div></article>`;
+}
+function imprimir(html, titulo) {
+  let box = document.getElementById('print');
+  if (!box) { box = document.createElement('div'); box.id = 'print'; document.body.appendChild(box); }
+  box.innerHTML = html;
+  const t0 = document.title; document.title = titulo || t0;          // nombre sugerido del PDF
+  document.body.classList.add('imprimiendo');
+  box.querySelectorAll('.lines').forEach(fixChords);
+  const fin = () => { document.body.classList.remove('imprimiendo'); box.innerHTML = ''; document.title = t0; removeEventListener('afterprint', fin); };
+  addEventListener('afterprint', fin);
+  setTimeout(() => print(), 50);
+}
+
 const openAnim = el => { if (!reduced()) el.animate([{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'none' }], { duration: 180, easing: 'ease-out' }); };
 
 function openSesSong(r, i) {
