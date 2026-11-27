@@ -46,7 +46,8 @@ export const isDefArr = (s, arr) => JSON.stringify((arr || []).map(e => ({ src: 
 export function arrLines(s, arr, musician) {
   const B = blocksOf(s), seen = new Set(), out = [];
   arr.forEach(e => {
-    const L = labOf(e); if (L) out.push({ t: 'sec', v: L });
+    const L = labOf(e), sec = B[e.src] && B[e.src].sec;
+    if (L) out.push({ t: 'sec', v: L, mod: sec && sec.mod, tono: sec && sec.tono });
     if (e.src == null || !B[e.src]) return;
     if (musician && seen.has(e.src)) return;
     seen.add(e.src); B[e.src].lines.forEach(l => out.push(l));

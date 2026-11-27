@@ -101,6 +101,32 @@ function labels_(s) {
 }
 const SEC_RE = /^(Verso|Coro|Puente|Estrofa|Pre ?[Cc]oro|Intro|Final|Parte)\b[\wÀ-ÿ ]*$/;
 
+// Títulos de parte escritos sin corchetes (SPEC §6): "Coro:", "Estrofa 1:", "CORO", "PRE-CORO",
+// "PUENTE (Repite …)", "CORO (Dm)", "Inter: Bb F C - Gm Dm C", "INTERLUDIO(2x): G - D", "FINAL /B-E-F#/".
+const PARTES_ = 'pre[- ]?coro|precoro|post[- ]?coro|interludio|instrumental|estrofa|verso|coro|puente|intro|inter|final|parte|tag|chorus|verse|bridge|outro';
+const LIBRE_RE = new RegExp('^((?:' + PARTES_ + ')(?:\\s*(?:\\d+|[IVX]+)\\b)?)\\b\\s*(.*)$', 'i');
+const VECES_RE = /^(?:[xX×]\s*(\d+)|\(\s*(\d+)\s*[xX×]\s*\)|\(\s*[xX×]\s*(\d+)\s*\))\s*/;
+/** Acordes con barras de compás sueltas ("/B-E-F#/", "B / / /", "//A - D//"). */
+function acordesSueltos_(t) {
+  const x = t.replace(/(^|[\s\-–])\/+/g, '$1 ').replace(/\/+(?=$|[\s\-–])/g, ' ');
+  return /\S/.test(x) && chordy_(x);
+}
+/** Si la línea es un título de parte sin corchetes, devuelve { v, ch? }; si no, null. */
+function tituloLibre_(s) {
+  const m = LIBRE_RE.exec(s.trim()); if (!m) return null;
+  let head = m[1].replace(/\s+/g, ' '), r = m[2].trim(), veces = '';
+  const v0 = VECES_RE.exec(r); if (v0) { veces = v0[1] || v0[2] || v0[3]; r = r.slice(v0[0].length).trim(); }
+  const dos = r.startsWith(':'); if (dos) r = r.slice(1).trim();
+  const v1 = VECES_RE.exec(r); if (v1) { veces = v1[1] || v1[2] || v1[3]; r = r.slice(v1[0].length).trim(); }
+  if (head === head.toUpperCase()) head = head.charAt(0) + head.slice(1).toLowerCase();
+  const nombre = head + (veces ? ' x' + veces : '');
+  if (!r) return { v: nombre };
+  if (acordesSueltos_(r)) return { v: nombre, ch: r };
+  // Nota entre paréntesis, o cualquier aclaración después de ":" → queda en el título.
+  if (dos || /^\(.*\)$/.test(r)) return { v: nombre + ' ' + r };
+  return null;                                                  // es una línea de letra que empieza con esa palabra
+}
+
 /**
  * Convierte los párrafos de un .docx a {tono, lineas}. Las posiciones son índices de caracteres
  * (como en Python); se trabaja con Array.from para no partir caracteres.
@@ -116,19 +142,22 @@ function convertirParrafos_(ps) {
   let i = 1;
   while (i < ps.length) {
     let p = ps[i], t = texto_(p).replace(/\s+$/, '');
-    const mm = /^\s*\((sube|baja|subida|bajada)\)\s*(?=\[)/i.exec(t);
+    const mm = new RegExp('^\\s*\\((sube|baja|subida|bajada)\\)\\s*(?=\\[|(?:' + PARTES_ + ')\\b)', 'i').exec(t);
     if (mm) { mod = mm[1].toUpperCase(); p = cortarRuns_(p, Array.from(mm[0]).length); ps[i] = p; t = texto_(p).replace(/\s+$/, ''); }
     const s = t.trim();
     if (!s) { L.push({ t: 'blank' }); i++; continue; }
     const m = LAB_RE.exec(t), lab = m ? m[1] : '';
     const rest = m ? t.slice(lab.length) : t;
     if (m && !rest.trim()) { secs(lab); i++; continue; }
-    if (SEC_RE.test(s)) { L.push({ t: 'sec', v: s }); i++; continue; }
+    if (!m) {
+      const tl = tituloLibre_(s);
+      if (tl) { secs('[' + tl.v + ']'); if (tl.ch) L.push({ t: 'ch', v: tl.ch }); i++; continue; }
+    }
     if (chordy_(rest)) {
       const nxt = i + 1 < ps.length ? ps[i + 1] : null;
       const nt = nxt ? texto_(nxt).replace(/\s+$/, '') : '';
       const nm = LAB_RE.exec(nt), nlab = nm ? nm[1] : '';
-      if (nxt && nt.trim() && !chordy_(nt.slice(nlab.length)) && nt.slice(nlab.length).trim()) {
+      if (nxt && nt.trim() && !chordy_(nt.slice(nlab.length)) && nt.slice(nlab.length).trim() && !(!nlab && tituloLibre_(nt))) {
         if (lab) secs(lab);
         if (nlab) secs(nlab);
         const cx = xs_(p), lx = xs_(nxt);

@@ -150,6 +150,11 @@ input[type=search]::placeholder { color: var(--mute); }
 .lines .mix.at { font-family: Inter, system-ui, sans-serif; white-space: pre-wrap; }
 .lines .sec { font-family: Inter, sans-serif; font-weight: 600; color: var(--sec); margin-top: .8em; font-size: .85em; }
 .lines .sec:first-child { margin-top: 0; }
+.lines .parte + .parte { margin-top: 1.1em; }
+.lines .parte > .sec:first-child, .lines .parte > .modi:first-child { margin-top: 0; }
+.lines .sec.inl { display: flex; flex-wrap: wrap; gap: .2em 1em; align-items: baseline; white-space: normal; }
+.lines .sec.inl .ch { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: calc(1em / .85); white-space: pre; }
+.lines .modi { font-family: Inter, sans-serif; font-weight: 700; font-size: .8em; color: var(--acc); margin-bottom: .2em; }
 .lines .gap { min-height: .4em; }
 .lines.singer { font-family: Inter, system-ui, sans-serif; line-height: 1.5; }
 .lines.singer div { white-space: pre-wrap; }
@@ -257,25 +262,27 @@ svg .bk { fill: currentColor; stroke: none; }
 
 /* ---------- Imprimir / PDF ----------
    Mientras se imprime, la copia limpia (#print) también se ve en pantalla con el ancho de la hoja,
-   así se pueden medir y separar los acordes que chocan antes de abrir el diálogo. */
+   así se miden los acordes que chocan y el alto de cada canción antes de abrir el diálogo.
+   @page sin márgenes: el navegador no agrega encabezado ni pie (fecha, título, URL, número de página);
+   el margen lo pone cada hoja, y se repite en cada página (box-decoration-break: clone). */
 #print { display: none; }
-@page { margin: 14mm 12mm; }
+@page { margin: 0; }
 body.imprimiendo > *:not(#print) { display: none !important; }
 body.imprimiendo { background: #fff; color: #000; min-height: 0; display: block; }
-body.imprimiendo #print { display: block; width: 186mm; max-width: 100%; margin: 0 auto; padding: 0 8px; font: 11pt/1.35 Inter, system-ui, sans-serif; color: #000; }
-#print .pses { margin-bottom: 6mm; }
-#print .pses h1 { font: 600 20pt/1.2 Fraunces, Georgia, serif; margin: 0; }
-#print .pses p { margin: 2px 0 0; color: #444; }
-#print .phoja h2 { font: 600 16pt/1.2 Fraunces, Georgia, serif; margin: 0; }
-#print .pmeta { margin: 2px 0 4mm; color: #444; font-size: 9.5pt; }
-#print .lines { font-size: 11pt; overflow: visible; }
+body.imprimiendo #print { display: block; width: 198mm; max-width: 100%; margin: 0 auto; font: 11pt/1.3 Inter, system-ui, sans-serif; color: #000; }
+#print .phoja { padding: 9mm 9mm; box-sizing: border-box; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+#print .pses { margin: 0 0 2mm; font-size: 10pt; color: #444; }
+#print .phoja h2 { font: 700 15pt/1.2 Fraunces, Georgia, serif; margin: 0 0 4mm; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#print .lines { font-size: 11pt; overflow: visible; padding: 0; }
 #print .lines.singer { font-size: 12pt; }
 #print .lines .pair { flex-wrap: wrap; }
 #print .lines div { white-space: pre-wrap; }
-#print .sec { color: #000; font-weight: 700; margin-top: 3mm; break-after: avoid; }
-#print .sg > b, #print .ch, #print .mix { color: #0a3d8f; }
-#print .pair, #print .lines > div { break-inside: avoid; }
+#print .lines .sec.inl { white-space: normal; }
+#print .sec { color: #000; font-weight: 700; }
+#print .sg > b, #print .ch, #print .mix, #print .modi { color: #0a3d8f; }
+#print .parte { break-inside: avoid; page-break-inside: avoid; }
+#print .parte + .parte { margin-top: 1em; }
 @media print {
-  body.imprimiendo #print { width: auto; padding: 0; }
-  #print .phoja + .phoja, #print .pses + .phoja { break-before: page; }
+  body.imprimiendo #print { width: auto; }
+  #print .phoja + .phoja { break-before: page; page-break-before: always; }
 }

@@ -166,7 +166,7 @@ addEventListener('online', paintStatus); addEventListener('offline', paintStatus
 
 // ---------- Componentes ----------
 const songItem = ({ s, snip, who }, attr) => `<li><button type="button" ${attr}="${esc(s.id)}" class="row">
-  <span class="row-main"><b>${esc(s.titulo)}</b><small>${who ? esc(who) : snip ? '“' + esc(snip) + '”' : esc(interp(s) || 'Intérprete sin confirmar')}</small></span>
+  <span class="row-main"><b>${esc(s.titulo)}</b><small>${who ? esc(who) : snip ? '“' + esc(snip) + '”' : esc(interp(s))}</small></span>
   <span class="key">${esc(s.tono)}</span></button></li>`;
 
 const back = (label, hash) => `<a class="back" href="${hash}" data-back>← ${esc(label)}</a>`;
@@ -267,9 +267,12 @@ function sheetRows(s, shift, mus, arr) {
   const src = arrLines(s, arr || defArr(s), mus)
     .filter(l => mus || (l.t !== 'ch' && l.t !== 'mix'))
     .filter((l, i, a) => l.t !== 'blank' || (i > 0 && a[i - 1].t !== 'blank' && a[i - 1].t !== 'sec' && a[i + 1] && a[i + 1].t !== 'sec'));
-  const rows = src.map(l => {
+  // "(Sube a A)" / "(Baja a F#)" no se muestran como texto: se reemplazan por el indicador de cambio de tono.
+  const SUBA = /^\(?\s*(sube|baja|subida|bajada)\s+(?:a|al)\s+([A-G][#b]?m?)\s*\)?\.?$/i;
+  const indicador = (dir, k) => `<div class="modi">${/^b/i.test(dir) ? '↓' : '↑'} ${esc(showKey(T.chord(k), P.not))}</div>`;
+  const line = l => {
     if (l.t === 'blank') return '<div class="gap"></div>';
-    if (l.t === 'sec') return `<div class="sec">${esc(l.v)}</div>`;
+    if (l.t === 'ly' && SUBA.test(l.v.trim())) { const m = SUBA.exec(l.v.trim()); return indicador(m[1], m[2]); }
     if (l.t === 'pair') {
       if (!mus) return `<div>${esc(l.segs.map(x => x[1]).join('').trim())}</div>`;
       const it = []; l.segs.forEach(([c, t]) => t.split(/(\s+)/).forEach((x, j) => { if (j === 0 || x) it.push({ c: j === 0 ? c : '', t: x }); }));
@@ -282,6 +285,21 @@ function sheetRows(s, shift, mus, arr) {
     if (l.t === 'ch') return `<div class="ch">${esc(T.line(l.v, false))}</div>`;
     if (l.t === 'mix') return `<div class="mix${l.at != null ? ' at' : ''}"${l.at != null ? ` data-anchor="${esc(l.at)}"` : ''}>${esc(T.line(l.v, true))}</div>`;
     return `<div>${esc(mus ? l.v : l.v.replace(/\s{2,}/g, ' ').trim())}</div>`;
+  };
+  // Cada parte va en su propio bloque (espacio entre partes; al imprimir nunca se corta).
+  // Una parte de una sola línea de acordes (Intro, Inter) muestra los acordes al lado del título.
+  const partes = []; let cur = null;
+  src.forEach(l => { if (l.t === 'sec' || !cur) { cur = { sec: l.t === 'sec' ? l : null, ls: [] }; partes.push(cur); if (l.t === 'sec') return; } cur.ls.push(l); });
+  const rows = partes.map(pt => {
+    const ls = pt.ls.slice(); while (ls.length && ls[0].t === 'blank') ls.shift(); while (ls.length && ls[ls.length - 1].t === 'blank') ls.pop();
+    if (!pt.sec && !ls.length) return '';
+    let head = '';
+    if (pt.sec) {
+      const mod = pt.sec.mod && pt.sec.tono && !ls.some(x => x.t === 'ly' && SUBA.test(x.v.trim())) ? indicador(pt.sec.mod, pt.sec.tono) : '';
+      if (ls.length === 1 && ls[0].t === 'ch') return `<section class="parte">${mod}<div class="sec inl"><span>${esc(pt.sec.v)}</span><span class="ch">${esc(T.line(ls[0].v, false))}</span></div></section>`;
+      head = mod + `<div class="sec">${esc(pt.sec.v)}</div>`;
+    }
+    return `<section class="parte">${head}${ls.map(line).join('')}</section>`;
   }).join('');
   return { rows, kd };
 }
@@ -337,7 +355,7 @@ function drawSheet(anim) {
     if (r) { P.modos[r.id] = view.mode; savePrefs(); drawSheet(); }
     else replaceHash(`#/cancion/${s.id}/${view.mode}`), transition(() => drawSheet());
   };
-  $('#pr').onclick = () => imprimir(hojaImpresa(s, shift, mus, ctx && ctx.arr, ctx && ctx.quien), s.titulo);
+  $('#pr').onclick = () => imprimir(hojaImpresa(s, shift, mus, ctx && ctx.arr), s.titulo);
   if (r) {
     $('#pv') && ($('#pv').onclick = () => go(`#/reunion/${r.id}/${i - 1}`, 'back'));
     $('#nx') && ($('#nx').onclick = () => go(`#/reunion/${r.id}/${i + 1}`));
@@ -461,8 +479,8 @@ function openSes(r) {
   $$('[data-o]').forEach(b => b.onclick = () => go(`#/reunion/${r.id}/${b.dataset.o}`));
   $('#pr').onclick = () => {
     const mus = P.modos[r.id] === 'm';
-    const hojas = r.canciones.map(c => { const s = songBy(c.id); return s ? hojaImpresa(s, shiftTo(s, c.tono), mus, c.arr, c.quien) : ''; }).join('');
-    imprimir(`<header class="pses"><h1>${esc(nombreSes(r))}</h1><p>${esc(fechaLarga(r.fecha))} · Dirige ${esc(r.director)}</p></header>${hojas}`, nombreSes(r));
+    const hojas = r.canciones.filter(c => songBy(c.id)).map((c, k) => { const s = songBy(c.id); return hojaImpresa(s, shiftTo(s, c.tono), mus, c.arr, k ? '' : nombreSes(r)); }).join('');
+    imprimir(hojas, nombreSes(r));
   };
   $('#sm2').onclick = () => { P.modos[r.id] = P.modos[r.id] === 'm' ? 'c' : 'm'; savePrefs(); openSes(r); };
   const ask = (what, run) => {
@@ -489,10 +507,24 @@ function openSes(r) {
 }
 // ---------- Imprimir / PDF ----------
 // Arma una copia limpia (sin botones) en #print y abre el diálogo del sistema; en el celular ofrece "Guardar como PDF".
-function hojaImpresa(s, shift, mus, arr, quien) {
+// Hoja como los documentos de la iglesia: "Nombre [Tono]" centrado, en una línea; sin otros datos.
+function hojaImpresa(s, shift, mus, arr, arriba) {
   const { rows, kd } = sheetRows(s, shift, mus, arr);
-  const meta = [quien ? 'Dirige ' + quien : '', interp(s), (mus ? 'Tono ' + kd : '') + (s.bpm ? (mus ? ' · ' : '') + s.bpm + ' BPM' : '')].filter(Boolean).map(esc).join(' · ');
-  return `<article class="phoja"><h2>${esc(s.titulo)}</h2><p class="pmeta">${meta}</p><div class="lines ${mus ? '' : 'singer'}">${rows}</div></article>`;
+  return `<article class="phoja">${arriba ? `<p class="pses">${esc(arriba)}</p>` : ''}<h2>${esc(s.titulo)} [${esc(kd)}]</h2><div class="lines ${mus ? '' : 'singer'}">${rows}</div></article>`;
+}
+// Alto útil de la hoja: A4 o carta, menos los márgenes (se usa el menor de los dos para que entre en ambos).
+const HOJA_MM = 279.4 - 2 * 9;
+/** Achica la letra de cada canción (hasta 8 pt) para que entre en una hoja; si aun así no entra, sigue en la siguiente. */
+function ajustarHojas(box) {
+  const mm = 96 / 25.4, alto = HOJA_MM * mm;
+  box.querySelectorAll('.phoja').forEach(h => {
+    const L = h.querySelector('.lines'), base = L.classList.contains('singer') ? 12 : 11;
+    for (let pt = base; pt >= 8; pt -= .5) {
+      L.style.fontSize = pt + 'pt';
+      L.querySelectorAll('.sg').forEach(x => { x.style.marginLeft = ''; }); fixChords(L);
+      if (h.scrollHeight <= alto) break;
+    }
+  });
 }
 function imprimir(html, titulo) {
   let box = document.getElementById('print');
@@ -500,7 +532,7 @@ function imprimir(html, titulo) {
   box.innerHTML = html;
   const t0 = document.title; document.title = titulo || t0;          // nombre sugerido del PDF
   document.body.classList.add('imprimiendo');
-  box.querySelectorAll('.lines').forEach(fixChords);
+  ajustarHojas(box);
   const fin = () => { document.body.classList.remove('imprimiendo'); box.innerHTML = ''; document.title = t0; removeEventListener('afterprint', fin); };
   addEventListener('afterprint', fin);
   setTimeout(() => print(), 50);
@@ -516,9 +548,27 @@ function openSesSong(r, i) {
 }
 
 // ---------- Editar reunión ----------
-async function persist(r) {
-  try { const saved = await ds.updateReunion(r.id, { canciones: r.canciones }, unlocked[r.id]); Object.assign(r, saved); }
-  catch (x) { toast(x.message || 'No se pudo guardar.'); }
+// Guardado en segundo plano y en orden: la pantalla se actualiza al instante y el motor (1–3 s por
+// escritura) recibe los cambios en fila. La respuesta solo se aplica si no quedó otro guardado pendiente,
+// así no pisa cambios más nuevos hechos mientras tanto.
+let colaGuardar = Promise.resolve(), pendientes = 0;
+// Se conservan los objetos locales (la pantalla los sigue usando) y solo se copian los pid que asignó el motor.
+function tomarIds(r, saved) {
+  const { canciones, ...resto } = saved || {}; Object.assign(r, resto);
+  (canciones || []).forEach((x, k) => {
+    const c = r.canciones[k]; if (!c || c.id !== x.id) return;
+    if (!c.pid) c.pid = x.pid;
+    (x.arr || []).forEach((p, j) => { if (c.arr && c.arr[j] && !c.arr[j].pid) c.arr[j].pid = p.pid; });
+  });
+}
+function persist(r) {
+  pendientes++;
+  colaGuardar = colaGuardar.then(async () => {
+    try { const saved = await ds.updateReunion(r.id, { canciones: r.canciones }, unlocked[r.id]); if (pendientes === 1) tomarIds(r, saved); }
+    catch (x) { toast(x.message || 'No se pudo guardar.'); }
+    finally { pendientes--; }
+  });
+  return colaGuardar;
 }
 let toastT; function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 3500); }
 
@@ -529,12 +579,12 @@ function editSes(r) {
       <button type="button" data-up="${i}" aria-label="Subir"${i ? '' : ' disabled'}>▲</button><button type="button" data-dn="${i}" aria-label="Bajar"${i < r.canciones.length - 1 ? '' : ' disabled'}>▼</button><button type="button" data-rm="${i}" aria-label="Quitar">✕</button></span></div>
       <div class="edr"><label>Tono<select data-k="${i}">${KEYS.map(k => `<option${k === c.tono ? ' selected' : ''}>${k}</option>`).join('')}</select></label>
       <label>Dirige${personSelect(`data-q="${i}"`, c.quien)}</label>
-      <button type="button" data-pa="${i}">Partes (${c.arr.length})</button></div></li>`; }).join('');
+      <button type="button" data-pa="${i}">Editar</button></div></li>`; }).join('');
   app.innerHTML = `${back(nombreSes(r), '#/reunion/' + r.id)}<h2 class="title">Editar reunión</h2><p class="meta">${esc(nombreSes(r))} · Dirige ${esc(r.director)}</p>
   <ol class="list">${rows || '<li class="empty">Agregá la primera canción con el buscador.</li>'}</ol>
   <div class="form"><label>Agregar canción<input id="ad" type="search" autocomplete="off" placeholder="Buscar por nombre, frase o director"></label>
     <ul class="list sugg" id="sg"></ul><button type="button" class="primary" id="ok">Listo</button></div>`;
-  const re = async () => { await persist(r); const y = scrollY; editSes(r); scrollTo(0, y); };
+  const re = () => { persist(r); const y = scrollY; editSes(r); scrollTo(0, y); };
   const swap = (a, b) => { [r.canciones[a], r.canciones[b]] = [r.canciones[b], r.canciones[a]]; re(); };
   $$('[data-up]').forEach(b => b.onclick = () => swap(+b.dataset.up - 1, +b.dataset.up));
   $$('[data-dn]').forEach(b => b.onclick = () => swap(+b.dataset.dn, +b.dataset.dn + 1));
@@ -553,8 +603,8 @@ function editSes(r) {
   ad.onblur = () => setTimeout(() => { if (document.activeElement !== ad) sg.innerHTML = ''; }, 150);
   sg.onmousedown = e => e.preventDefault(); // que tocar una opción no cierre la lista antes del click
   sg.onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; const s = songBy(b.dataset.a);
-    r.canciones.push({ id: s.id, tono: keyOption(s), quien: r.director, arr: defArr(s) }); re().then(() => $('#ad')?.focus()); };
-  $('#ok').onclick = async () => { await persist(r); go('#/reunion/' + r.id, 'back'); };
+    r.canciones.push({ id: s.id, tono: keyOption(s), quien: r.director, arr: defArr(s) }); re(); $('#ad')?.focus(); };
+  $('#ok').onclick = async () => { const b = $('#ok'); b.disabled = true; b.textContent = 'Guardando…'; await colaGuardar; go('#/reunion/' + r.id, 'back'); };
 }
 
 // ---------- Partes ----------
@@ -570,10 +620,10 @@ function parts(r, i) {
     <div class="pvb" hidden><div class="pvb-in">${blockText(AB[e.src]).map(t => `<div>${esc(t)}</div>`).join('') || '<div>Sin letra (instrumental)</div>'}</div></div></li>`).join('')}</ol>
   <div class="form"><label>Agregar parte<select id="ap"><option value="">Elegir…</option>${B.map(b => `<option value="${b.id}">${esc((b.label || '(inicio)') + ' — ' + (blockText(b)[0] || 'instrumental'))}</option>`).join('')}</select></label>
     <button type="button" id="rs">Volver al orden original</button><button type="button" class="primary" id="ok">Listo</button></div>`;
-  const re = async () => { await persist(r); const y = scrollY; parts(r, i); scrollTo(0, y); };
+  const re = () => { persist(r); const y = scrollY; parts(r, i); scrollTo(0, y); };
   const sw = (a, b) => { [c.arr[a], c.arr[b]] = [c.arr[b], c.arr[a]]; re(); };
   $('#rs').onclick = () => { c.arr = defArr(s); re(); };
-  $('#ok').onclick = async () => { await persist(r); go('#/reunion/' + r.id + '/editar', 'back'); };
+  $('#ok').onclick = async () => { await colaGuardar; go('#/reunion/' + r.id + '/editar', 'back'); };
   $$('[data-u]').forEach(b => b.onclick = () => sw(+b.dataset.u - 1, +b.dataset.u));
   $$('[data-d]').forEach(b => b.onclick = () => sw(+b.dataset.d, +b.dataset.d + 1));
   $$('[data-c]').forEach(b => b.onclick = () => { const j = +b.dataset.c; c.arr.splice(j + 1, 0, { ...c.arr[j] }); re(); });

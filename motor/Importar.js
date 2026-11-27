@@ -21,22 +21,33 @@ function catalogo_(ig) {
   return out;
 }
 
-/** "Título [Tono].docx" → { titulo, tono } */
-function nombreArchivo_(n) {
-  const base = n.replace(/\.docx$/i, ''), m = /^(.*?)\s*\[([^\]]+)\]\s*$/.exec(base);
-  return m ? { titulo: m[1].trim(), tono: m[2].trim() } : { titulo: base.trim(), tono: '' };
+// Paréntesis del nombre del archivo que son el intérprete (persona o grupo). Los demás ("(Simple)", "(New)",
+// "(Con subida)", subtítulos como "(Abba Padre)" o nombres dudosos) quedan en el título.
+const INTERPRETES_ = ['Anástasis', 'Jaime Murrel', 'Elevation', 'Hillsong', 'Majo Solis', 'Marcos Brunet'];
+
+/** "Título (Intérprete) [Tono] (Versión).docx" → { titulo, tono, interprete } */
+function nombreArchivo_(n, conocidos) {
+  const base = n.replace(/\.docx$/i, '').trim(), m = /^(.*?)\s*\[([^\]]+)\]\s*(\(.*\))?\s*$/.exec(base);
+  let titulo = m ? m[1].trim() + (m[3] ? ' ' + m[3].trim() : '') : base, interprete = '';
+  const lista = INTERPRETES_.concat(conocidos || []).map(norm_);
+  titulo = titulo.replace(/\s*\(([^()]+)\)/g, (all, x) => {
+    if (!interprete && lista.indexOf(norm_(x)) >= 0) { interprete = x.trim(); return ''; }
+    return all;
+  }).trim();
+  return { titulo, tono: m ? m[2].trim() : '', interprete };
 }
 
 // Apps Script corta cada ejecución a los 6 min: la importación avanza por tandas.
 // El progreso queda en Datos/import-estado.json; los Word que no cambiaron no se vuelven a convertir.
 const TANDA_MS = 4.5 * 60 * 1000;
-const CONV_V = 5;   // subir cuando cambia Convertir.js: fuerza a reconvertir todo
+const CONV_V = 6;   // subir cuando cambia Convertir.js: fuerza a reconvertir todo
 
 function importarCanciones_(ig, desdeCero) {
   if (!ig.letrasId) throw apiError_('Falta configurar la carpeta "Letra y Acordes" de esta iglesia.', 'config');
   const t0 = Date.now(), datos = datos_(ig), dirCanciones = subcarpeta_(datos, 'canciones');
   const estado = desdeCero ? { archivos: {}, canciones: {} } : leerJson_(datos, 'import-estado.json', { archivos: {}, canciones: {} });
   const cat = catalogo_(ig);
+  const conocidos = Object.keys(cat).map(k => cat[k].interprete).filter(x => x && x !== '-');
   const it = DriveApp.getFolderById(ig.letrasId).getFiles(), lista = [];
   while (it.hasNext()) lista.push(it.next());
   lista.sort((a, b) => a.getName().localeCompare(b.getName(), 'es'));
@@ -48,7 +59,7 @@ function importarCanciones_(ig, desdeCero) {
     if (Date.now() - t0 > TANDA_MS) { pendientes++; continue; }
     try {
       if (f.getMimeType() !== DOCX) throw new Error('No es un .docx (' + f.getMimeType() + ')');
-      const { titulo, tono: tonoArchivo } = nombreArchivo_(nombre);
+      const { titulo, tono: tonoArchivo, interprete: intArchivo } = nombreArchivo_(nombre, conocidos);
       const conv = convertirDocx_(f.getBlob());
       const c = cat[norm_(titulo)] || {};
       // id estable: se conserva el de una importación anterior del mismo archivo
@@ -60,7 +71,7 @@ function importarCanciones_(ig, desdeCero) {
       }
       // BPM solo si está confirmado (confianza alta o sin columna de confianza)
       const bpm = c.bpm && (!c.confianza || c.confianza === 'alta') ? c.bpm : null;
-      const song = { id, titulo: c.titulo || titulo, interprete: c.interprete || '-', tono: conv.tono || tonoArchivo || c.tono,
+      const song = { id, titulo: c.titulo || titulo, interprete: c.interprete || intArchivo || '', tono: conv.tono || tonoArchivo || c.tono,
                      lineas: conv.lineas, bpm, estado: c.estado || 'oficial', fuente: nombre };
       if (!song.lineas.length) throw new Error('El documento no tiene letra.');
       // Tono por parte, transiciones, puentes y Modulante (SPEC §6). song.tono pasa a ser el tono de inicio.
