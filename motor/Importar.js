@@ -30,6 +30,7 @@ function nombreArchivo_(n) {
 // Apps Script corta cada ejecución a los 6 min: la importación avanza por tandas.
 // El progreso queda en Datos/import-estado.json; los Word que no cambiaron no se vuelven a convertir.
 const TANDA_MS = 4.5 * 60 * 1000;
+const CONV_V = 2;   // subir cuando cambia Convertir.js: fuerza a reconvertir todo
 
 function importarCanciones_(ig, desdeCero) {
   if (!ig.letrasId) throw apiError_('Falta configurar la carpeta "Letra y Acordes" de esta iglesia.', 'config');
@@ -43,7 +44,7 @@ function importarCanciones_(ig, desdeCero) {
   let hechos = 0, pendientes = 0;
   for (const f of lista) {
     const fid = f.getId(), nombre = f.getName(), upd = f.getLastUpdated().getTime(), prev = estado.archivos[fid];
-    if (prev && prev.upd === upd) continue;                 // ya convertido y sin cambios
+    if (prev && prev.upd === upd && prev.v === CONV_V) continue;                // ya convertido y sin cambios
     if (Date.now() - t0 > TANDA_MS) { pendientes++; continue; }
     try {
       if (f.getMimeType() !== DOCX) throw new Error('No es un .docx (' + f.getMimeType() + ')');
@@ -64,9 +65,9 @@ function importarCanciones_(ig, desdeCero) {
       if (!song.lineas.length) throw new Error('El documento no tiene letra.');
       escribirJson_(dirCanciones, id + '.json', song);
       estado.canciones[id] = song;
-      estado.archivos[fid] = { upd, nombre, id, enPlanilla: !!c.titulo };
+      estado.archivos[fid] = { upd, v: CONV_V, nombre, id, enPlanilla: !!c.titulo };
     } catch (e) {
-      estado.archivos[fid] = { upd, nombre, error: String(e && e.message || e) };
+      estado.archivos[fid] = { upd, v: CONV_V, nombre, error: String(e && e.message || e) };
     }
     hechos++;
   }

@@ -20,7 +20,8 @@ function mkW_(w) {
   Object.keys(acc).forEach(k => { w[k] = w[acc[k]]; });
   return w;
 }
-const ancho_ = (ch, bold) => ((bold ? W_BOLD : W_REG)[ch] || 500) * (ch === ' ' ? 0.94 : 1);
+W_REG[' '] = W_BOLD[' '] = 250; W_REG['​'] = W_BOLD['​'] = 0; // espacio duro y espacio de ancho cero
+const ancho_ = (ch, bold) => ((bold ? W_BOLD : W_REG)[ch] ?? 500) * (ch === ' ' ? 0.94 : 1);
 
 const CH_RE = /^\(?[A-G][#b]?(m|maj|min|sus|add|dim|aug|M)?\d*(sus\d*|add\d*|maj\d*|b\d+|#\d+)*(\/[A-G][#b]?)?\)?[,.]?$/;
 const LAB_RE = /^\s*((?:\[[^\]]+\]:?\s*(?:[xX×]\d+)?\s*)+)/;
