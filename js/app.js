@@ -542,11 +542,25 @@ function settings() {
   $('#imp').onclick = async () => {
     const b = $('#imp'), res = $('#res'); b.disabled = true;
     try {
-      let r, n = 0;
-      do {
-        res.innerHTML = `<p class="hint">Importando${n ? ' (tanda ' + (n + 1) + ')' : ''}… no cierres esta pantalla.</p>`;
-        r = await ds.importar(ADMIN.token); n++;
-      } while (!r.completo && n < 20);
+      // Cada tanda dura hasta ~4,5 min en el motor. Si el motor dice "ocupado" (la tanda anterior sigue
+      // corriendo) o se corta la conexión, se espera 30 s y se reintenta solo, sin perder el avance.
+      let r = null, n = 0, esperas = 0, prog = '';
+      const espera = s => new Promise(ok => setTimeout(ok, s * 1000));
+      while (n < 40 && esperas < 30) {
+        res.innerHTML = `<p class="hint">Importando${n ? ' (tanda ' + (n + 1) + ')' : ''}${prog}… no cierres esta pantalla.</p>`;
+        try { r = await ds.importar(ADMIN.token); esperas = 0; }
+        catch (x) {
+          if (x.code === 'admin' && ADMIN.exp * 1000 < Date.now()) throw Object.assign(new Error('La sesión de Google venció. Volvé a ingresar y tocá Importar: sigue desde donde quedó.'), { code: 'admin' });
+          if (x.code && x.code !== 'ocupado') throw x;
+          esperas++;
+          res.innerHTML = `<p class="hint">Esperando que termine la tanda anterior${prog}… reintento en 30 s.</p>`;
+          await espera(30); continue;
+        }
+        n++;
+        if (r.total) prog = ` · ${r.listos} de ${r.total} canciones`;
+        if (r.completo) break;
+      }
+      if (!r) throw new Error('El motor no respondió. Probá de nuevo en unos minutos: sigue desde donde quedó.');
       res.innerHTML = r.completo
         ? `<p class="ok">Listo: ${r.importadas} canciones.${r.fallidas.length ? ' Con problemas:' : ''}</p>${r.fallidas.length ? '<ul class="fails">' + r.fallidas.map(f => `<li><b>${esc(f.archivo)}</b>: ${esc(f.error)}</li>`).join('') + '</ul>' : ''}`
         : `<p class="err">Quedaron ${r.pendientes} archivos sin procesar. Tocá de nuevo para seguir.</p>`;

@@ -81,7 +81,7 @@ function importarCanciones_(ig, desdeCero) {
 
   const A = Object.keys(estado.archivos).map(k => estado.archivos[k]);
   const ok = A.filter(a => a.id), fallidas = A.filter(a => a.error).map(a => ({ archivo: a.nombre, error: a.error }));
-  const res = { completo: pendientes === 0, hechosEnEstaTanda: hechos, pendientes, importadas: ok.length, fallidas };
+  const res = { completo: pendientes === 0, hechosEnEstaTanda: hechos, pendientes, total: lista.length, listos: lista.length - pendientes, importadas: ok.length, fallidas };
   if (res.completo) {
     // Correcciones del admin sobre la base (Datos/correcciones.json): se aplican después de cada importación.
     const corr = leerJson_(datos, 'correcciones.json', {});
