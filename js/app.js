@@ -714,7 +714,60 @@ function avisoDeshacer(msg, deshacer) {
   clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 5000);
 }
 
-let datosAbiertos = false;
+/**
+ * Hoja de la ruedita de Editar reunión: fecha, nombre y director (con la misma clave), conservando canciones,
+ * tonos y arreglos. El id no cambia: links, historial y Registro siguen igual. Si hay sesión de admin, abajo y
+ * en chico: clave nueva y el historial de lo que hizo el admin.
+ */
+function hojaDatos(r) {
+  const adm = esAdmin();
+  const w = document.createElement('div'); w.className = 'tsheetw';
+  w.innerHTML = `<div class="veil"></div><div class="tsheet" role="dialog" aria-modal="true" aria-labelledby="dh-t"><div class="bar"></div>
+    <h3 id="dh-t">Datos de la reunión</h3>
+    <form id="dr" class="form" novalidate>
+      <label>Fecha<input id="drd" type="date" value="${esc(r.fecha)}" required${r.registrada ? ' disabled' : ''}></label>
+      ${r.registrada ? '<p class="hint">Ya está anotada en el Registro: la fecha no se puede cambiar.</p>' : ''}
+      <label>Nombre<input id="drn" value="${esc(r.nombre)}" autocomplete="off" required></label>
+      <label>Dirige${personSelect('id="drp"', r.director)}</label>
+      ${adm ? `<label class="adk">Clave nueva<input id="adk" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="Solo si cambia (4 números)"></label>` : ''}
+      <p class="err" id="dre" role="alert"></p>
+      <div class="edr"><button class="primary">Guardar</button><button type="button" id="drc">Cancelar</button></div></form>
+    ${adm ? '<details class="adh"><summary>Historial del admin</summary><ul id="adh"><li>Cargando…</li></ul></details>' : ''}</div>`;
+  app.append(w);
+  const cerrar = () => { w.remove(); document.removeEventListener('keydown', tecla); const b = $('#cfg'); if (b) b.focus({ preventScroll: true, focusVisible: false }); };
+  const tecla = ev => { if (ev.key === 'Escape') cerrar(); };
+  document.addEventListener('keydown', tecla);
+  w.querySelector('.veil').onclick = cerrar; w.querySelector('#drc').onclick = cerrar;
+  const q = x => w.querySelector(x), drd = q('#drd'), drn = q('#drn'); wirePerson(q('#drp'), () => {});
+  const auto = f => { const [y, m, d] = f.split('-').map(Number); return DIAS[new Date(y, m - 1, d).getDay()] + ' ' + String(d).padStart(2, '0') + '-' + String(m).padStart(2, '0') + '-' + y; };
+  // Si el nombre era el automático de la fecha, sigue a la fecha nueva.
+  let sigue = !!r.fecha && drn.value.trim() === auto(r.fecha);
+  drn.oninput = () => { sigue = false; };
+  drd.oninput = () => { if (drd.value && sigue) drn.value = auto(drd.value); };
+  const adk = q('#adk'); if (adk) adk.oninput = () => { adk.value = adk.value.replace(/\D/g, '').slice(0, 4); };
+  if (adm) ds.adminReunion(r.id, ADMIN.token).then(x => { const h = x.historial || [];
+    q('#adh').innerHTML = h.length ? h.map(x => `<li>${esc(new Date(x.fecha).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }))} · ${esc(x.quien)}: ${esc(x.que)}</li>`).join('') : '<li>Sin cambios del admin.</li>'; })
+    .catch(x => { q('#adh').innerHTML = `<li>${esc(x.message)}</li>`; });
+  q('#dr').onsubmit = async ev => {
+    ev.preventDefault(); const er = q('#dre'); er.textContent = '';
+    if (!drd.value) return er.textContent = 'Elegí una fecha.';
+    if (!drn.value.trim()) return er.textContent = 'Escribí un nombre para la reunión.';
+    const dir = q('#drp') ? q('#drp').value : r.director, k = adk ? adk.value : '';
+    if (k && !/^\d{4}$/.test(k)) return er.textContent = 'La clave tiene que ser de 4 números.';
+    try {
+      await colaGuardar;   // primero lo que se esté guardando de las canciones
+      // Admin: el director nuevo (y la clave nueva) van por adminReunion, así queda como "reasignó".
+      if (adm && (k || dir !== r.director)) { const x = await ds.adminReunion(r.id, ADMIN.token, { clave: k || undefined, director: dir !== r.director ? dir : undefined }); r.director = x.reunion.director; }
+      const saved = await ds.updateReunion(r.id, { nombre: drn.value.trim(), fecha: drd.value, director: dir }, unlocked[r.id]);
+      r.nombre = saved.nombre; r.fecha = saved.fecha; r.director = saved.director;
+      cerrar(); toast(k ? 'Datos y clave guardados.' : 'Datos de la reunión guardados.'); const y = scrollY; editSes(r); scrollTo(0, y);
+    } catch (x) { er.textContent = x.message || 'No se pudo guardar.'; }
+  };
+  drn.focus({ preventScroll: true });
+  if (!reduced()) { q('.tsheet').animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.7,.2,1)' });
+                    q('.veil').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 }); }
+}
+
 /** Admin con sesión de Google vigente (no en el modo demo). */
 const esAdmin = () => !DEMO && !!ADMIN && ADMIN.exp * 1000 > Date.now() + 60000;
 function editSes(r) {
@@ -725,23 +778,7 @@ function editSes(r) {
       <div class="edr una"><label>Tono<select data-k="${i}">${KEYS.map(k => `<option${k === c.tono ? ' selected' : ''}>${k}</option>`).join('')}</select></label>
       <label>Dirige${personSelect(`data-q="${i}"`, c.quien)}</label>
       <button type="button" data-pa="${i}">Editar</button></div></li>`; }).join('');
-  app.innerHTML = `${back(nombreSes(r), '#/reunion/' + r.id)}<h2 class="title">Editar reunión</h2><p class="meta">${esc(nombreSes(r))} · Dirige ${esc(r.director)}</p>
-  <details class="datos"${datosAbiertos ? ' open' : ''}><summary>Fecha, nombre y director</summary>
-    <form id="dr" class="form" novalidate>
-      <label>Fecha<input id="drd" type="date" value="${esc(r.fecha)}" required></label>
-      <label>Nombre<input id="drn" value="${esc(r.nombre)}" autocomplete="off" required></label>
-      <label>Dirige${personSelect('id="drp"', r.director)}</label>
-      ${r.registrada ? '<p class="hint">Ya está anotada en el Registro: la fecha no se puede cambiar.</p>' : ''}
-      <p class="err" id="dre" role="alert"></p>
-      <button class="primary">Guardar datos</button></form></details>
-  ${esAdmin() ? `<details class="datos adm"><summary>Admin</summary>
-    <form id="adf" class="form" novalidate>
-      <p class="hint">Ingresaste como ${esc(ADMIN.email)}. Lo que hagas acá queda en el historial de la reunión.</p>
-      <label>Director${personSelect('id="adp"', r.director)}</label>
-      <label>Clave nueva<input id="adk" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="4 números (la escribe el director)"></label>
-      <p class="err" id="ade" role="alert"></p>
-      <button class="primary">Guardar</button></form>
-    <h4>Historial del admin</h4><ul class="adh" id="adh"><li class="hint">Cargando…</li></ul></details>` : ''}
+  app.innerHTML = `${back(nombreSes(r), '#/reunion/' + r.id)}<div class="edtit"><h2 class="title">Editar reunión</h2><button type="button" class="cfg" id="cfg" aria-haspopup="dialog" aria-label="Fecha, nombre y director" title="Fecha, nombre y director"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div><p class="meta">${esc(nombreSes(r))} · Dirige ${esc(r.director)}</p>
   <ol class="list">${rows || '<li class="empty">Agregá la primera canción con el buscador.</li>'}</ol>
   <div class="form"><label>Agregar canción<input id="ad" type="search" autocomplete="off" placeholder="Buscar por nombre, frase o director"></label>
     <ul class="list sugg" id="sg"></ul>
@@ -757,42 +794,7 @@ function editSes(r) {
     <button type="button" class="primary" id="ok">Listo</button></div>`;
   const re = () => { persist(r); const y = scrollY; editSes(r); scrollTo(0, y); };
   const swap = (a, b) => { [r.canciones[a], r.canciones[b]] = [r.canciones[b], r.canciones[a]]; re(); };
-  // ---- Fecha, nombre y director (conserva canciones, tonos y arreglos). El id no cambia: links, historial y Registro siguen igual.
-  const drd = $('#drd'), drn = $('#drn'); wirePerson($('#drp'), () => {});
-  if (r.registrada) drd.disabled = true;
-  const auto = f => { const [y, m, d] = f.split('-').map(Number); return DIAS[new Date(y, m - 1, d).getDay()] + ' ' + String(d).padStart(2, '0') + '-' + String(m).padStart(2, '0') + '-' + y; };
-  // Si el nombre era el automático de la fecha, sigue a la fecha nueva.
-  let sigue = !!r.fecha && drn.value.trim() === auto(r.fecha);
-  drn.oninput = () => { sigue = false; };
-  drd.oninput = () => { if (drd.value && sigue) drn.value = auto(drd.value); };
-  $('#dr').onsubmit = async ev => {
-    ev.preventDefault(); const er = $('#dre'); er.textContent = '';
-    if (!drd.value) return er.textContent = 'Elegí una fecha.';
-    if (!drn.value.trim()) return er.textContent = 'Escribí un nombre para la reunión.';
-    const dir = $('#drp') ? $('#drp').value : r.director;
-    try {
-      await colaGuardar;   // primero lo que se esté guardando de las canciones
-      const saved = await ds.updateReunion(r.id, { nombre: drn.value.trim(), fecha: drd.value, director: dir }, unlocked[r.id]);
-      r.nombre = saved.nombre; r.fecha = saved.fecha; r.director = saved.director;
-      datosAbiertos = false; toast('Datos de la reunión guardados.'); const y = scrollY; editSes(r); scrollTo(0, y);
-    } catch (x) { er.textContent = x.message || 'No se pudo guardar.'; }
-  };
-  if (esAdmin()) {
-    const adk = $('#adk'); adk.oninput = () => { adk.value = adk.value.replace(/\D/g, '').slice(0, 4); }; wirePerson($('#adp'), () => {});
-    const hist = h => { $('#adh').innerHTML = h.length ? h.map(x => `<li><b>${esc(new Date(x.fecha).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }))}</b> ${esc(x.quien)}: ${esc(x.que)}</li>`).join('') : '<li class="hint">Sin cambios del admin.</li>'; };
-    ds.adminReunion(r.id, ADMIN.token).then(x => hist(x.historial || [])).catch(x => { $('#adh').innerHTML = `<li class="err">${esc(x.message)}</li>`; });
-    $('#adf').onsubmit = async ev => {
-      ev.preventDefault(); const er = $('#ade'); er.textContent = '';
-      const dir = $('#adp') ? $('#adp').value : r.director, k = adk.value;
-      if (k && !/^\d{4}$/.test(k)) return er.textContent = 'La clave tiene que ser de 4 números.';
-      if (!k && dir === r.director) return er.textContent = 'No hay cambios: elegí otro director o escribí una clave nueva.';
-      try {
-        const x = await ds.adminReunion(r.id, ADMIN.token, { clave: k || undefined, director: dir !== r.director ? dir : undefined });
-        r.director = x.reunion.director; toast(k ? 'Clave cambiada.' : 'Reunión reasignada.'); const y = scrollY; editSes(r); scrollTo(0, y);
-      } catch (x) { er.textContent = x.message || 'No se pudo guardar.'; }
-    };
-  }
-  $('details.datos:not(.adm)').ontoggle = e => { datosAbiertos = e.target.open; };
+  $('#cfg').onclick = () => hojaDatos(r);
   $$('[data-up]').forEach(b => b.onclick = () => swap(+b.dataset.up - 1, +b.dataset.up));
   $$('[data-dn]').forEach(b => b.onclick = () => swap(+b.dataset.dn, +b.dataset.dn + 1));
   $$('[data-rm]').forEach(b => b.onclick = () => { r.canciones.splice(+b.dataset.rm, 1); re(); });
