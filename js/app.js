@@ -676,7 +676,7 @@ function editSes(r) {
 }
 
 // ---------- Partes ----------
-function parts(r, i) {
+function parts(r, i, abrirTono) {
   const c = r.canciones[i], s = c && songBy(c.id); if (!s) return editSes(r);
   setTabs(null);
   const AB = blocksOf(s), B = AB.filter(b => b.has);
@@ -684,55 +684,50 @@ function parts(r, i) {
   const letra = id => blockText(contenidoDe(s, id)).filter(t => !SUBA.test(t));
   // Tono de cada parte, calculado igual que en la hoja (tonosDelItem).
   const TD = tonosDelItem(c, { [s.id]: s }), modul = TD.modulante, PT = TD.partes;
-  const ant = j => { for (let k = j - 1; k >= 0; k--) if (!PT[k].transicion) return PT[k]; return null; };
+  const antI = j => { for (let k = j - 1; k >= 0; k--) if (!PT[k].transicion) return k; return -1; };
+  const ant = j => { const k = antI(j); return k < 0 ? null : PT[k]; };
   const sig = j => { for (let k = j + 1; k < PT.length; k++) if (!PT[k].transicion) return PT[k]; return null; };
+  const nom = e => base(e.label || '') || '(inicio)';
   const opts = (t, extra) => extra + [...Array(12)].map((_, n) => tonoMas(/m$/.test(t) ? 'Cm' : 'C', n))
     .map(k => `<option value="${k}"${extra || intervalo(k, t) ? '' : ' selected'}>${esc(k)}</option>`).join('');
   const DIF = [[0, '='], [1, '+½'], [2, '+1'], [-1, '−½']];
-  const tonoDe = (e, j) => {
-    const o = PT[j];
-    if (o.transicion) return modul ? `<div class="tn">Toma el tono de la parte siguiente${o.ver ? ' · ' + esc(o.tono) : ''}</div>` : '';
-    if (!modul) return '';
-    const a = ant(j);
-    if (!a) return `<div class="tn">Tono <b>${esc(o.tono)}</b> · inicio</div>`;
-    const d = intervalo(a.tono, o.tono);
-    return `<div class="tn">Tono <b>${esc(o.tono)}</b><span class="tnb">${DIF.map(([n, t]) => `<button type="button" data-t="${j}" data-n="${n}" aria-pressed="${d === n}" aria-label="${n ? t + ' respecto de la parte anterior' : 'Igual que la parte anterior'}">${t}</button>`).join('')}</span>
-      <select data-ta="${j}" aria-label="Tono de la parte">${e.tono ? `<option value="">Original</option>` : `<option value="" selected>Original (${esc(o.tono)})</option>`}${[...Array(12)].map((_, n) => tonoMas(/m$/.test(o.tono) ? 'Cm' : 'C', n)).map(k => `<option value="${k}"${e.tono && !intervalo(k, o.tono) ? ' selected' : ''}>${esc(k)}</option>`).join('')}</select></div>`;
+  // Chip de tono: "E" si sigue igual que la parte anterior, "↑ A" / "↓ G" si cambia. Solo con Modulante.
+  const chip = j => {
+    const o = PT[j]; if (!modul || o.transicion) return '';
+    if (antI(j) < 0) return `<span class="k" title="Tono de inicio">${esc(o.tono)}</span>`;
+    const d = intervalo(ant(j).tono, o.tono), fl = d > 0 ? '↑ ' : d < 0 ? '↓ ' : '';
+    return `<button type="button" class="k${d > 0 ? ' up' : d < 0 ? ' dn' : ''}" data-k="${j}" aria-haspopup="dialog" aria-label="Tono ${esc(o.tono)}${d ? (d > 0 ? ', sube' : ', baja') : ''}. Cambiar el tono de ${esc(nom(c.arr[j]))}">${fl}${esc(o.tono)}</button>`;
   };
+  const nota = j => { const o = PT[j]; return o.transicion && modul ? `<div class="x">Toma el tono de la parte siguiente${o.ver ? ` · <i>${esc(o.tono)}</i>` : ''}</div>` : ''; };
   // "Mostrar igual": en las transiciones y en las partes con acordes puente o [ ], cuando la siguiente queda en el mismo tono.
   const conPuente = e => { const b = AB[e.src]; return !!(b && b.lines.some(l => l.puente || l.modula)); };
   const mostrarDe = (e, j) => {
     const o = PT[j]; if (!sig(j) || !(o.transicion || conPuente(e)) || (o.cambia && !e.mostrar)) return '';
-    return `<label class="mi"><input type="checkbox" data-mi="${j}"${e.mostrar ? ' checked' : ''}> Mostrar igual ${o.transicion ? 'esta transición' : 'los acordes puente'}</label>`;
+    return `<label><input type="checkbox" data-mi="${j}"${e.mostrar ? ' checked' : ''}> Mostrar igual ${o.transicion ? 'esta transición' : 'los acordes puente'}</label>`;
   };
   const secciones = c.arr.map((e, j) => [e, j]).filter(([e, j]) => !PT[j].transicion && AB[e.src])
     .filter(([e], k, a) => a.findIndex(([x]) => x.src === e.src) === k);
+  const MANIJA = '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 5h12M3 9h12M3 13h12"/></svg>';
   app.innerHTML = `${back('Editar reunión', '#/reunion/' + r.id + '/editar')}<h2 class="title">${esc(s.titulo)}</h2><p class="meta">Orden de las partes</p>
   <div class="modbox"><label class="sw"><input type="checkbox" id="mo"${modul ? ' checked' : ''}> Modulante</label><p class="hint">Permite cambiar de tono entre partes</p>
     <div class="edr"><label>Tono de inicio<select id="ti">${opts(c.tono || keyOption(s), '')}</select></label></div></div>
-  <ol class="list parts">${c.arr.map((e, j) => `<li class="ed"><div class="edh">
-    <button type="button" class="pv" data-v="${j}" aria-expanded="false"><b>${esc(base(e.label || '') || '(inicio)')}</b><small>${esc(letra(e.src)[0] || 'Sin letra (instrumental)')}</small></button>
-    <span class="tools"><span class="repc"><button type="button" data-m="${j}" aria-label="Menos repeticiones"${rOf(e) > 1 ? '' : ' disabled'}>−</button><span class="rep">x${rOf(e)}</span><button type="button" data-p="${j}" aria-label="Más repeticiones"${rOf(e) < 9 ? '' : ' disabled'}>+</button></span>
-    <button type="button" data-u="${j}" aria-label="Subir"${j ? '' : ' disabled'}>▲</button><button type="button" data-d="${j}" aria-label="Bajar"${j < c.arr.length - 1 ? '' : ' disabled'}>▼</button><button type="button" data-c="${j}" aria-label="Duplicar">⧉</button><button type="button" data-x="${j}" aria-label="Quitar">✕</button></span></div>
-    ${tonoDe(e, j)}${mostrarDe(e, j)}
+  <ol class="pl">${c.arr.map((e, j) => `<li class="pc${PT[j].transicion ? ' tr' : ''}">
+    <button type="button" class="h" data-h="${j}" aria-label="Mover ${esc(nom(e))} (flechas arriba y abajo)">${MANIJA}</button>
+    <div class="t"><b>${esc(nom(e))}</b><button type="button" class="rp${rOf(e) > 1 ? ' mas' : ''}" data-r="${j}" aria-haspopup="true" aria-expanded="false" aria-label="Repeticiones: ${rOf(e)}">x${rOf(e)}</button></div>
+    ${chip(j)}<button type="button" class="m" data-o="${j}" aria-haspopup="true" aria-expanded="false" aria-label="Más opciones de ${esc(nom(e))}">⋯</button>
+    <button type="button" class="pv" data-v="${j}" aria-expanded="false">${esc(letra(e.src)[0] || 'Sin letra (instrumental)')}</button>
+    ${nota(j)}
     <div class="pvb" hidden><div class="pvb-in">${letra(e.src).map(t => `<div>${esc(t)}</div>`).join('') || '<div>Sin letra (instrumental)</div>'}</div></div></li>`).join('')}</ol>
   <div class="form"><label>Agregar parte<select id="ap"><option value="">Elegir…</option>${B.map(b => `<option value="${b.id}">${esc((b.label || '(inicio)') + ' — ' + (letra(b.id)[0] || 'instrumental'))}</option>`).join('')}</select></label>
-    ${modul ? `<label>+ Agregar sección (copia de una parte, con tono nuevo)<select id="as"><option value="">Elegir…</option>${secciones.map(([e, j]) => `<option value="${j}">${esc((base(e.label || '') || '(inicio)') + ' — ' + PT[j].tono)}</option>`).join('')}</select></label>` : ''}
+    ${modul ? `<label>+ Agregar sección (copia de una parte, con tono nuevo)<select id="as"><option value="">Elegir…</option>${secciones.map(([e, j]) => `<option value="${j}">${esc(nom(e) + ' — ' + PT[j].tono)}</option>`).join('')}</select></label>` : ''}
     <button type="button" id="rs">Volver al orden original</button><button type="button" class="primary" id="ok">Listo</button></div>`;
-  const re = () => { persist(r); const y = scrollY; parts(r, i); scrollTo(0, y); };
-  const sw = (a, b) => { [c.arr[a], c.arr[b]] = [c.arr[b], c.arr[a]]; re(); };
+  const re = abrir => { persist(r); const y = scrollY; parts(r, i, abrir); scrollTo(0, y); };
   $('#rs').onclick = () => { c.arr = defArr(s); re(); };
   $('#ok').onclick = async () => { await colaGuardar; go('#/reunion/' + r.id + '/editar', 'back'); };
-  $$('[data-u]').forEach(b => b.onclick = () => sw(+b.dataset.u - 1, +b.dataset.u));
-  $$('[data-d]').forEach(b => b.onclick = () => sw(+b.dataset.d, +b.dataset.d + 1));
   // La copia va sin pid: el motor le da uno nuevo (y la app lo toma al guardar).
   const copia = j => { const x = { ...c.arr[j] }; delete x.pid; return x; };
-  $$('[data-c]').forEach(b => b.onclick = () => { const j = +b.dataset.c; c.arr.splice(j + 1, 0, copia(j)); re(); });
   $('#mo').onchange = e => { c.modulante = e.target.checked; re(); };
   $('#ti').onchange = e => { cambiarInicio(c, e.target.value); re(); };
-  $$('[data-t]').forEach(b => b.onclick = () => { const j = +b.dataset.t, a = ant(j); c.arr[j].tono = tonoMas(a.tono, +b.dataset.n); re(); });
-  $$('[data-ta]').forEach(x => x.onchange = () => { const e = c.arr[+x.dataset.ta]; if (x.value) e.tono = x.value; else delete e.tono; re(); });
-  $$('[data-mi]').forEach(x => x.onchange = () => { const e = c.arr[+x.dataset.mi]; if (x.checked) e.mostrar = true; else delete e.mostrar; re(); });
   // "+ Agregar sección": copia de la parte elegida al final, medio tono arriba de la última parte.
   if ($('#as')) $('#as').onchange = e => { const j = +e.target.value; if (e.target.value === '' || !c.arr[j]) return;
     const x = copia(j), ult = [...PT].reverse().find(o => !o.transicion); delete x.mostrar;
@@ -745,10 +740,113 @@ function parts(r, i) {
     const a = box.animate(open ? [{ height: 0, opacity: 0 }, { height: h + 'px', opacity: 1 }] : [{ height: h + 'px', opacity: 1 }, { height: 0, opacity: 0 }], { duration: 220, easing: 'cubic-bezier(.2,.7,.2,1)' });
     a.onfinish = () => { box.hidden = !li.classList.contains('open'); };
   });
-  $$('[data-m]').forEach(b => b.onclick = () => { const e = c.arr[+b.dataset.m]; e.rep = Math.max(1, rOf(e) - 1); re(); });
-  $$('[data-p]').forEach(b => b.onclick = () => { const e = c.arr[+b.dataset.p]; e.rep = Math.min(9, rOf(e) + 1); re(); });
-  $$('[data-x]').forEach(b => b.onclick = () => { c.arr.splice(+b.dataset.x, 1); re(); });
   $('#ap').onchange = e => { const b = AB[+e.target.value]; if (b) { c.arr.push({ src: b.id, label: b.label, rep: 1 }); re(); } };
+
+  // ---- Menús chicos (repeticiones y ⋯): flotan junto al botón; se cierran al tocar afuera, con Escape o al desplazar.
+  let cerrarPop = null, popDe = null;
+  const pop = (btn, cls, html, wire) => {
+    const mismo = popDe === btn; if (cerrarPop) cerrarPop(); if (mismo) return;
+    const p = document.createElement('div'); p.className = 'pop ' + cls; p.innerHTML = html; app.append(p);
+    const b = btn.getBoundingClientRect(), W = document.documentElement.clientWidth;
+    const izq = cls === 'step' ? b.left - 8 : b.right - p.offsetWidth;
+    p.style.left = Math.max(8, Math.min(izq, W - p.offsetWidth - 8)) + 'px';
+    p.style.top = (b.bottom + p.offsetHeight + 8 > innerHeight ? b.top - p.offsetHeight - 4 : b.bottom + 4) + 'px';
+    const fuera = ev => { if (!p.contains(ev.target) && !btn.contains(ev.target)) cerrar(); };
+    const tecla = ev => { if (ev.key === 'Escape') { cerrar(); btn.focus(); } };
+    const cerrar = () => { p.remove(); btn.setAttribute('aria-expanded', 'false'); cerrarPop = popDe = null;
+      document.removeEventListener('pointerdown', fuera, true); document.removeEventListener('keydown', tecla); removeEventListener('scroll', cerrar); };
+    document.addEventListener('pointerdown', fuera, true); document.addEventListener('keydown', tecla); addEventListener('scroll', cerrar, { passive: true });
+    btn.setAttribute('aria-expanded', 'true'); cerrarPop = cerrar; popDe = btn;
+    wire(p, cerrar); const f = p.querySelector('button:not(:disabled), input'); if (f) f.focus({ preventScroll: true });
+  };
+  // Repeticiones: − x2 +, sin volver a dibujar la página (no cambia ningún tono).
+  $$('[data-r]').forEach(btn => btn.onclick = () => {
+    const e = c.arr[+btn.dataset.r];
+    pop(btn, 'step', `<button type="button" data-s="-1" aria-label="Menos repeticiones">−</button><b aria-live="polite"></b><button type="button" data-s="1" aria-label="Más repeticiones">+</button>`, p => {
+      const pinta = () => { const n = rOf(e); p.querySelector('b').textContent = 'x' + n; btn.textContent = 'x' + n;
+        btn.classList.toggle('mas', n > 1); btn.setAttribute('aria-label', 'Repeticiones: ' + n);
+        p.querySelector('[data-s="-1"]').disabled = n <= 1; p.querySelector('[data-s="1"]').disabled = n >= 9; };
+      p.querySelectorAll('[data-s]').forEach(x => x.onclick = () => { e.rep = Math.max(1, Math.min(9, rOf(e) + +x.dataset.s)); persist(r); pinta(); });
+      pinta();
+    });
+  });
+  // ⋯: Duplicar, Mostrar igual (solo donde corresponde) y Quitar.
+  $$('[data-o]').forEach(btn => btn.onclick = () => {
+    const j = +btn.dataset.o, e = c.arr[j], mi = mostrarDe(e, j);
+    pop(btn, 'menu', `<button type="button" data-a="dup">Duplicar</button>${mi}<div class="sep"></div><button type="button" class="del" data-a="del">Quitar</button>`, (p, cerrar) => {
+      p.querySelector('[data-a="dup"]').onclick = () => { cerrar(); c.arr.splice(j + 1, 0, copia(j)); re(); };
+      p.querySelector('[data-a="del"]').onclick = () => { cerrar(); c.arr.splice(j, 1); re(); };
+      const x = p.querySelector('[data-mi]'); if (x) x.onchange = () => { if (x.checked) e.mostrar = true; else delete e.mostrar; cerrar(); re(); };
+    });
+  });
+
+  // ---- Hoja de tono: =, +½, +1, −½ respecto de la parte anterior, o un tono de los 12. Se aplica al tocar; "Listo" cierra.
+  const hoja = (j, sinAnim) => {
+    const o = PT[j], k = antI(j); if (k < 0 || !modul || o.transicion) return;
+    const a = PT[k], e = c.arr[j], d = intervalo(a.tono, o.tono);
+    // Tono original: el que tendría la parte sin tono elegido.
+    const sinTono = c.arr.map((x, n) => { if (n !== j) return x; const y = { ...x }; delete y.tono; return y; });
+    const orig = tonosDelItem({ ...c, arr: sinTono }, { [s.id]: s }).partes[j].tono;
+    const doce = [...Array(12)].map((_, n) => tonoMas(/m$/.test(o.tono) ? 'Cm' : 'C', n));
+    const w = document.createElement('div'); w.className = 'sheetw';
+    w.innerHTML = `<div class="veil"></div><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-t"><div class="bar"></div>
+      <h3 id="sh-t">Tono de ${esc(nom(e))}</h3><p>Respecto de la parte anterior (${esc(nom(c.arr[k]))}, en ${esc(a.tono)})</p>
+      <div class="rel">${DIF.map(([n, t]) => `<button type="button" data-n="${n}" aria-pressed="${d === n}">${t}<small>${n ? esc(tonoMas(a.tono, n)) : 'igual'}</small></button>`).join('')}</div>
+      <h4>O elegí el tono</h4>
+      <div class="keys">${doce.map(t => `<button type="button" data-tk="${t}"${intervalo(t, orig) ? '' : ' class="orig"'} aria-pressed="${!intervalo(t, o.tono)}">${esc(t)}</button>`).join('')}</div>
+      <div class="orig-n">Tono original: ${esc(orig)}</div>
+      <button type="button" class="primary ok">Listo</button></div>`;
+    app.append(w);
+    const chipBtn = () => $(`[data-k="${j}"]`);
+    const cerrar = () => { w.remove(); document.removeEventListener('keydown', tecla); const b = chipBtn(); if (b) b.focus(); };
+    const tecla = ev => { if (ev.key === 'Escape') cerrar(); };
+    document.addEventListener('keydown', tecla);
+    // Elegir el tono original quita el tono elegido (vuelve a seguir a la parte anterior como en la canción).
+    const poner = t => { if (!intervalo(t, orig)) delete e.tono; else e.tono = t; document.removeEventListener('keydown', tecla); re(j); };
+    w.querySelector('.veil').onclick = cerrar; w.querySelector('.ok').onclick = cerrar;
+    w.querySelectorAll('[data-n]').forEach(b => b.onclick = () => poner(tonoMas(a.tono, +b.dataset.n)));
+    w.querySelectorAll('[data-tk]').forEach(b => b.onclick = () => poner(b.dataset.tk));
+    (w.querySelector('.sheet [aria-pressed="true"]') || w.querySelector('.ok')).focus({ preventScroll: true });
+    if (!reduced()) { w.querySelector('.sheet').animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: sinAnim ? 0 : 240, easing: 'cubic-bezier(.2,.7,.2,1)' });
+                      w.querySelector('.veil').animate([{ opacity: 0 }, { opacity: 1 }], { duration: sinAnim ? 0 : 200 }); }
+  };
+  $$('[data-k]').forEach(b => b.onclick = () => hoja(+b.dataset.k));
+  if (abrirTono != null) hoja(abrirTono, true);
+
+  // ---- Mover: arrastrando la manija ≡, o con las flechas arriba/abajo cuando la manija tiene el foco.
+  const lista = $('.pl');
+  const mover = (a, b) => { const [x] = c.arr.splice(a, 1); c.arr.splice(b, 0, x); re(); };
+  $$('[data-h]').forEach(h => {
+    h.onkeydown = ev => {
+      const j = +h.dataset.h, n = ev.key === 'ArrowUp' ? j - 1 : ev.key === 'ArrowDown' ? j + 1 : -1;
+      if (n < 0 || n >= c.arr.length) return; ev.preventDefault(); mover(j, n); const f = $(`[data-h="${n}"]`); if (f) f.focus();
+    };
+    h.onpointerdown = ev => {
+      if (ev.button || c.arr.length < 2) return; ev.preventDefault();
+      const j = +h.dataset.h, li = h.closest('li'), items = [...lista.children];
+      const top = x => x.getBoundingClientRect().top + scrollY;
+      const tops = items.map(top), mid = items.map((x, k) => tops[k] + x.offsetHeight / 2);
+      const paso = li.offsetHeight + (items.length > 1 ? (j ? tops[j] - tops[j - 1] - items[j - 1].offsetHeight : tops[1] - tops[0] - items[0].offsetHeight) : 0);
+      const y0 = ev.clientY + scrollY; let py = ev.clientY, dest = j, raf = 0;
+      h.setPointerCapture(ev.pointerId); li.classList.add('lift'); lista.classList.add('drag');
+      const pinta = () => {
+        const dy = py + scrollY - y0, centro = mid[j] + dy; li.style.translate = `0 ${dy}px`;
+        dest = j;
+        for (let k = j + 1; k < items.length && centro > mid[k]; k++) dest = k;
+        for (let k = j - 1; k >= 0 && centro < mid[k]; k--) dest = k;
+        items.forEach((x, k) => { if (k === j) return; const s = k > j && k <= dest ? -paso : k < j && k >= dest ? paso : 0; x.style.translate = s ? `0 ${s}px` : ''; });
+      };
+      // Cerca del borde de la pantalla se desplaza solo, para poder llevar la parte lejos.
+      const auto = () => { const v = py < 80 ? -10 : py > innerHeight - 80 ? 10 : 0; if (v) { scrollBy(0, v); pinta(); } raf = requestAnimationFrame(auto); };
+      raf = requestAnimationFrame(auto);
+      h.onpointermove = e2 => { py = e2.clientY; pinta(); };
+      h.onpointerup = h.onpointercancel = () => {
+        cancelAnimationFrame(raf); h.onpointermove = h.onpointerup = h.onpointercancel = null;
+        items.forEach(x => { x.style.translate = ''; }); li.classList.remove('lift'); lista.classList.remove('drag');
+        if (dest !== j) mover(j, dest);
+      };
+    };
+  });
 }
 
 // ---------- Ajustes (admin con Google) ----------

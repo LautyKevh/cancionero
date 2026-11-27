@@ -216,27 +216,69 @@ input[type=search]::placeholder { color: var(--mute); }
 .modbox { margin: 10px 0 4px; }
 .modbox .hint { margin: -6px 0 0 32px; }
 .modbox .edr { margin-top: 4px; }
-.sw, .mi { display: flex; align-items: center; gap: 10px; min-height: 44px; }
-.sw { font-weight: 600; font-size: 16px; }
-.mi { font-size: 13px; color: var(--mute); min-height: 40px; }
-.sw input, .mi input { width: 22px; height: 22px; margin: 0; accent-color: var(--acc); flex: none; }
-.tn { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 8px; font-size: 13px; color: var(--mute); }
-.tn b { color: var(--ink); font-size: 15px; min-width: 2.4em; }
-.tnb { display: inline-flex; gap: 3px; }
-.tn button { font-weight: 600; font-size: 13px; height: 36px; min-width: 40px; padding: 0 6px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--card); color: var(--ink); }
-.tn button[aria-pressed="true"] { background: var(--acc-soft); color: var(--acc); border-color: var(--acc); }
-.tn select { font-size: 14px; height: 36px; padding: 0 6px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--card); color: var(--ink); }
-.pv { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 2px; flex: 1; min-height: 40px; padding: 2px 0; }
-.pv small { color: var(--mute); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pv b::after { content: " ▾"; color: var(--mute); font-size: .8em; display: inline-block; transition: transform .2s var(--ease); }
-li.open .pv b::after { transform: rotate(180deg); }
+.sw { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 600; font-size: 16px; }
+.sw input { width: 22px; height: 22px; margin: 0; accent-color: var(--acc); flex: none; }
+
+/* Partes de una canción: tarjeta compacta. Manija | título + repeticiones | chip de tono | ⋯ ; abajo, la primera línea de letra. */
+.pl { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
+.pc { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto 40px; grid-template-areas: "h t k m" "h l l l" "h x x x" "h b b b";
+      align-items: center; column-gap: 6px; padding: 8px 2px 10px 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+.pc.tr { background: transparent; border-style: dashed; }
+.pc.tr .t b { font-weight: 500; color: var(--mute); }
+.pc .h { grid-area: h; align-self: stretch; display: grid; place-items: center; padding: 0; color: var(--mute); cursor: grab; touch-action: none; border: 0; background: none; border-radius: 10px; }
+.pc .h svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; stroke-linecap: round; fill: none; }
+.pc .t { grid-area: t; display: flex; align-items: center; gap: 8px; min-height: 36px; }
+.pc .t b { font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc .pv { all: unset; grid-area: l; cursor: pointer; color: var(--mute); font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 10px 2px 0; margin-top: -2px; }
+.pc .pv:focus-visible { outline: 3px solid var(--acc); outline-offset: 2px; border-radius: 4px; }
+.pc.open .pv { color: var(--ink); }
+.pc .x { grid-area: x; color: var(--mute); font-size: 12.5px; margin-top: 3px; }
+.pc .x i { font-style: normal; font-family: "JetBrains Mono", monospace; font-weight: 700; color: var(--ch); }
+.pc .pvb { grid-area: b; padding-right: 10px; }
+.rp { flex: none; font-weight: 700; font-size: 12.5px; height: 26px; min-width: 34px; padding: 0 7px; border-radius: 13px; border: 1px solid var(--line); background: none; color: var(--mute); }
+.rp.mas { color: var(--ch); border-color: color-mix(in srgb, var(--ch) 45%, var(--line)); background: var(--ch-soft); }
+/* Chip de tono: lo único con color fuerte, para ver de un vistazo dónde cambia el tono. */
+.k { grid-area: k; font: 700 15px/1 "JetBrains Mono", monospace; height: 36px; min-width: 50px; padding: 0 12px; border-radius: 18px; border: 0; background: var(--ch-soft); color: var(--ch); display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
+.k.up { background: #0474c4; color: #fff; }
+.k.dn { background: #06457f; color: #fff; }
+.pc .m { grid-area: m; width: 40px; height: 40px; padding: 0; border: 0; background: none; border-radius: 50%; color: var(--mute); font-size: 20px; line-height: 1; }
+.pc .m[aria-expanded="true"] { background: var(--acc-soft); color: var(--acc); }
+/* Arrastrando: la tarjeta se levanta y las demás le hacen lugar. */
+.pl.drag .pc:not(.lift) { transition: translate .18s var(--ease); }
+.pc.lift { position: relative; z-index: 2; scale: 1.02; rotate: -.6deg; border-color: var(--ch); box-shadow: 0 14px 30px -12px rgba(6, 69, 127, .45); }
+.pc.lift .h { cursor: grabbing; }
+/* Menús chicos (⋯ y repeticiones) */
+.pop { position: fixed; z-index: 20; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 16px 36px -18px rgba(29, 34, 54, .5); padding: 6px; }
+.pop.menu { min-width: 220px; max-width: calc(100vw - 16px); }
+.pop.menu button { display: flex; width: 100%; align-items: center; min-height: 44px; padding: 0 12px; border: 0; background: none; border-radius: 8px; font-size: 15px; text-align: left; }
+.pop.menu button.del { color: var(--danger); }
+.pop .sep { height: 1px; background: var(--line); margin: 4px 6px; }
+.pop label { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; font-size: 14px; }
+.pop label input { width: 20px; height: 20px; margin: 0; accent-color: var(--acc); flex: none; }
+.pop.step { display: flex; align-items: center; gap: 4px; padding: 4px; }
+.pop.step button { width: 44px; height: 44px; border: 0; border-radius: 8px; background: none; font-size: 20px; font-weight: 600; }
+.pop.step b { min-width: 40px; text-align: center; font-size: 16px; color: var(--ch); }
+/* Hoja de abajo: tono de una parte */
+.sheetw .veil { position: fixed; inset: 0; z-index: 30; background: rgba(20, 24, 40, .38); }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-width: 560px; margin: 0 auto; background: var(--card); border-radius: 20px 20px 0 0; padding: 8px var(--gut) calc(18px + env(safe-area-inset-bottom)); }
+.sheet .bar { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 12px; }
+.sheet h3 { margin: 0; font: 600 20px/1.2 Fraunces, Georgia, serif; }
+.sheet p { margin: 2px 0 12px; color: var(--mute); font-size: 13px; }
+.sheet h4 { margin: 16px 0 6px; font-size: 13px; font-weight: 600; color: var(--mute); }
+.rel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.keys { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.rel button, .keys button { font: 700 15px/1 "JetBrains Mono", monospace; height: 46px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); display: grid; place-items: center; align-content: center; gap: 3px; padding: 0; }
+.keys button { height: 42px; position: relative; }
+.rel button small { font: 500 10.5px Inter, sans-serif; color: var(--mute); }
+.rel button[aria-pressed="true"], .keys button[aria-pressed="true"] { background: #0474c4; border-color: #0474c4; color: #fff; }
+.rel button[aria-pressed="true"] small { color: #fff; opacity: .85; }
+.keys button.orig::after { content: ""; position: absolute; bottom: 5px; left: 50%; margin-left: -2px; width: 4px; height: 4px; border-radius: 50%; background: var(--sec); }
+.sheet .orig-n { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: var(--mute); }
+.sheet .orig-n::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--sec); }
+.sheet .ok { width: 100%; margin-top: 14px; }
+
 .pvb { overflow: hidden; }
-.pvb-in { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--sec); background: var(--card); border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.45; }
-@media (max-width: 520px) {
-  .parts .edh { flex-wrap: wrap; }
-  .parts .pv { flex-basis: 100%; }
-  .parts .tools { width: 100%; justify-content: flex-end; }
-}
+.pvb-in { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--sec); background: var(--bg); border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.45; }
 
 /* ---------- Línea de estado ---------- */
 .status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%; max-width: 900px; margin: 0 auto; padding: 10px var(--gut) calc(12px + env(safe-area-inset-bottom)); color: var(--mute); font-size: 13px; border-top: 1px solid var(--line); }
