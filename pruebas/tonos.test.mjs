@@ -4,7 +4,7 @@
 // tonos con tonosTocados_ de motor/Tonos.js en todas las canciones modulantes, con arreglos al azar.
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { tonosDelItem, transposer, keyAt } from '../js/music.js';
+import { tonosDelItem, transposer, keyAt, tituloTransportado } from '../js/music.js';
 import { blocksOf, defArr, contenidoDe, variantesDe } from '../js/songs.js';
 
 const dir = new URL('.', import.meta.url);
@@ -147,6 +147,16 @@ const puente = (r, s, re) => {
   igual(motor(item, songs), tonosDelItem(item, songs).secuencias.map(x => x.tonos), 'arr vacío: igual que el motor');
   item = { tipo: 'medley', tono: 'A', quien: 'X', canciones: [{ id: b.id }, { id: a.id }], arr: [] };
   igual(motor(item, songs), tonosDelItem(item, songs).secuencias.map(x => x.tonos), 'Medley con arr vacío: igual que el motor');
+}
+
+// ---------- Títulos que nombran un tono ----------
+igual(['Inter para subir a A', 'Coro (Sube a A)', 'BAJA AL F#', 'Coro (baja a Am)', 'Subir a Dios', 'Coro'].map(t => tituloTransportado(t, 1)),
+  ['Inter para subir a Bb', 'Coro (Sube a Bb)', 'BAJA AL G', 'Coro (baja a Bbm)', 'Subir a Dios', 'Coro'], 'Título con tono: se transporta');
+{
+  const s = SONGS['al-estar-aqui'], songs = { [s.id]: s };
+  const R = tonosDelItem({ id: s.id, tono: 'G', modulante: true, arr: [] }, songs);
+  const k = R.arr.findIndex(e => /inter para subir/i.test(e.label));
+  igual(tituloTransportado(R.arr[k].label, R.partes[k].sh), 'Inter para subir a Bb', 'Al estar aquí en G: "Inter para subir a Bb"');
 }
 
 // ---------- Variantes de una parte ----------

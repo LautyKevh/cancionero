@@ -3,7 +3,7 @@ import { LocalDataSource, ClaveError } from './datasource.js';
 import { ApiDataSource } from './apidatasource.js';
 import { CONFIG } from './config.js';
 import { demoSeed } from './demo.js';
-import { KEYS, keyAt, shiftTo, keyOption, showKey, transposer, tonosDelItem, tonoMas, intervalo, enTonos, CHORD } from './music.js';
+import { KEYS, keyAt, shiftTo, keyOption, showKey, transposer, tonosDelItem, tonoMas, intervalo, enTonos, tituloTransportado, CHORD } from './music.js';
 import { prepare, blocksOf, contenidoDe, SUBA, defArr, isDefArr, mismoOrden, variantesDe, blockText, base, rOf, labOf, summary, historyOf, search, fmt, isoOf } from './songs.js';
 import { GRUPOS } from './grupos.js';
 
@@ -15,7 +15,7 @@ const ds = DEMO ? new LocalDataSource({ seedFn: demoSeed }) : new ApiDataSource(
 
 // ---------- Estado ----------
 const prefs = (() => { try { return JSON.parse(localStorage.getItem('cancionero:prefs') || '{}'); } catch (e) { return {}; } })();
-const P = { not: prefs.not || 0, adj: prefs.adj || 0, sadj: prefs.sadj || 0, modos: prefs.modos || {}, tema: prefs.tema || '' };
+const P = { not: prefs.not || 0, adj: prefs.adj || 0, sadj: prefs.sadj || 0, modos: prefs.modos || {}, tema: prefs.tema || '', nombre: prefs.nombre || '' };
 /** Modo claro / oscuro de este dispositivo ('' = el del sistema). Lo aplica también index.html antes de pintar. */
 function aplicarTema() {
   const t = P.tema === 'light' || P.tema === 'dark' ? P.tema : '';
@@ -321,12 +321,12 @@ const xpose = (T, tok) => tok.split(/([-–|\s])/).map(p => CHORD.test(p.replace
  * transiciones, [ ] / { } e indicador de cambio de tono. Lo usan la vista y la impresión.
  * item: { id | tipo: 'medley', canciones, tono, arr?, modulante? }.
  */
-function sheetRows(item, mus, vari) {
+function sheetRows(item, mus, vari, ed) {
   const songs = {}; (item.tipo === 'medley' ? (item.canciones || []).map(c => c.id) : [item.id]).forEach(id => { const s = songBy(id); if (s) songs[id] = s; });
   const R = tonosDelItem(item, songs), medley = item.tipo === 'medley';
   const TR = (tono, sh) => transposer({ tono: tono || item.tono || 'C' }, sh || 0, P.not);
   const p0 = R.partes.find(p => !p.transicion), kd = showKey(p0 ? TR(p0.escrito, p0.sh).key : item.tono, P.not);
-  const seen = new Set(); let antCancion = null;
+  const seen = new Set(), info = []; let antCancion = null;
 
   const rows = R.partes.map((p, k) => {
     const e = R.arr[k], s = songs[p.cancion]; if (!s) return '';
@@ -336,13 +336,16 @@ function sheetRows(item, mus, vari) {
     if (p.transicion && !p.ver) return sep;                    // transición oculta (no cambia el tono)
     // Un bloque que solo trae "(Baja a F#)" repite el anterior con el mismo nombre: sus líneas, en el tono de esta parte.
     const b = e.src != null ? contenidoDe(s, e.src) : null, escr = b && b.sec && b.sec.tono || p.escrito;
-    const T = TR(escr, escr === p.escrito ? p.sh : intervalo(escr, p.tono));
+    const shT = escr === p.escrito ? p.sh : intervalo(escr, p.tono), T = TR(escr, shT);
     const TG = { p: TR(p.puente.escrito, p.puente.sh), m: TR(p.modula.escrito, p.modula.sh), r: T };
     const VER = { p: p.puente.ver, m: p.modula.ver, r: p.repite.ver };
     // En Músico, una parte repetida en el mismo tono va solo con su título; en otro tono, completa.
-    const clave = p.cancion + '#' + (b ? b.id : e.src) + '@' + tonoMas(p.tono, 0);
-    let ls = b && !(mus && seen.has(clave)) ? b.lines : [];
-    if (b) seen.add(clave);
+    // Acordes editados por los músicos para esta reunión (e.lineas, en el tono escrito); si no, los del Word.
+    const base_ = e.lineas || (b && b.lines);
+    const clave = p.cancion + '#' + (b ? b.id : e.src) + (e.lineas ? '~' + (e.pid || k) : '') + '@' + tonoMas(p.tono, 0);
+    let ls = base_ && !(mus && seen.has(clave)) ? base_ : [];
+    if (base_) seen.add(clave);
+    info[k] = { escr, sh: shT, tono: p.tono, lines: base_ || [] };
     ls = ls.filter(l => (mus || (l.t !== 'ch' && l.t !== 'mix')) && !(l.t === 'ly' && SUBA.test(l.v.trim())))
       .filter((l, i, a) => l.t !== 'blank' || (i > 0 && a[i - 1].t !== 'blank'));
     while (ls.length && ls[0].t === 'blank') ls.shift();
@@ -384,18 +387,22 @@ function sheetRows(item, mus, vari) {
     const L = ls.map(line).filter(Boolean);
     // Indicador en el renglón del título: "Coro  ↑ A (+1½)".
     const ind = p.indicador ? `<span class="modi">${p.indicador.dir} ${esc(showKey(T.key, P.not))} (${enTonos(p.indicador.dif)})</span>` : '';
-    const label = labOf(e);
+    // Un título que nombra un tono ("Inter para subir a A") lo transporta igual que los acordes.
+    const label = tituloTransportado(labOf(e), p.sh, k => showKey(k, P.not));
     if (!label && !ind && !L.length) return sep;
+    // ✎ (Músico, en una reunión): editar los acordes de esta parte; resaltado si ya tiene acordes editados.
+    const edb = ed && base_ && base_.some(l => l.t !== 'blank')
+      ? `<button type="button" class="edac${e.lineas ? ' on' : ''}" data-ac="${k}" aria-haspopup="dialog" aria-label="Acordes de ${esc(label || 'la parte')}${e.lineas && e.editado ? ' (editados por ' + esc(e.editado.quien) + ')' : ''}">✎</button>` : '';
     // Una parte de un solo renglón de acordes (Intro, Inter, Final) los muestra al lado del título; con 2 o más, abajo.
     if (label && ls.length === 1 && L.length === 1 && (ls[0].t === 'ch' || (ls[0].t === 'mix' && ls[0].at == null)))
-      return `${sep}<section class="parte"><div class="sec inl"><span>${esc(label)}</span>${ind}<span class="${ls[0].t}">${esc(textoCh(ls[0]))}</span></div></section>`;
+      return `${sep}<section class="parte"><div class="sec inl"><span>${esc(label)}</span>${ind}<span class="${ls[0].t}">${esc(textoCh(ls[0]))}</span>${edb}</div></section>`;
     // Variantes (Músico, en una reunión): el nombre de la parte es un chip para elegir otra ("es el Coro 2").
     const nv = vari && e.src != null && !e.nueva ? variantesDe(s, e.src).length : 0;
     const nomP = nv ? `<button type="button" class="varc" data-var="${k}" aria-haspopup="dialog" aria-label="${esc(label || 'Parte')}: elegir otra variante (hay ${nv})">${esc(label || 'Parte')} <span class="vart" aria-hidden="true">▾</span></button>` : `<span>${esc(label)}</span>`;
-    const head = label || ind || nv ? `<div class="sec${ind ? ' inl' : ''}">${nomP}${ind}</div>` : '';
+    const head = label || ind || nv || edb ? `<div class="sec${ind ? ' inl' : ''}">${nomP}${ind}${edb}</div>` : '';
     return `${sep}<section class="parte">${head}${L.join('')}</section>`;
   }).join('');
-  return { rows, kd };
+  return { rows, kd, info, arr: R.arr };
 }
 
 function drawSheet(anim) {
@@ -404,7 +411,9 @@ function drawSheet(anim) {
   const item = c ? conDelta(c, shift - shiftTo(s, c.tono)) : { id: s.id, tono: keyAt(s, shift), arr: defArr(s) };
   // Variantes: solo en Músico dentro de una reunión, si el orden difiere del Word o es un medley.
   const vari = !!(mus && c && (c.tipo === 'medley' || ((c.arr || []).length && !mismoOrden(s, c.arr))));
-  const { rows, kd } = sheetRows(item, mus, vari);
+  // Acordes compartidos: en Músico, dentro de una reunión, cada parte tiene ✎ para editar sus acordes.
+  const ed = !!(mus && c && ctx.ses);
+  const { rows, kd, info, arr: arrUsado } = sheetRows(item, mus, vari, ed);
 
   const ctl = (mus ? `<button type="button" id="dn" aria-label="Bajar medio tono">−½</button>
       <span class="now" id="now" title="Tono actual" aria-live="polite">${esc(kd)}</span>
@@ -457,6 +466,7 @@ function drawSheet(anim) {
   };
   $('#pr').onclick = () => imprimir(hojaImpresa(item, mus), s.titulo);
   if (vari) $$('[data-var]').forEach(b => b.onclick = () => hojaVariante(r, i, +b.dataset.var));
+  if (ed) $$('[data-ac]').forEach(b => b.onclick = () => hojaAcordes(r, i, +b.dataset.ac, info[+b.dataset.ac], arrUsado));
   if (r) {
     $('#pv') && ($('#pv').onclick = () => go(`#/reunion/${r.id}/${i - 1}`, 'back'));
     $('#nx') && ($('#nx').onclick = () => go(`#/reunion/${r.id}/${i + 1}`));
@@ -498,6 +508,162 @@ function hojaVariante(r, i, k) {
     catch (x) { Object.assign(e, antes); if (!antes.variante) delete e.variante; const y2 = scrollY; drawSheet(); scrollTo(0, y2); toast(x.message || 'No se pudo guardar.'); }
   });
   (w.querySelector('[aria-pressed="true"]') || w.querySelector('.ok')).focus({ preventScroll: true });
+  if (!reduced()) { w.querySelector('.tsheet').animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.7,.2,1)' });
+                    w.querySelector('.veil').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 }); }
+}
+
+/**
+ * Acordes de una parte del arreglo (Músico, sin clave; SPEC §7 "Arreglo compartido"). Se editan en el tono en que
+ * se toca, renglón por renglón, encima de la letra (que no se toca), y se guardan en el tono escrito.
+ * También: historial de la parte y "Restaurar acordes" (versión base o como la última vez).
+ */
+const ACORDE_OK = t => CHORD.test(t.replace(/[{}]/g, '')) || /^[-–|/()[\]{}]+$/.test(t) || /^\(?[x×]\d+\)?$/i.test(t);
+const fechaHora = iso => { const d = new Date(iso); if (isNaN(d)) return '';
+  const h = isoOf(d) === isoOf(new Date()) ? 'hoy' : fmt(isoOf(d)).slice(0, 5);
+  return `${h} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+/** La misma parte (canción y bloque) en la última reunión anterior donde se tocó: { lineas, fecha } o null. */
+function ultimaVezParte(r, c, e) {
+  const id = c.tipo === 'medley' ? e.cancion : c.id;
+  const prev = SES.filter(x => x !== r && !x.borrada && x.fecha && x.fecha < r.fecha).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  for (const x of prev) for (const it of x.canciones || []) {
+    if (!(it.tipo === 'medley' ? (it.canciones || []).some(y => y.id === id) : it.id === id)) continue;
+    const p = (it.arr || []).find(q => (it.tipo === 'medley' ? q.cancion === id : true) && q.src === e.src && !q.nueva);
+    return { lineas: p && p.lineas || null, fecha: x.fecha };
+  }
+  return null;
+}
+/** Última vez que se tocó la canción sola (no en medley), en una reunión anterior: { r, it } o null. */
+function ultimaVezItem(r, id) {
+  const prev = SES.filter(x => x !== r && x.id !== r.id && !x.borrada && x.fecha && x.fecha < r.fecha).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  for (const x of prev) { const it = (x.canciones || []).find(c => c.tipo !== 'medley' && c.id === id); if (it) return { r: x, it }; }
+  return null;
+}
+/** Hoja al agregar una canción que ya se tocó: "Como la última vez" o "Versión base". */
+function hojaComoUltima(s, ult, base, agregar) {
+  const { r: x, it } = ult;
+  // Copia del arreglo: partes, orden, xN, tonos, "mostrar", partes nuevas y acordes editados (sin pids ni historial).
+  const copia = { id: s.id, tono: it.tono || base.tono, quien: base.quien, desde: x.id + '#' + (it.pid || ''),
+    arr: ((it.arr || []).length ? it.arr : defArr(s)).map(p => {
+      const o = { label: p.label, rep: p.rep }; if (p.nueva) o.nueva = true; else o.src = p.src;
+      ['tono', 'mostrar', 'lineas'].forEach(kk => { if (p[kk] != null && p[kk] !== false) o[kk] = p[kk]; });
+      return o;
+    }) };
+  if (it.modulante != null) copia.modulante = it.modulante;
+  let sec = ''; try { sec = tonosDelItem(copia, { [s.id]: s }).secuencias[0].tonos.join('→'); } catch (e) { sec = copia.tono; }
+  const w = document.createElement('div'); w.className = 'tsheetw';
+  w.innerHTML = `<div class="veil"></div><div class="tsheet" role="dialog" aria-modal="true" aria-labelledby="cu-t"><div class="bar"></div>
+    <h3 id="cu-t">${esc(s.titulo)}</h3><p>¿Cómo la agregás?</p>
+    <div class="vars"><button type="button" data-cu="u"><b>Como la última vez</b><small>${esc(nombreSes(x))}${it.quien ? ' · dirigió ' + esc(it.quien) : ''} · ${esc(sec)}</small></button>
+      <button type="button" data-cu="b"><b>Versión base</b><small>Como está en la carpeta, en ${esc(base.tono)}</small></button></div>
+    <button type="button" class="ok">Cancelar</button></div>`;
+  app.append(w);
+  const cerrar = () => { w.remove(); document.removeEventListener('keydown', tecla); };
+  const tecla = ev => { if (ev.key === 'Escape') cerrar(); };
+  document.addEventListener('keydown', tecla);
+  w.querySelector('.veil').onclick = cerrar; w.querySelector('.ok').onclick = cerrar;
+  w.querySelectorAll('[data-cu]').forEach(b => b.onclick = () => { cerrar(); agregar(b.dataset.cu === 'u' ? copia : base); });
+  w.querySelector('[data-cu]').focus({ preventScroll: true });
+  if (!reduced()) { w.querySelector('.tsheet').animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.7,.2,1)' });
+                    w.querySelector('.veil').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 }); }
+}
+
+function hojaAcordes(r, i, k, inf, arrUsado) {
+  const c = r.canciones[i]; if (!c || !inf) return;
+  const e0 = (c.arr || []).length ? c.arr[k] : arrUsado[k]; if (!e0) return;
+  const TD = transposer({ tono: inf.escr || 'C' }, inf.sh || 0, 0);                    // escrito → tocado (cifrado americano)
+  const TB = transposer({ tono: tonoMas(inf.escr || 'C', inf.sh || 0) }, -(inf.sh || 0), 0);  // tocado → escrito
+  const ac = (X, t) => /\s/.test(t) ? xpose(X, t) : X.chord(t);
+  // Un renglón por línea: acordes (editable) y letra (fija). Las indicaciones "(Sube a X)" no se editan.
+  const R0 = inf.lines.map(l => {
+    if (l.t === 'pair') {
+      let fila = '', col = 0;
+      l.segs.forEach(([ch, t]) => { if (ch) { const x = ac(TD, ch); fila = fila.padEnd(Math.max(col, fila.length ? fila.length + 1 : 0)) + x; } col += t.length; });
+      return { l, fila, letra: l.segs.map(x => x[1]).join('') };
+    }
+    if (l.t === 'ly') return SUBA.test(l.v.trim()) ? { l, fija: true, letra: l.v } : { l, fila: '', letra: l.v };
+    if (l.t === 'ch' || l.t === 'mix') return { l, fila: TD.line(l.v, l.t === 'mix') };
+    return { l, fija: true, letra: '' };
+  });
+  const ancho = Math.max(20, ...R0.map(x => Math.max((x.fila || '').length, (x.letra || '').length))) + 8;
+  const nombre = labOf(e0) || 'la parte', ult = ultimaVezParte(r, c, e0);
+  const igualA = L => JSON.stringify(L || null) === JSON.stringify(e0.lineas || null);
+  const hist = [].concat(e0.editado ? [{ ahora: true, quien: e0.editado.quien, fecha: e0.editado.fecha, lineas: e0.lineas || null }] : [], e0.cambios || []);
+  const quienH = h => h.lineas ? esc(h.quien || 'Sin nombre') : h.quien ? `Versión base (la restauró ${esc(h.quien)})` : 'Versión base';
+  const w = document.createElement('div'); w.className = 'tsheetw';
+  w.innerHTML = `<div class="veil"></div><div class="tsheet acsheet" role="dialog" aria-modal="true" aria-labelledby="ah-t"><div class="bar"></div>
+    <h3 id="ah-t">Acordes de ${esc(nombre)}</h3>
+    <p>En ${esc(inf.tono || '')}, solo para esta reunión: lo ven todos. La letra no se cambia.${P.not ? ' Escribí los acordes en cifrado americano (C, D, E…).' : ''}</p>
+    <div class="acx"><div class="acg" style="--w:${ancho}ch">${R0.map((x, j) => x.fija
+      ? (x.letra ? `<div class="acl mute">${esc(x.letra)}</div>` : '<div class="acgap"></div>')
+      : `<input class="acf" data-j="${j}" value="${esc(x.fila)}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Acordes del renglón ${j + 1}${x.letra ? ': ' + esc(x.letra.slice(0, 40)) : ''}">${x.letra != null ? `<div class="acl">${esc(x.letra)}</div>` : ''}`).join('')}</div></div>
+    <p class="err" id="ac-err" hidden></p>
+    <label class="acn">Tu nombre<input id="ac-q" value="${esc(P.nombre || '')}" autocomplete="name" maxlength="40" placeholder="Queda guardado en este teléfono"></label>
+    <button type="button" class="ok primary" id="ac-ok">Guardar acordes</button>
+    ${(e0.lineas && !e0.nueva) || (ult && !igualA(ult.lineas)) ? `<h4>Restaurar acordes</h4><div class="acr">
+      ${e0.lineas && !e0.nueva ? '<button type="button" data-rs="base">Versión base</button>' : ''}
+      ${ult && !igualA(ult.lineas) ? `<button type="button" data-rs="ult">Como la última vez (${esc(fmt(ult.fecha).slice(0, 5))})</button>` : ''}</div>` : ''}
+    ${hist.length ? `<details class="ach"><summary>Historial de esta parte</summary><ul>${hist.map((h, n) => `<li><span>${h.ahora ? '<b>Ahora</b> · ' : ''}${quienH(h)}${h.fecha ? ' · ' + esc(fechaHora(h.fecha)) : ''}</span>${!h.ahora && !igualA(h.lineas) ? `<button type="button" data-hi="${n}">Restaurar</button>` : ''}</li>`).join('')}</ul></details>` : ''}
+    <button type="button" class="ok" id="ac-x">Cancelar</button></div>`;
+  app.append(w);
+  const err = w.querySelector('#ac-err'), q = w.querySelector('#ac-q');
+  const fallo = m => { err.textContent = m; err.hidden = false; err.scrollIntoView({ block: 'nearest' }); };
+  const cerrar = () => { w.remove(); document.removeEventListener('keydown', tecla); const b = $(`[data-ac="${k}"]`); if (b) b.focus({ preventScroll: true, focusVisible: false }); };
+  const tecla = ev => { if (ev.key === 'Escape') cerrar(); };
+  document.addEventListener('keydown', tecla);
+  w.querySelector('.veil').onclick = cerrar; w.querySelector('#ac-x').onclick = cerrar;
+
+  // Renglón editado → línea en el tono escrito. Los que no se tocaron quedan exactamente como estaban.
+  const leer = () => {
+    const out = [];
+    for (const [j, x] of R0.entries()) {
+      const inp = w.querySelector(`.acf[data-j="${j}"]`);
+      if (!inp || inp.value.replace(/\s+$/, '') === x.fila.replace(/\s+$/, '')) { out.push(x.l); continue; }
+      const toks = [...inp.value.matchAll(/\S+/g)], malo = toks.find(m => !ACORDE_OK(m[0]));
+      if (malo) throw new Error(`No reconozco “${malo[0]}” como acorde (renglón ${j + 1}).`);
+      const marcas = {}; ['puente', 'modula', 'repite', 'at'].forEach(m => { if (x.l[m] != null) marcas[m] = x.l[m]; });
+      if (x.letra == null) {                                                  // renglón solo de acordes
+        out.push(toks.length ? { ...marcas, t: x.l.t, v: TB.line(inp.value.replace(/\s+$/, ''), x.l.t === 'mix') } : { t: 'blank' });
+        continue;
+      }
+      if (!toks.length) { out.push({ t: 'ly', v: x.letra }); continue; }
+      // Cada acorde se ancla a la letra en su columna (los que pasan el final quedan al final).
+      const L = x.letra, pos = toks.map(m => Math.min(m.index, L.length)), segs = [];
+      if (pos[0] > 0) segs.push(['', L.slice(0, pos[0])]);
+      toks.forEach((m, n) => segs.push([ac(TB, m[0]), L.slice(pos[n], n + 1 < toks.length ? pos[n + 1] : L.length)]));
+      out.push({ ...(x.l.t === 'pair' ? marcas : {}), t: 'pair', segs });
+    }
+    return out;
+  };
+  const guardar = async (lineas, btn) => {
+    const quien = q.value.trim();
+    if (!quien) { fallo('Escribí tu nombre: queda junto a los acordes.'); q.focus(); return; }
+    P.nombre = quien; savePrefs();
+    const sinArr = !(c.arr || []).length;
+    // Ítem en el orden original: el arreglo base con pids (igual que el motor) para poder guardar una parte.
+    if (sinArr) c.arr = arrUsado.map((x, j) => ({ ...x, pid: c.pid + 'p' + j }));
+    const e = c.arr[k];
+    w.querySelectorAll('button').forEach(b => b.disabled = true); if (btn) btn.textContent = 'Guardando…';
+    try {
+      const p = await ds.editarAcordes({ id: r.id, i, k, item: c.pid, parte: e.pid, lineas, quien, base: c.arr });
+      if (p.lineas) e.lineas = p.lineas; else delete e.lineas;
+      e.cambios = p.cambios; e.editado = p.editado;
+      cerrar(); const y = scrollY; drawSheet(); scrollTo(0, y);
+      toast(lineas ? 'Acordes guardados.' : 'Volvió a la versión base.');
+    } catch (x) {
+      if (sinArr) c.arr = [];
+      w.querySelectorAll('button').forEach(b => b.disabled = false); if (btn) btn.textContent = btn.dataset.t || btn.textContent;
+      fallo(x.message || 'No se pudo guardar.');
+    }
+  };
+  const ok = w.querySelector('#ac-ok'); ok.dataset.t = ok.textContent;
+  ok.onclick = () => {
+    let L; try { L = leer(); } catch (x) { fallo(x.message); return; }
+    if (L.every((l, j) => l === R0[j].l)) { cerrar(); toast('No cambiaste ningún acorde.'); return; }
+    guardar(L, ok);
+  };
+  w.querySelectorAll('[data-rs]').forEach(b => { b.dataset.t = b.textContent; b.onclick = () => guardar(b.dataset.rs === 'ult' ? ult.lineas : null, b); });
+  w.querySelectorAll('[data-hi]').forEach(b => { b.dataset.t = b.textContent; b.onclick = () => guardar(hist[+b.dataset.hi].lineas, b); });
+  (w.querySelector('.acf') || ok).focus({ preventScroll: true });
   if (!reduced()) { w.querySelector('.tsheet').animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.7,.2,1)' });
                     w.querySelector('.veil').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 }); }
 }
@@ -827,8 +993,15 @@ function editSes(r) {
   ad.onfocus = ad.onclick = () => { if (sg.innerHTML) return; showSg(); openAnim(sg); };
   ad.onblur = () => setTimeout(() => { if (document.activeElement !== ad) sg.innerHTML = ''; }, 150);
   sg.onmousedown = e => e.preventDefault(); // que tocar una opción no cierre la lista antes del click
+  // Al elegirla: "Como la última vez" (copia el arreglo de la última reunión donde se tocó) o "Versión base".
   sg.onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; const s = songBy(b.dataset.a);
-    r.canciones.push({ id: s.id, tono: keyOption(s), quien: r.director, arr: defArr(s) }); re(); $('#ad')?.focus(); };
+    const agregar = it => { r.canciones.push(it); re(); $('#ad')?.focus(); };
+    const base = { id: s.id, tono: keyOption(s), quien: r.director, desde: 'base', arr: defArr(s) };
+    const ult = ultimaVezItem(r, s.id);
+    if (!ult) return agregar(base);
+    ad.blur(); sg.innerHTML = '';
+    hojaComoUltima(s, ult, base, agregar);
+  };
   // ---- Crear medley: canciones (búsqueda en vivo) y tono de inicio; después se abre el editor de partes.
   const med = [], mbx = $('#mbx'), mbq = $('#mbq'), mbs = $('#mbs'), mbt = $('#mbt');
   let tonoElegido = false;
@@ -955,7 +1128,9 @@ function parts(r, i, abrirTono) {
   const antI = j => { for (let k = j - 1; k >= 0; k--) if (!PT[k].transicion) return k; return -1; };
   const ant = j => { const k = antI(j); return k < 0 ? null : PT[k]; };
   const sig = j => { for (let k = j + 1; k < PT.length; k++) if (!PT[k].transicion) return PT[k]; return null; };
-  const nom = e => base(e.label || '') || '(inicio)';
+  // Con Modulante, un título que nombra un tono ("Inter para subir a A") va con el tono transportado.
+  const nom = e => { const j = c.arr.indexOf(e), o = j >= 0 && modul ? PT[j] : null;
+    return tituloTransportado(base(e.label || ''), o ? o.sh : 0) || '(inicio)'; };
   const opts = (t, extra) => extra + [...Array(12)].map((_, n) => tonoMas(/m$/.test(t) ? 'Cm' : 'C', n))
     .map(k => `<option value="${k}"${extra || intervalo(k, t) ? '' : ' selected'}>${esc(k)}</option>`).join('');
   const DIF = [[0, '='], [1, '+½'], [2, '+1'], [-1, '−½']];

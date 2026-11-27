@@ -69,6 +69,8 @@ export class ApiDataSource {
   adminReunion(id, idToken, { clave, director } = {}) { return this._post('adminReunion', { id, idToken, clave, director }); }
   /** Músicos, sin clave: otra variante de una parte del arreglo. Devuelve la parte guardada. */
   elegirVariante({ id, item, parte, src, label }) { return this._post('elegirVariante', { id, item, parte, src, label }); }
+  /** Músicos, sin clave: acordes de una parte (lineas null = volver a la base). Devuelve la parte guardada. */
+  editarAcordes({ id, item, parte, lineas, quien }) { return this._post('editarAcordes', { id, item, parte, lineas, quien }); }
   registrarUso(id, clave) { return this._post('registrarUso', { id, clave }); }
 
   info() { return this._get('info'); }

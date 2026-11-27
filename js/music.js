@@ -117,6 +117,15 @@ export function enTonos(n) {
   const a = Math.abs(n), e = Math.floor(a / 2), h = a % 2 ? '½' : '';
   return (n < 0 ? '−' : '+') + (e ? e : '') + h;
 }
+/**
+ * Título de parte que nombra un tono ("Inter para subir a A", "Coro (Sube a A)", "BAJA AL F#"): ese tono se
+ * transporta sh semitonos, igual que los acordes de la parte. fmt da el nombre a mostrar (cifrado elegido).
+ */
+const TONO_EN_TITULO = /((?:[Ss]u[bv]|SU[BV]|[Bb]aj|BAJ)[A-Za-zÁÉÍÓÚáéíóú]*\s+(?:(?:a|al|A|AL)\s+)?)([A-G][#b]?m?)(?![A-Za-z0-9#])/g;
+export function tituloTransportado(label, sh, fmt = k => k) {
+  if (!label) return label || '';
+  return String(label).replace(TONO_EN_TITULO, (_, pre, k) => pre + fmt(sh ? tonoMas(k, sh) : k));
+}
 const sinRep = a => a.filter((t, i) => t && (i === 0 || t !== a[i - 1]));
 /** Mismo tono aunque esté escrito distinto (F# = Gb). */
 const mismo = (a, b) => intervalo(a, b) === 0 && /m$/.test(a || '') === /m$/.test(b || '');

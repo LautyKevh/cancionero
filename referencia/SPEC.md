@@ -304,6 +304,8 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - agregar y quitar partes;
   - tono por parte, Modulante y "mostrar".
 - **Músicos, sin clave:** editan los **acordes** de cualquier parte del arreglo de esa reunión; se asume que hay consenso entre los músicos. Nunca la estructura ni los tonos.
+  - En la vista Músico de la reunión, cada parte tiene un ✎ chico al lado del título (resaltado si ya tiene acordes editados). Abre una hoja desde abajo con un renglón de acordes editable encima de cada renglón de letra (fija), en el tono en que se toca y en cifrado americano; se guardan en el tono escrito. Cada acorde se ancla a la letra en su columna. Los renglones que no se tocan quedan igual. Un acorde que no se reconoce no se guarda (avisa en qué renglón).
+  - La vista y la impresión muestran los acordes editados de esa parte.
   - Queda abierto a cualquiera con el link de la iglesia. El motor exige nombre y limita el tamaño por parte y las ediciones por minuto (ver 4).
   - La primera vez se pide el nombre, que queda guardado en el dispositivo.
   - Cada edición guarda nombre y fecha/hora. El historial de cambios se ve por parte.
@@ -316,6 +318,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - En cada cambio de tono hay un indicador discreto: "↑ A (+1½)" o "↓ F# (−1½)".
 - En un medley, un separador muestra el nombre de cada canción al cambiar. Si una parte no tiene tono propio, al cambiar de canción se sigue en el mismo tono.
 - El indicador va en el renglón del título de la parte ("Coro  ↑ A (+1½)").
+- Un título de parte que nombra un tono ("Inter para subir a A", "Coro (Sube a A)") lo transporta igual que los acordes: empezando "Al estar aquí" en G dice "Inter para subir a Bb". También en el editor de partes.
 - **Cifrado (# o b):** sin transporte, los acordes y el tono se ven tal como están escritos en el Word. Con transporte, se elige # o b según el tono de destino: los grados de la escala con la letra que les corresponde y los acordes prestados como bII, bIII, #IV, bVI y bVII (en A: Bb, C, D#, F, G). F# nunca se escribe Gb. E#, B#, Cb y Fb se escriben F, C, B y E.
 - En la vista Músico, una parte repetida en el mismo tono va solo con su título; si se repite en otro tono, se ve completa.
 - `{ }` en la última parte: se muestran (no hay parte siguiente que cambie de tono).

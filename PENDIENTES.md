@@ -1,6 +1,6 @@
 # Pendientes
 
-Estado al 27-11-2026 (rama `desarrollo`, app v49; motor de PRUEBA: implementación @29). Nada en `main` ni en IBSI.
+Estado al 27-11-2026 (rama `desarrollo`, app v50; motor de PRUEBA: implementación @29, con un cambio sin desplegar). Nada en `main` ni en IBSI.
 
 ## Hecho hoy (en desarrollo)
 - Aprobado en el celular: etapa C (tono por parte, Modulante, guardado, sin conexión), medley (etapa D), variantes de una parte.
@@ -17,26 +17,26 @@ Estado al 27-11-2026 (rama `desarrollo`, app v49; motor de PRUEBA: implementaci�
 
 ## Próximo, en orden
 Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesia de prueba; la planilla real de IBSI no se toca sin OK.
-1. **Etapa E: prueba en la iglesia de prueba**, hecha en la compu (27-11) con la reunión "Prueba etapa E" (30-12-2026, dirige Test, clave 2468). Resultado:
-   - Bien: "Hay poder" con 2 subidas (G, =, =, +½, =, +½) → G→G→G→Ab→Ab→A, puentes (Eb) y (E), los otros ocultos, Registro `G→Ab→A`. "Al estar aquí" en G → G→Bb→G→Bb→G, puente (Eb/G - F/A), Inter a Bb. Medley Digno de adorar + Roca firme (+1 → E) con separador e indicador. Variante elegida desde Músico, guardada por el motor y vista por todos. Motor `editarAcordes`: pide nombre, limita el tamaño, guarda historial y restaura la base.
-   - Corregido (v49): los coros de "Hay poder" salían como variantes (son los mismos acordes en otro tono; la comparación se trababa con "(C - G)" y con el puente final). Con solo tonos por parte, la lista decía "orden modificado" y aparecía el ▾ de variantes: ahora dice "tonos por parte" y el ▾ sale solo si cambió el orden.
-   - **Falta en la app** (el motor ya lo tiene): que los músicos editen los acordes de una parte (nombre, historial, "Restaurar acordes") y que la vista muestre esos acordes editados; y al agregar una canción, "Como la última vez" / "Versión base". Es lo que sigue.
-   - El Registro no se probó (la reunión es a futuro): el 31-12 se anota sola en el Registro de la iglesia de prueba, salvo que se borre antes.
-   - Para mirar: el título "Inter para subir a A" sigue diciendo "A" aunque, empezando en G, sube a Bb.
-2. **Esperan respuesta u OK de Lautaro:**
+1. **Probar en el celular (v50, Lautaro):**
+   - Acordes de los músicos: en una reunión, modo Músico, ✎ al lado del título de cada parte → hoja con los acordes encima de la letra, nombre (queda guardado), "Guardar acordes", "Restaurar acordes" (Versión base / Como la última vez) e "Historial de esta parte". La vista y la impresión muestran los acordes editados. Probado en el demo y, del lado del motor, contra la iglesia de prueba.
+   - Al agregar una canción que ya se tocó sola: hoja "Como la última vez" (copia partes, orden, tonos y acordes editados de la última reunión anterior) o "Versión base". Si nunca se tocó, se agrega directo.
+   - Títulos con tono: "Inter para subir a A" se transporta como los acordes (empezando en G, "Inter para subir a Bb"), también en el editor de partes.
+   - **Falta desplegar el motor de prueba** (Claude no tuvo permiso): `clasp push` y `clasp create-deployment -i AKfycbwTr_…hCtw -d "prueba"` desde `motor/` (ver `motor/README.md`). Sin eso, los acordes editados de una parte con `[ ]` / `{ }` pierden esas marcas al guardar.
+2. **Etapa E (hecha, 27-11):** "Hay poder" con 2 subidas → G→G→G→Ab→Ab→A con puentes (Eb) y (E); "Al estar aquí" en G → G→Bb→G→Bb→G; medley con separador e indicador; variantes compartidas; motor `editarAcordes` (nombre, tamaño, historial, base). Registro probado con una reunión del 20-11-2026: anotó `G→Ab→A`, `G→Bb→G→Bb→G`, D y E con `reunión <id>#<pid>`. Las dos reuniones de prueba se borraron; esas 4 filas quedan en el Registro de la iglesia de prueba (el motor no borra filas). Corregido en v49: falsas variantes en "Hay poder" y el rótulo "orden modificado" con solo tonos por parte.
+3. **Esperan respuesta u OK de Lautaro:**
    - Probar en el celular: deslizar para borrar, la ruedita de Editar reunión (fecha/nombre/director) y lo del admin (ingresando en Ajustes).
    - OK final al editor de partes rediseñado, ahora con deslizar para borrar (el ✕ ya no está en la tarjeta; queda "Quitar" en ⋯).
    - Agrupación: ¿agregar ya los 6 grupos decididos (Aquí estoy como en A; El Dios que adoramos F/F#/G como en F#/G; Él nos ama como en A; No voy a caer como en A; Por siempre como en Ab) o esperar a corregir esos Word? Mientras tanto siguen separados. Sin agrupar: "Levanto un aleluya" (versiones distintas).
    - "Con tu sangre" [D-Eb] y [D]: van por separado salvo que se haga la función de mostrar "Padre eterno, Cordero de Dios (Sube a…)" solo con Modulante (sin proponer todavía).
-3. **Completar datos de canciones (sin clave):** intérprete, BPM (cuenta como confirmado), tono original (de una lista; en modulantes, una por tono de la secuencia), link (solo si está vacío). Gana lo editado en la app; si el archivo trae otro valor, es conflicto en "Revisar cambios". Definir `Datos/ediciones.json`. Confirmación antes de guardar, nombre guardado en el dispositivo, historial con quién y cuándo, y "deshacer". Con esto entra la regla 1 de la agrupación (tono original registrado).
-4. **Director edita la letra** de cualquier parte del arreglo de su reunión, con PIN. Solo esa reunión; nunca la base.
-5. **"Pendientes de revisión"** (una bandeja por iglesia, admin en Ajustes):
+4. **Completar datos de canciones (sin clave):** intérprete, BPM (cuenta como confirmado), tono original (de una lista; en modulantes, una por tono de la secuencia), link (solo si está vacío). Gana lo editado en la app; si el archivo trae otro valor, es conflicto en "Revisar cambios". Definir `Datos/ediciones.json`. Confirmación antes de guardar, nombre guardado en el dispositivo, historial con quién y cuándo, y "deshacer". Con esto entra la regla 1 de la agrupación (tono original registrado).
+5. **Director edita la letra** de cualquier parte del arreglo de su reunión, con PIN. Solo esa reunión; nunca la base.
+6. **"Pendientes de revisión"** (una bandeja por iglesia, admin en Ajustes):
    - "Sugerir corrección" (sin clave), con atajo "Proponer para todas las versiones" desde una reunión;
    - canción nueva (sin clave): pegar cifrado, subir archivo, sin cifrado o "pedir canción"; nombre, intérprete (o "No sé"), link, comentario; aviso de duplicados por nombre + intérprete y por letra; tono opcional en "sin cifrado"; borrador usable en reuniones;
    - revisión: antes/después para correcciones; canción nueva ya convertida y editable; aprobar o rechazar con motivo.
-6. **Importación en dos botones:** "Agregar canciones nuevas" y "Revisar cambios en la carpeta" (antes/después, conflictos por parte con correcciones aprobadas, nunca aplica solo). Marca en las canciones con correcciones de la app. Sin la palabra "Word" en la interfaz.
-7. **Link de la canción:** columna "Link" en Canciones; botón "▶ Escuchar" solo si hay link. La app nunca busca links.
-8. **Planilla:** desplegable de B1 ("Ver tonos de:") con validación desde `Personas!A2:A`, creado por el motor. Intérpretes: "Roca firme" → Eric Bustamante; medley "Hermoso nombre" → Evangelina Crubinca (en la iglesia de prueba). En IBSI, B1 e intérpretes al pasar a estable.
+7. **Importación en dos botones:** "Agregar canciones nuevas" y "Revisar cambios en la carpeta" (antes/después, conflictos por parte con correcciones aprobadas, nunca aplica solo). Marca en las canciones con correcciones de la app. Sin la palabra "Word" en la interfaz.
+8. **Link de la canción:** columna "Link" en Canciones; botón "▶ Escuchar" solo si hay link. La app nunca busca links.
+9. **Planilla:** desplegable de B1 ("Ver tonos de:") con validación desde `Personas!A2:A`, creado por el motor. Intérpretes: "Roca firme" → Eric Bustamante; medley "Hermoso nombre" → Evangelina Crubinca (en la iglesia de prueba). En IBSI, B1 e intérpretes al pasar a estable.
 
 ## Revisar (a mano, en los Word; nada de esto frena lo próximo)
 - Agrupación, para que los grupos decididos muestren la letra elegida: Aquí estoy [D] (agregar "Que puedo hacer, que puedo decir…" como en [A]); El Dios que adoramos [F] ("Tú" → "Él") y [F#] ("pre coro" escrito como letra → título); Él nos ama [C] ("unan" → "unen"); No voy a caer [C] (falta un "Jesús, Jesús, Jesús"); Por siempre [G] (falta la estrofa "la tierra retumbó…").

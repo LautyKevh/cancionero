@@ -232,15 +232,17 @@ const TIPOS_LINEA_ = ['pair', 'ch', 'mix', 'ly', 'blank', 'sec'];
 function limpiarLineas_(L) {
   if (!Array.isArray(L)) throw apiError_('Formato de acordes inválido.', 'formato');
   if (L.length > LIM_ACORDES_.lineas || JSON.stringify(L).length > LIM_ACORDES_.bytes) throw apiError_('La parte es demasiado larga.', 'tamano');
+  // Marcas de la línea: acordes puente, [ ] (modula), { } (repite) y nota anclada a una palabra (at).
+  const marcas = (o, l) => { ['puente', 'modula', 'repite'].forEach(k => { if (l[k]) o[k] = true; }); if (l.at != null) o.at = String(l.at).slice(0, 40); return o; };
   return L.map(l => {
     if (!l || TIPOS_LINEA_.indexOf(l.t) < 0) throw apiError_('Formato de acordes inválido.', 'formato');
     if (l.t === 'pair') {
       if (!Array.isArray(l.segs)) throw apiError_('Formato de acordes inválido.', 'formato');
       const o = { t: 'pair', segs: l.segs.map(sg => [String(sg[0] || '').slice(0, 30), String(sg[1] || '').slice(0, 300)]) };
-      if (l.puente) o.puente = true; return o;
+      return marcas(o, l);
     }
     if (l.t === 'blank') return { t: 'blank' };
-    const o = { t: l.t, v: String(l.v || '').slice(0, 300) }; if (l.puente) o.puente = true; return o;
+    return marcas({ t: l.t, v: String(l.v || '').slice(0, 300) }, l);
   });
 }
 

@@ -138,6 +138,24 @@ export class LocalDataSource {
     this._save(list); return structuredClone(p);
   }
 
+  /**
+   * Músicos, sin clave: acordes de una parte (lineas null = volver a la base). En el demo, por posición; `base` es el
+   * arreglo base con pids, para un ítem guardado sin arreglo (igual que el motor).
+   */
+  async editarAcordes({ id, i, k, lineas, quien, base }) {
+    quien = String(quien || '').trim();
+    if (!quien) throw new ClaveError('Escribí tu nombre para guardar los acordes.', 'nombre');
+    const list = this._all(), r = list.find(x => x.id === id && !x.borrada), it = r && r.canciones[i];
+    if (it && !(it.arr || []).length && base) it.arr = structuredClone(base);
+    const p = it && (it.arr || [])[k];
+    if (!p) throw new ClaveError('Esa parte ya no está en la reunión. Recargá.', 'no-existe');
+    const fecha = new Date().toISOString();
+    p.cambios = [{ quien: p.editado ? p.editado.quien : '', fecha: p.editado ? p.editado.fecha : '', lineas: p.lineas ?? null }].concat(p.cambios || []).slice(0, 30);
+    if (lineas == null) delete p.lineas; else p.lineas = structuredClone(lineas);
+    p.editado = { quien, fecha };
+    this._save(list); return structuredClone(p);
+  }
+
   async deleteReunion(id, clave) {
     await this.checkClave(id, clave);
     const list = this._all(), r = list.find(x => x.id === id);
