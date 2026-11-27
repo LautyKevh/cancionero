@@ -40,15 +40,19 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 
 | Rol | Cómo entra | Puede |
 |---|---|---|
-| Miembro (músico/cantante) | Sin cuenta | Ver canciones y reuniones, transponer, usar sin conexión |
-| Director | Sin cuenta, con la clave de 4 dígitos de su reunión | Crear reuniones; editar o borrar las suyas |
-| Admin de iglesia | Google Sign-In (solo para acciones de admin) | Configurar carpetas, aprobar canciones, dar de alta personas, otros admins y editores, actualizar versión |
+| Miembro (músico/cantante) | Sin cuenta | Ver canciones y reuniones, transponer, usar sin conexión. Editar los **acordes** del arreglo de una reunión (queda su nombre); nunca la estructura ni los tonos |
+| Director | Sin cuenta, con la clave de 4 dígitos de su reunión | Crear reuniones; editar o borrar las suyas, incluida la estructura del arreglo de cada canción |
+| Admin de iglesia | Google Sign-In (solo para acciones de admin) | Configurar carpetas, aprobar canciones, corregir la canción base, dar de alta personas, otros admins y editores, actualizar versión |
 | Superadmin | Lautaro | Publicar versiones; opcional: código de invitación para altas |
 
 - Hay un solo link por iglesia (`…/app/?c=<id>`). No existe un "link de admin": el ingreso con Google aparece solo en Ajustes.
 - **Alta autoservicio:** "Crear el cancionero de mi iglesia" → Google Sign-In → queda como admin → comparte su carpeta con el email del motor → el motor crea la estructura e importa. Se puede exigir un código de invitación (activable).
 - **Clave de director:** exactamente 4 dígitos numéricos. En la planilla se guarda solo el hash con sal (nunca la clave). Se verifica en el servidor y nunca se envía al cliente. Después de 5 intentos fallidos, bloqueo de 10 minutos por reunión.
 - **Admin:** el ID token de Google se verifica en Apps Script, y el email tiene que estar en la lista de admins de esa iglesia.
+- **Edición de acordes sin clave:** queda abierta a cualquiera que tenga el link de la iglesia. El motor valida:
+  - nombre obligatorio;
+  - un límite de tamaño por parte;
+  - un límite de ediciones por minuto.
 
 ## 5. Estructura en el Drive de cada iglesia (la crea el configurador)
 
@@ -64,18 +68,51 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 **Canciones:**
 - Columnas: ID, Título, Intérprete, Tono original, BPM, Estado (oficial / borrador / sin cifrado), Archivo fuente, Confianza.
 - Puede haber varias versiones de una misma canción, con distinto ID e intérprete.
+- **Canción base:** es el Word de la iglesia (la versión de la casa, no la original del intérprete).
+  - Todo bloque del Word es válido aunque no exista en la original. Por ejemplo, el [Final] en F# de "Al estar aquí" lo agregó la iglesia y es parte de la base.
+  - Cambiar el arreglo de una reunión nunca modifica la canción base.
+- Tono original de una canción modulante: la secuencia de tonos, como en el título del Word (`G-Ab-A-Bb-C`). El primero es el tono de inicio.
+- En el JSON de cada canción (`Datos/canciones/<id>.json`):
+  - cada parte guarda su **tono escrito** y si es **de transición**;
+  - se marcan los **acordes puente**;
+  - la canción guarda si es **Modulante** y su secuencia de tonos (ver 6).
+- **Correcciones de la base (`Datos/correcciones.json`):** solo las hace el admin, desde Ajustes → Canciones, con Google. Cubren:
+  - tonos detectados por parte;
+  - marcas de transición;
+  - acordes de transición;
+  - posición de acordes.
+
+  Se aplican después de cada reimportación del Word. Los cambios de cada domingo **nunca** van ahí: van en la reunión.
 
 **Registro:**
 - Columnas: Fecha, Canción (ID), Tono, Quién, Origen (domingo / reunión / planilla vieja).
 - Se alimenta solo desde las reuniones y desde la lectura de los documentos de `Domingos`.
 - Las reuniones se anotan solas al día siguiente de su fecha, con la última versión guardada de la lista: un activador nocturno (3–4 h) y, como respaldo, la primera lectura de la app. Se anotan una sola vez; los cambios posteriores no se trasladan a Registro (no se modifican filas existentes).
 - "Quién" puede quedar vacío.
+- "Tono" guarda la secuencia completa de tonos tocados cuando hubo cambios: `G→Ab→A→Bb→C`. Si no hubo cambios, un solo tono.
+- Los tonos consecutivos iguales se registran una sola vez: `G→Ab→A→Bb→Bb→C` se registra `G→Ab→A→Bb→C`.
+- Registro e historial guardan **cómo se tocó**, no solo el tono. Cada fila que sale de una reunión lleva en "Origen" la referencia al arreglo: `reunión <id>#<pid>` (id de la reunión e id del ítem). Así no se agregan columnas a la planilla; el arreglo completo está en la pestaña Reuniones.
 
 **Personas:** lista libre. Los nombres nuevos que se escriben en "Dirige" se agregan solos.
 
 **Reuniones:**
-- Columnas: id, nombre, fecha, director, hash de clave, canciones (JSON: id, tono, quién, arr = [{src, label, rep}]).
-- Un ítem de canciones puede ser un medley: `{ tipo: "medley", nombre?, tono, quien, canciones: [{ id, quien? }], arr: [{ cancion, src, label, rep, tono? }] }`. En `arr`, `cancion` indica de qué canción es la parte y `tono` (opcional) cambia el tono desde esa parte en adelante.
+- Columnas: id, nombre, fecha, director, hash de clave, canciones (JSON), borrada, registrada.
+- Cada ítem de `canciones` guarda su **arreglo completo**: partes, orden, repeticiones, tono por parte, Modulante, "mostrar" y partes nuevas creadas ahí mismo. Nunca modifica la canción base.
+  - Canción: `{ pid, id, tono, quien, modulante?, desde?, arr: [Parte] }`.
+  - Medley: `{ pid, tipo: "medley", nombre?, tono, quien, canciones: [{ id, quien? }], arr: [Parte] }`. Siempre es modulante.
+  - `pid`: id estable del ítem dentro de la reunión. Lo usan el Registro (`reunión <id>#<pid>`) y "Como la última vez".
+  - `tono` del ítem: el tono de inicio. `arr` vacío = versión base en su orden original.
+  - `desde`: de dónde se copió el arreglo, `"base"` o `"<id reunión>#<pid>"` ("Como la última vez").
+  - Sin `modulante` (reuniones anteriores), se toma el valor de la canción.
+- **Parte** (`arr[i]`): `{ pid, src | nueva, cancion?, label, rep, tono?, mostrar?, lineas?, cambios? }`.
+  - `pid`: id estable de la parte (no cambia al reordenar). Lo usan las ediciones de acordes.
+  - `src`: bloque de la canción base. `nueva`: parte creada en la reunión (por ejemplo, un interludio que no existe en la base), con sus `lineas` escritas a mano.
+  - `cancion`: de qué canción es la parte (medley).
+  - `tono`: tono absoluto en que se toca la parte. Solo cuenta con Modulante encendido. Si falta, se calcula desde el tono escrito, manteniendo el intervalo original con la parte anterior.
+  - `mostrar: true` = "Mostrar igual": el puente o la transición se muestran aunque la parte siguiente quede en el mismo tono.
+  - `lineas`: acordes editados de esa parte para esta reunión (mismo formato que la canción). Si falta, se usan los de la base.
+  - `cambios`: historial de ediciones de acordes, `[{ quien, fecha, lineas }]`, con la versión anterior a cada cambio.
+  - "+ Agregar sección" crea una entrada más de `arr`, copia de otra parte, con su propio `tono`.
 - Se pueden borrar. El borrado es lógico, con papelera.
 
 ## 6. Conversión Word → canción (reglas probadas en el prototipo; ver `referencia/convert.py`)
@@ -89,6 +126,15 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - Los guiones bajos de estiramiento (`de_rro__ta`) se eliminan. Los espacios múltiples dentro de la letra se reducen a uno.
 - Las líneas mixtas (`[Interludio] // C D G/B //`, `(Db9) (la 4ta vez se mutea)`) se muestran como notas; los acordes se transponen. Las notas sueltas se anclan a una palabra de la línea anterior.
 - **Bloques:** desde un `[Título]` hasta el siguiente. Si un título aparece sin contenido (por ejemplo, el segundo "Coro x2"), referencia al primer bloque con el mismo nombre base.
+- **Tono por parte (tono escrito):** cada bloque guarda el tono en que está escrito.
+  - Se detecta analizando sus acordes y con las pistas del Word:
+    - la secuencia del título (`Hay poder [G-Ab-A-Bb-C]`, `Al estar aquí [F# - A]`);
+    - las indicaciones `(Sube a X)` y `(Baja a X)`.
+  - El admin puede corregirlo.
+- **Modulante:** la canción es Modulante si sus partes no están todas en el mismo tono. El conversor la marca sola y el admin puede cambiarlo.
+- **Acordes puente:** son los acordes entre paréntesis al final de una parte que preparan la siguiente (`(Eb)`, `(E)`, `(D/F# - E/Ab)`). Se marcan como puente; no son los acordes de paso entre paréntesis dentro de una línea, como `(C - G)`.
+- **Partes de transición:** son partes cuyo título indica un pasaje hacia otro tono, como "Inter para subir a A". Se marcan como transición, con el tono de destino.
+- Lo detectado (tono por parte, transiciones, puentes, Modulante) lo puede corregir el admin. Esas correcciones van en `Datos/correcciones.json` (ver 5).
 
 ## 7. Pantallas y comportamiento (como en el prototipo)
 
@@ -141,7 +187,9 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - Las canciones se abren en el tono y el orden de la reunión, con "Dirige X" en el encabezado.
 - Al final de cada canción, botones grandes "← Anterior · título" / "Siguiente → título"; en la última, "Fin de la reunión".
 - **Editar (con clave):**
-  - Agregar canción con buscador en vivo (título, letra, director).
+  - Agregar canción con buscador en vivo (título, letra, director). Al elegirla hay dos opciones:
+    - **"Como la última vez":** copia el arreglo de la última reunión donde se tocó.
+    - **"Versión base":** la canción como está en el Word.
   - Subir, bajar o quitar canciones.
   - Tono y "Dirige" por canción (por defecto, el director de la reunión).
 - **Partes:**
@@ -152,13 +200,66 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Volver al orden original.
 - **Borrar (con clave):** con confirmación dentro de la página.
 
-**Medley (fase posterior; el modelo de datos ya lo admite, la interfaz todavía no):**
-- Es un ítem dentro de una reunión que combina 2 o más canciones.
-- Crear: en Editar reunión → "Crear medley" → elegir canciones (búsqueda en vivo) → elegir tono destino → se abre directo el editor de partes con las partes de todas las canciones (reordenar, xN, duplicar, quitar).
-- Tono: único para todo el medley; cada canción se transporta desde su tono original. Opción de cambiar el tono desde una parte en adelante (modulación).
-- Vista Músico/Cantante: una sola canción continua, con un separador que muestra el nombre de cada canción al cambiar.
-- Registro: cada canción del medley se registra por separado, con el tono en que se tocó y quién dirigió.
+**Tono por parte y Modulante (fase posterior; todavía sin implementar):**
+- En la configuración de cada canción de la reunión (Editar, con clave) hay un interruptor **"Modulante"**, con la ayuda "Permite cambiar de tono entre partes".
+- **Apagado:** toda la canción en un solo tono.
+  - Todas las partes se transportan al tono elegido.
+  - Los acordes puente y las partes de transición se ocultan.
+- **Encendido:** se desbloquea el tono por parte.
+  1. Se elige el tono de inicio. Por defecto se conservan los intervalos originales entre partes.
+  2. En cada parte hay botones `=` / `+½` / `+1` / `−½` respecto de la parte anterior, o se elige un tono absoluto.
+  3. El director decide cuántas subidas hace (puede quitarlas o dejar `=` en cualquiera) y en qué tono termina.
+  4. **"+ Agregar sección":** duplica una parte (a elección) y le asigna un tono nuevo, por ejemplo un coro extra en D. Solo existe con Modulante encendido.
+- **Parte nueva:** el director puede crear en la reunión una parte que no existe en la base (por ejemplo, un interludio) con acordes escritos a mano.
+- Las canciones marcadas como Modulante arrancan con el interruptor encendido y los tonos originales.
+- **Acordes puente y partes de transición:**
+  - No se reemplazan por otro acorde: se transportan según el tono de la parte **siguiente**, así conservan su función respecto del destino. Por ejemplo, "(Eb)" antes de Ab queda "(F#)" si el destino pasa a B.
+  - Las transiciones (interludios como "Inter para subir a A") siguen la misma regla: todos sus acordes se transportan según el tono de destino, sin importar su largo.
+  - Si la parte siguiente queda en el mismo tono que la actual, el puente y la transición se ocultan por defecto. Hay una opción **"Mostrar igual"**, para quien quiera tocar el interludio aunque no module.
+  - Si la transición original no sirve para el nuevo salto, en esa reunión los músicos pueden editar sus acordes (ver "Arreglo compartido"). Si el arreglo de la base está mal, lo corrige el admin (ver 5).
+
+**Medley (fase posterior; todavía sin implementar):**
+- Es un ítem dentro de una reunión que combina 2 o más canciones. Usa exactamente el mismo mecanismo de tono por parte.
+- Crear: Editar reunión → "Crear medley" → elegir canciones (búsqueda en vivo) → elegir tono de inicio. Se abre directo el editor de partes, con las partes de todas las canciones: reordenar, xN, duplicar, quitar y tono por parte.
+- Un medley es Modulante siempre: el interruptor viene encendido.
 - Requiere la clave del director, igual que el resto de la edición de reuniones.
+
+**Arreglo compartido de la reunión (lo ven todos):**
+- **Director, con clave:** la estructura del arreglo:
+  - partes, orden y repeticiones;
+  - agregar y quitar partes;
+  - tono por parte, Modulante y "mostrar".
+- **Músicos, sin clave:** editan los **acordes** de cualquier parte del arreglo de esa reunión; se asume que hay consenso entre los músicos. Nunca la estructura ni los tonos.
+  - Queda abierto a cualquiera con el link de la iglesia. El motor exige nombre y limita el tamaño por parte y las ediciones por minuto (ver 4).
+  - La primera vez se pide el nombre, que queda guardado en el dispositivo.
+  - Cada edición guarda nombre y fecha/hora. El historial de cambios se ve por parte.
+  - Por parte: **"Restaurar acordes"**, a la base o a "Como la última vez".
+  - Si dos editan la misma parte, gana el último guardado. El anterior queda en el historial y se puede restaurar. El motor serializa las escrituras (LockService).
+- **Ajustes personales del músico** (notas propias, ocultar partes en su vista, tamaño): solo en su dispositivo; no se comparten.
+
+**Vistas Músico y Cantante con cambios de tono:**
+- La canción (o el medley) se ve como una sola canción continua.
+- En cada cambio de tono hay un indicador discreto: "↑ A (+1½)" o "↓ F# (−1½)".
+- En un medley, un separador muestra el nombre de cada canción al cambiar.
+
+**Registro de tonos:**
+- Se registra la secuencia completa de tonos tocados (`G→Ab→A→Bb→C`) y la referencia al arreglo de esa reunión, para poder repetirlo con "Como la última vez".
+- "Tono última vez" muestra esa secuencia completa.
+- En un medley, cada canción se registra por separado, con su propia secuencia y quién dirigió.
+
+**Casos de prueba esperados:**
+- **"Hay poder [G-Ab-A-Bb-C]".** Partes: Coro 1ª G · Estrofa 1 Ab · Coro 2ª A · Estrofa 2 Bb · Coro 3ª Bb · Coro 4ª C. Puentes escritos: (Eb), (E), (F), (G).
+  - *Modulante, original:* G→Ab→A→Bb→Bb→C. Puentes visibles tal como están escritos: (Eb), (E), (F), (G). No hay puente entre Estrofa 2 y Coro 3ª porque quedan en el mismo tono. Registro: `G→Ab→A→Bb→C`.
+  - *Modulante con solo 2 subidas* (G, `=`, `=`, `+½`, `=`, `+½`): G→G→G→Ab→Ab→A.
+    - Los puentes de Coro 1ª y Estrofa 1 se ocultan (con "Mostrar igual" disponible).
+    - El puente de Coro 2ª, escrito (F) para ir a Bb, se transporta al nuevo destino Ab y queda (Eb).
+    - El de Coro 3ª, escrito (G) para ir a C, se transporta al destino A y queda (E).
+    - Registro: `G→Ab→A`.
+  - *Un solo tono (G):* todas las partes en G, puentes ocultos. Registro: `G`.
+- **"Al estar aquí [F# - A]".** Partes: Intro y Verso 1 en F#; Verso 2 "(Sube a A)" y Coro 1 en A; Verso 1 "(Baja a F#)" y Coro 2 en F#; "Inter para subir a A" (transición); Coro 1 Final en A; Final en F# (lo agregó la iglesia; es parte de la base). Puente escrito al final de Verso 1: (D/F# - E/Ab).
+  - *Modulante, original:* F#→A→F#→A→F#. El puente del Verso 1 se muestra tal como está escrito, (D/F# - E/Ab), porque el destino sigue siendo A. La transición "Inter para subir a A" se muestra con sus acordes originales. Las indicaciones "(Sube a A)" y "(Baja a F#)" se reemplazan por el indicador de cambio de tono. El indicador marca "↓ F# (−1½)" al entrar al Final. Registro: `F#→A→F#→A→F#`.
+  - *Un solo tono (F#):* todo en F#. "Inter para subir a A" y el puente quedan ocultos, con "Mostrar igual" disponible. Registro: `F#`.
+  - *Modulante, inicio en G* (+½ sobre el original): G→Bb→G→Bb→G. El puente del Verso 1 se transporta al destino Bb y queda (Eb/G - F/A). "Inter para subir a A" se transporta al destino Bb.
 
 ## 8. Sin conexión y actualización
 
@@ -180,7 +281,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 Además:
 - **Detección de duplicados** al escribir el título: busca en título y letra.
 - **Borradores:** se pueden usar en reuniones con la marca "sin revisar". El admin los aprueba.
-- **Modo "corregir acordes" (admin):** tocar un acorde y moverlo a otra sílaba; se guarda en el JSON.
+- **Modo "corregir acordes" (admin):** tocar un acorde y moverlo a otra sílaba. Corrige la base: se guarda en `Datos/correcciones.json` (ver 5).
 - La app NUNCA busca ni copia cifrados de internet por su cuenta.
 
 ## 10. Diseño
