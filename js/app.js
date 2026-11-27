@@ -3,8 +3,8 @@ import { LocalDataSource, ClaveError } from './datasource.js';
 import { ApiDataSource } from './apidatasource.js';
 import { CONFIG } from './config.js';
 import { demoSeed } from './demo.js';
-import { KEYS, keyAt, baseKey, shiftTo, keyOption, showKey, transposer, tonosDelItem, tonoMas, enTonos, CHORD } from './music.js';
-import { prepare, blocksOf, defArr, isDefArr, blockText, base, rOf, labOf, summary, search, fmt, isoOf } from './songs.js';
+import { KEYS, keyAt, shiftTo, keyOption, showKey, transposer, tonosDelItem, tonoMas, intervalo, enTonos, CHORD } from './music.js';
+import { prepare, blocksOf, contenidoDe, SUBA, defArr, isDefArr, blockText, base, rOf, labOf, summary, search, fmt, isoOf } from './songs.js';
 
 // Motor real si hay iglesia (?c= o config) y no se pidió ?demo=1; si no, modo demo local.
 const qs = new URLSearchParams(location.search);
@@ -267,8 +267,6 @@ function openSheet(s, mode, ctx) {
   drawSheet();
 }
 
-// "(Sube a A)" / "(Baja a F#)" no se muestran como texto: los reemplaza el indicador de cambio de tono.
-const SUBA = /^\(?\s*(sube|baja|subida|bajada)\s+(?:a|al)\s+([A-G][#b]?m?)\s*\)?\.?$/i;
 /**
  * Grupo de cada acorde de una línea: 'p' = acordes puente (paréntesis al final de la parte), 'm' = [ ] (modular),
  * 'r' = { } (repetir), null = acorde común. Los paréntesis dentro de la línea, como (C - G), son comunes.
@@ -296,9 +294,8 @@ const xpose = (T, tok) => tok.split(/([-–|])/).map(p => CHORD.test(p.replace(/
 function sheetRows(item, mus) {
   const songs = {}; (item.tipo === 'medley' ? (item.canciones || []).map(c => c.id) : [item.id]).forEach(id => { const s = songBy(id); if (s) songs[id] = s; });
   const R = tonosDelItem(item, songs), medley = item.tipo === 'medley';
-  // Una parte escrita en otro tono que el de la canción (subida, puente, [ ]) sin transporte se ve tal como está escrita.
-  const TR = (tono, sh, s) => transposer({ tono: tono || item.tono || 'C' }, sh || 0, P.not, !!s && baseKey({ tono }) !== baseKey(s));
-  const p0 = R.partes.find(p => !p.transicion), kd = showKey(p0 ? TR(p0.escrito, p0.sh, songs[p0.cancion]).key : item.tono, P.not);
+  const TR = (tono, sh) => transposer({ tono: tono || item.tono || 'C' }, sh || 0, P.not);
+  const p0 = R.partes.find(p => !p.transicion), kd = showKey(p0 ? TR(p0.escrito, p0.sh).key : item.tono, P.not);
   const seen = new Set(); let antCancion = null;
 
   const rows = R.partes.map((p, k) => {
@@ -307,11 +304,14 @@ function sheetRows(item, mus) {
     if (medley && p.cancion !== antCancion) sep = `<div class="medsep">${esc(s.titulo)}</div>`;
     antCancion = p.cancion;
     if (p.transicion && !p.ver) return sep;                    // transición oculta (no cambia el tono)
-    const T = TR(p.escrito, p.sh, s);
-    const TG = { p: TR(p.puente.escrito, p.puente.sh, songs[p.puente.cancion] || s), m: TR(p.modula.escrito, p.modula.sh, songs[p.modula.cancion] || s), r: T };
+    // Un bloque que solo trae "(Baja a F#)" repite el anterior con el mismo nombre: sus líneas, en el tono de esta parte.
+    const b = e.src != null ? contenidoDe(s, e.src) : null, escr = b && b.sec && b.sec.tono || p.escrito;
+    const T = TR(escr, escr === p.escrito ? p.sh : intervalo(escr, p.tono));
+    const TG = { p: TR(p.puente.escrito, p.puente.sh), m: TR(p.modula.escrito, p.modula.sh), r: T };
     const VER = { p: p.puente.ver, m: p.modula.ver, r: p.repite.ver };
-    const b = e.src != null ? blocksOf(s)[e.src] : null, clave = p.cancion + '#' + e.src;
-    let ls = b && !(mus && seen.has(clave)) ? b.lines : [];   // en Músico, una parte repetida va solo con su título
+    // En Músico, una parte repetida en el mismo tono va solo con su título; en otro tono, completa.
+    const clave = p.cancion + '#' + (b ? b.id : e.src) + '@' + tonoMas(p.tono, 0);
+    let ls = b && !(mus && seen.has(clave)) ? b.lines : [];
     if (b) seen.add(clave);
     ls = ls.filter(l => (mus || (l.t !== 'ch' && l.t !== 'mix')) && !(l.t === 'ly' && SUBA.test(l.v.trim())))
       .filter((l, i, a) => l.t !== 'blank' || (i > 0 && a[i - 1].t !== 'blank'));

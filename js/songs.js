@@ -39,6 +39,20 @@ export function blocksOf(s) {
   return (s._b = B);
 }
 
+// "(Sube a A)" / "(Baja a F#)": indicación de cambio de tono (la vista la reemplaza por el indicador).
+export const SUBA = /^\(?\s*(sube|baja|subida|bajada)\s+(?:a|al)\s+([A-G][#b]?m?)\s*\)?\.?$/i;
+const soloIndicacion = b => { const r = b.lines.filter(l => l.t !== 'blank'); return r.length > 0 && r.every(l => l.t === 'ly' && SUBA.test(l.v.trim())); };
+/**
+ * Bloque cuya letra y acordes se muestran para el bloque `id`. Un bloque que solo trae "(Sube/Baja a X)"
+ * repite el bloque anterior con el mismo nombre (en el tono nuevo); los demás se muestran a sí mismos.
+ */
+export function contenidoDe(s, id) {
+  const B = blocksOf(s), b = B[id];
+  if (!b || !soloIndicacion(b)) return b;
+  for (let k = b.id - 1; k >= 0; k--) if (B[k].base === b.base && B[k].has && !soloIndicacion(B[k])) return B[k];
+  return b;
+}
+
 export const defArr = s => blocksOf(s).map(b => ({ src: b.has ? b.id : b.ref, label: b.label, rep: repOf(b.label) }));
 export const isDefArr = (s, arr) => JSON.stringify((arr || []).map(e => ({ src: e.src, label: e.label, rep: e.rep }))) === JSON.stringify(defArr(s)) && !(arr || []).some(e => e.tono || e.nueva || e.lineas);
 

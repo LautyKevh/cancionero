@@ -4,8 +4,8 @@
 // tonos con tonosTocados_ de motor/Tonos.js en todas las canciones modulantes, con arreglos al azar.
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { tonosDelItem, transposer } from '../js/music.js';
-import { blocksOf, defArr } from '../js/songs.js';
+import { tonosDelItem, transposer, keyAt } from '../js/music.js';
+import { blocksOf, defArr, contenidoDe } from '../js/songs.js';
 
 const dir = new URL('.', import.meta.url);
 const SONGS = JSON.parse(fs.readFileSync(new URL('canciones-prueba.json', dir), 'utf8'));
@@ -116,6 +116,28 @@ const puente = (r, s, re) => {
   igual(vis(r), [[false, true], [true, false], [true, false], [true, false], [true, true]], 'Quiero llenar modulante: [ ] antes de subir, { } ocultos; en la última, los dos');
   r = tonosDelItem({ ...base, modulante: false, arr: defArr(s) }, songs);
   igual(vis(r), [[false, true], [false, true], [false, true], [false, true], [false, true]], 'Quiero llenar un solo tono: [ ] ocultos siempre (también en la última), { } visibles');
+}
+
+// ---------- # o b: sin transporte, tal como está escrito; con transporte, según el tono de destino ----------
+{
+  const t = (k, sh) => transposer({ tono: k }, sh, 0);
+  igual([t('A', 0).key, t('A', 0).chord('Bb'), t('A', 0).chord('G#m'), t('F#', 0).key, t('F#', 0).chord('Gb/Bb')], ['A', 'Bb', 'G#m', 'F#', 'Gb/Bb'], 'Sin transporte: acordes y tono tal como están escritos');
+  igual([t('E', 2).key, t('C', 6).key, t('Ab', -2).key, keyAt({ tono: 'B' }, 7)], ['F#', 'F#', 'F#', 'F#'], 'Con transporte: F#, nunca Gb');
+  igual(['A', 'C#m', 'D', 'E', 'Ab', 'Bb', 'F', 'C', 'D#'].map(t('G', 2).chord).slice(), ['B', 'D#m', 'E', 'F#', 'Bb', 'C', 'G', 'D', 'F'], 'G → A: diatónicos con #, prestados con b (Bb = bII, C = bIII, F = bVI, G = bVII)');
+  igual(['F', 'Bb', 'C/E', 'Eb', 'Db'].map(t('F', 1).chord), ['F#', 'B', 'C#/E#'.replace('E#', 'F'), 'E', 'D'], 'F → F#: con #');
+  igual(['E', 'A', 'B7', 'C#m', 'F#m'].map(t('E', 1).chord), ['F', 'Bb', 'C7', 'Dm', 'Gm'], 'E → F: con b');
+}
+
+// ---------- Bloque que solo trae "(Baja a F#)" repite el anterior con el mismo nombre ----------
+{
+  const s = { id: 'x', tono: 'F#', lineas: [
+    { t: 'sec', v: 'Verso 1', tono: 'F#' }, { t: 'pair', segs: [['F#', 'Te adoro']] },
+    { t: 'sec', v: 'Verso 2', tono: 'A' }, { t: 'ly', v: '(Sube a A)' }, { t: 'pair', segs: [['A', 'Otra letra']] },
+    { t: 'sec', v: 'Verso 1', tono: 'F#' }, { t: 'ly', v: '(Baja a F#)' }, { t: 'blank' } ] };
+  igual([0, 1, 2].map(i => contenidoDe(s, i).id), [0, 1, 0], 'Solo "(Baja a F#)": repite el Verso 1 anterior; los demás se muestran a sí mismos');
+  // "Al estar aquí": el segundo Verso 1 trae "(Baja a F#)" y además un renglón propio, así que no es una repetición.
+  const a = SONGS['al-estar-aqui'], v1 = blocksOf(a).filter(b => b.label === 'Verso 1');
+  igual(contenidoDe(a, v1[1].id).id, v1[1].id, 'Al estar aquí: el segundo Verso 1 (indicación + un renglón) se muestra a sí mismo');
 }
 
 // ---------- arr vacío = versión base (app y motor iguales) ----------

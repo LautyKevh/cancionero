@@ -5,7 +5,6 @@ import { blocksOf, defArr } from './songs.js';
 export const SH = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 export const FL = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
 export const LAT = { C:'Do', D:'Re', E:'Mi', F:'Fa', G:'Sol', A:'La', B:'Si' };
-export const FLATKEYS = ['F','Bb','Eb','Ab','Db','Gb','Dm','Gm','Cm','Fm','Bbm','Ebm'];
 export const KEYS = ['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
 const DEG = {0:'I',1:'bII',2:'II',3:'bIII',4:'III',5:'IV',6:'#IV',7:'V',8:'bVI',9:'VI',10:'bVII',11:'VII'};
 
@@ -14,11 +13,29 @@ export const idx = n => { const i = SH.indexOf(n); return i < 0 ? FL.indexOf(n) 
 /** Tono base de una canción ("Ab", "Dm"). */
 export const baseKey = song => ((song.tono || '').match(/^[A-G][#b]?m?/) || ['C'])[0];
 
-/** Tono resultante de transponer `song` `sh` semitonos, escrito con # o b según la tonalidad. */
+// Nombres de tono: F# (nunca Gb), Db, Eb, Ab, Bb; en menor, C#m, F#m, G#m, Ebm, Bbm.
+const TONO_MAY = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+const TONO_MEN = ['Cm', 'C#m', 'Dm', 'Ebm', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'Bbm', 'Bm'];
+
+/** Tono resultante de transponer `song` `sh` semitonos. Sin transporte, tal como está escrito. */
 export function keyAt(song, sh) {
-  const k = baseKey(song), m = k.endsWith('m') ? 'm' : '', r = k.replace(/m$/, '');
+  const k = baseKey(song), m = k.endsWith('m'), r = k.replace(/m$/, '');
+  if ((sh % 12 + 12) % 12 === 0 && idx(r) >= 0) return k;
   const i = (idx(r) + sh + 120) % 12;
-  return (FLATKEYS.includes(FL[i] + m) ? FL[i] : SH[i]) + m;
+  return (m ? TONO_MEN : TONO_MAY)[i];
+}
+
+// Nombre de una nota según el grado en el tono: los grados de la escala con su letra, y los prestados
+// como bII, bIII, #IV, bVI y bVII (en A: Bb, C, D#, F, G). Así se elige # o b según el tono de destino.
+const LETRAS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'], LETRA_PC = [0, 2, 4, 5, 7, 9, 11];
+const PASO = [0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 6];      // semitonos desde la tónica → letras desde la tónica
+function nombreEnTono(pc, key) {
+  const r = key.replace(/m$/, ''), L0 = LETRAS.indexOf(r[0]), t = idx(r);
+  if (L0 < 0 || t < 0) return SH[pc];
+  const L = (L0 + PASO[(pc - t + 12) % 12]) % 7, acc = ((pc - LETRA_PC[L]) % 12 + 18) % 12 - 6;
+  const n = acc === 0 ? LETRAS[L] : acc === 1 ? LETRAS[L] + '#' : acc === -1 ? LETRAS[L] + 'b' : null;
+  // E#, B#, Cb, Fb o dobles alteraciones: se escribe la nota más simple.
+  return !n || /^(E#|B#|Cb|Fb)$/.test(n) ? (TONO_MAY[pc].length === 1 ? TONO_MAY[pc] : (acc > 0 ? SH[pc] : FL[pc])) : n;
 }
 
 /** Semitonos (−5…+6) para llevar la canción al tono `target`. */
@@ -41,15 +58,14 @@ const degOf = (n, tonic) => { const i = idx(n); return i < 0 ? n : DEG[(i - toni
 /**
  * Crea un transpositor para un contexto (canción, desplazamiento, cifrado).
  * Devuelve { chord(c), line(text, strict) }.
- * tal = true: sin transporte, los acordes quedan tal como están escritos (no se cambia # por b).
+ * Sin transporte, los acordes quedan tal como están escritos; con transporte, # o b según el tono de destino.
  */
-export function transposer(song, sh, not, tal) {
-  const igual = tal && (sh % 12 + 12) % 12 === 0;
-  const key = igual ? baseKey(song) : keyAt(song, sh), flat = FLATKEYS.includes(key), tonic = idx(key.replace(/m$/, ''));
+export function transposer(song, sh, not) {
+  const igual = (sh % 12 + 12) % 12 === 0;
+  const key = keyAt(song, sh), tonic = idx(key.replace(/m$/, ''));
   const note = n => {
     const i = idx(n); if (i < 0) return n;
-    if (igual) return not === 1 ? LAT[n[0]] + n.slice(1) : n;
-    let o = (flat ? FL : SH)[(i + sh + 120) % 12];
+    let o = igual ? n : nombreEnTono((i + sh + 120) % 12, key);
     if (not === 1) o = LAT[o[0]] + o.slice(1);
     return o;
   };

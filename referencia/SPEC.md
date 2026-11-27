@@ -146,6 +146,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - Los guiones bajos de estiramiento (`de_rro__ta`) se eliminan. Los espacios múltiples dentro de la letra se reducen a uno.
 - Las líneas mixtas (`[Interludio] // C D G/B //`, `(Db9) (la 4ta vez se mutea)`) se muestran como notas; los acordes se transponen. Las notas sueltas se anclan a una palabra de la línea anterior.
 - **Bloques:** desde un `[Título]` hasta el siguiente. Si un título aparece sin contenido (por ejemplo, el segundo "Coro x2"), referencia al primer bloque con el mismo nombre base.
+  - Un bloque que solo trae la indicación "(Sube a X)" / "(Baja a X)" repite el bloque anterior con el mismo nombre, con su letra y sus acordes, en el tono nuevo. Conserva su propio tono para la secuencia y el Registro.
 - **Tono por parte (tono escrito):** cada bloque guarda el tono en que está escrito.
   - Se detecta analizando sus acordes y con las pistas del Word:
     - la secuencia del título (`Hay poder [G-Ab-A-Bb-C]`, `Al estar aquí [F# - A]`);
@@ -303,7 +304,8 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - En cada cambio de tono hay un indicador discreto: "↑ A (+1½)" o "↓ F# (−1½)".
 - En un medley, un separador muestra el nombre de cada canción al cambiar. Si una parte no tiene tono propio, al cambiar de canción se sigue en el mismo tono.
 - El indicador va en el renglón del título de la parte ("Coro  ↑ A (+1½)").
-- Una parte escrita en otro tono que el de la canción (una subida, un puente, `[ ]`), cuando no se transporta, se ve tal como está escrita (no se cambia # por b).
+- **Cifrado (# o b):** sin transporte, los acordes y el tono se ven tal como están escritos en el Word. Con transporte, se elige # o b según el tono de destino: los grados de la escala con la letra que les corresponde y los acordes prestados como bII, bIII, #IV, bVI y bVII (en A: Bb, C, D#, F, G). F# nunca se escribe Gb. E#, B#, Cb y Fb se escriben F, C, B y E.
+- En la vista Músico, una parte repetida en el mismo tono va solo con su título; si se repite en otro tono, se ve completa.
 - `{ }` en la última parte: se muestran (no hay parte siguiente que cambie de tono).
 
 **Registro de tonos:**
