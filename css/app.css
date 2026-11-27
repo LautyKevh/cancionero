@@ -201,7 +201,10 @@ input[type=search]::placeholder { color: var(--mute); }
 /* ---------- Edición ---------- */
 .list li.ed { padding: 12px 4px; border-bottom: 1px solid var(--line); }
 .edh { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.edh > b { display: flex; align-items: center; min-width: 0; flex: 1 1 auto; }
+.edn { display: flex; align-items: center; min-width: 0; flex: 1 1 auto; min-height: 44px; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.edn .edt { min-width: 0; }
+.edn svg { flex: none; width: 18px; height: 18px; margin-left: 4px; fill: none; stroke: var(--mute); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.edn:hover .edt { text-decoration: underline; text-underline-offset: 3px; }
 .edh .medtag { flex: none; }
 .tools { flex: none; display: flex; align-items: center; gap: 3px; }
 .tools button { font-weight: 600; font-size: 13px; height: 36px; min-width: 36px; padding: 0 6px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--card); }

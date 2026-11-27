@@ -252,7 +252,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
     - **"Como la última vez":** copia el arreglo de la última reunión donde se tocó.
     - **"Versión base":** la canción como está en el Word.
   - Subir, bajar o quitar canciones.
-  - Tono, "Dirige" y "Editar" (partes) de cada canción en una sola línea (por defecto, Dirige = director de la reunión).
+  - Tocar el nombre de la canción (o del medley), con un › al lado, abre el editor de partes; no hay botón "Editar". Debajo, Tono y "Dirige" en una sola línea (por defecto, Dirige = director de la reunión); ▲ ▼ ✕, el tono y Dirige no abren nada.
   - **Fecha, nombre y director:** ruedita ⚙ al lado del título "Editar reunión" (sin bloques en la pantalla); abre una hoja desde abajo, con la misma clave: se cambian como al crearla y se conservan canciones, tonos y arreglos. El id de la reunión no depende de la fecha, así que links, historial y Registro siguen apuntando bien. Si la fecha nueva ya tiene otra reunión, avisa ("Ya hay una reunión el …") y no cambia nada. Una reunión ya anotada en el Registro no puede cambiar de fecha (el Registro no se modifica nunca). Si el nombre era el automático de la fecha, sigue a la fecha nueva.
 - **Partes (editor, pensado para el celular):**
   - Una tarjeta por parte: manija ≡ para arrastrar (o flechas arriba/abajo con la manija enfocada), título, chip de repeticiones (`x2`, popover 1–9), chip de tono y ⋯ (Duplicar, Mostrar igual cuando corresponde, Quitar).
@@ -353,7 +353,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - **Ingreso de admin (Ajustes → Administración):** botón "Iniciar sesión" de Google; no aparece ningún cartel emergente: solo se ingresa al tocarlo. Ya adentro, en el mismo lugar: "Ingresaste como …" y "Cerrar sesión". Se recuerda en el dispositivo mientras vale el token de Google (~1 h); después se vuelve a tocar "Iniciar sesión".
 - **Importación desde Ajustes:** avanza por tandas, muestra "X de Y canciones" y, si el motor dice que la tanda anterior sigue corriendo o se corta la conexión, espera 30 s y reintenta sola.
 - **Reconversión:** los Word nuevos o modificados se bajan y se convierten. Cuando cambia el conversor (sube `CONV_V`), los Word sin cambios se reconvierten desde la copia de sus párrafos (`Datos/import-parrafos.json`, sin volver a bajarlos) y solo se reescriben las canciones cuyo resultado cambió; `import-log.json` lista las reescritas. Si cambia la lectura del Word (sube `LECTOR_V`), se descarta la copia y se vuelve a bajar todo.
-- **Editar reunión:** los cambios se ven al instante y se guardan en segundo plano, en orden; "Listo" espera a que terminen. El botón de cada canción para ordenar sus partes se llama "Editar".
+- **Editar reunión:** los cambios se ven al instante y se guardan en segundo plano, en orden; "Listo" espera a que terminen. El editor de partes de cada canción se abre tocando su nombre.
 - Sin conexión se puede ver todo. Editar reuniones requiere conexión.
 - **Versión nueva:** cada cambio de la app sube `VERSION` en `sw.js`; la versión nueva se activa sola al abrir la app o al volver a ella (sin botón).
 

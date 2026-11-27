@@ -781,11 +781,11 @@ const esAdmin = () => !DEMO && !!ADMIN && ADMIN.exp * 1000 > Date.now() + 60000;
 function editSes(r) {
   setTabs(null);
   const rows = r.canciones.map((c, i) => { if (!itemOk(c)) return '';
-    return `<li class="ed"><div class="edh"><b><span class="num">${i + 1}</span>${esc(tituloItem(c))}${c.tipo === 'medley' ? '<small class="medtag">Medley</small>' : ''}</b><span class="tools">
+    // Tocar el nombre abre el editor de partes (el renglón de tono y Dirige no abre nada).
+    return `<li class="ed"><div class="edh"><button type="button" class="edn" data-pa="${i}" aria-label="${esc(tituloItem(c))}: ordenar partes"><span class="num">${i + 1}</span><span class="edt">${esc(tituloItem(c))}</span>${c.tipo === 'medley' ? '<small class="medtag">Medley</small>' : ''}${ICON.chev}</button><span class="tools">
       <button type="button" data-up="${i}" aria-label="Subir"${i ? '' : ' disabled'}>▲</button><button type="button" data-dn="${i}" aria-label="Bajar"${i < r.canciones.length - 1 ? '' : ' disabled'}>▼</button><button type="button" data-rm="${i}" aria-label="Quitar">✕</button></span></div>
       <div class="edr una"><label>Tono<select data-k="${i}">${KEYS.map(k => `<option${k === c.tono ? ' selected' : ''}>${k}</option>`).join('')}</select></label>
-      <label>Dirige${personSelect(`data-q="${i}"`, c.quien)}</label>
-      <button type="button" data-pa="${i}">Editar</button></div></li>`; }).join('');
+      <label>Dirige${personSelect(`data-q="${i}"`, c.quien)}</label></div></li>`; }).join('');
   app.innerHTML = `${back(nombreSes(r), '#/reunion/' + r.id)}<div class="edtit"><h2 class="title">Editar reunión</h2><button type="button" class="cfg" id="cfg" aria-haspopup="dialog" aria-label="Fecha, nombre y director" title="Fecha, nombre y director"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div><p class="meta">${esc(nombreSes(r))} · Dirige ${esc(r.director)}</p>
   <ol class="list">${rows || '<li class="empty">Agregá la primera canción con el buscador.</li>'}</ol>
   <div class="form"><label>Agregar canción<input id="ad" type="search" autocomplete="off" placeholder="Buscar por nombre, frase o director"></label>
