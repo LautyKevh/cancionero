@@ -89,3 +89,17 @@ function configurarClientId(clientId) {
 }
 
 function verIglesias() { Logger.log(JSON.stringify(iglesias_(), null, 2)); }
+
+// ---------- Registro diario automático ----------
+/** Lo corre el activador diario: anota en Registro las reuniones ya pasadas de todas las iglesias. */
+function anotarReunionesPasadas() {
+  const m = iglesias_();
+  Object.keys(m).forEach(root => { try { anotarPasadas_(iglesia_(root)); } catch (e) { console.error(root, e && e.stack || e); } });
+}
+
+/** Correr UNA vez desde el editor: crea el activador diario (3 a 4 de la mañana). Repetirlo no duplica. */
+function activarRegistroDiario() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'anotarReunionesPasadas').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('anotarReunionesPasadas').timeBased().everyDays(1).atHour(3).create();
+  Logger.log('Listo: todos los días entre las 3 y las 4 se anotan las reuniones del día anterior.');
+}

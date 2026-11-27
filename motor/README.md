@@ -64,7 +64,9 @@ Para volver atrás, repetir el último comando con el número de versión anteri
    los permisos (Drive, Hojas, conexiones externas): aceptar con `paisaarias@gmail.com`.
    En el registro de ejecución aparece el **id de la iglesia de prueba**.
 2. Ejecutar `importarPrueba` → convierte los Word y deja el resultado en `Datos/import-log.json`.
-3. Poner ese id en `js/config.js` → `iglesia` (o abrir la PWA con `?c=<id>`).
+3. Ejecutar `activarRegistroDiario` (una vez): todos los días entre las 3 y las 4 anota en Registro
+   las reuniones ya pasadas de todas las iglesias. Si falla, se anotan igual al abrir la app.
+4. Poner ese id en `js/config.js` → `iglesia` (o abrir la PWA con `?c=<id>`).
 
 ## Acciones de admin (Google Sign-In)
 
