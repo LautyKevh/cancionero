@@ -1,6 +1,6 @@
 # Pendientes
 
-Estado al 27-11-2026 (rama `desarrollo`, app v50; motor de PRUEBA: implementación @29, con un cambio sin desplegar). Nada en `main` ni en IBSI.
+Estado al 27-11-2026 (rama `desarrollo`, app v50; motor de PRUEBA: implementación @30). Nada en `main` ni en IBSI.
 
 ## Hecho hoy (en desarrollo)
 - Aprobado en el celular: etapa C (tono por parte, Modulante, guardado, sin conexión), medley (etapa D), variantes de una parte.
@@ -21,7 +21,6 @@ Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesi
    - Acordes de los músicos: en una reunión, modo Músico, ✎ al lado del título de cada parte → hoja con los acordes encima de la letra, nombre (queda guardado), "Guardar acordes", "Restaurar acordes" (Versión base / Como la última vez) e "Historial de esta parte". La vista y la impresión muestran los acordes editados. Probado en el demo y, del lado del motor, contra la iglesia de prueba.
    - Al agregar una canción que ya se tocó sola: hoja "Como la última vez" (copia partes, orden, tonos y acordes editados de la última reunión anterior) o "Versión base". Si nunca se tocó, se agrega directo.
    - Títulos con tono: "Inter para subir a A" se transporta como los acordes (empezando en G, "Inter para subir a Bb"), también en el editor de partes.
-   - **Falta desplegar el motor de prueba** (Claude no tuvo permiso): `clasp push` y `clasp create-deployment -i AKfycbwTr_…hCtw -d "prueba"` desde `motor/` (ver `motor/README.md`). Sin eso, los acordes editados de una parte con `[ ]` / `{ }` pierden esas marcas al guardar.
 2. **Etapa E (hecha, 27-11):** "Hay poder" con 2 subidas → G→G→G→Ab→Ab→A con puentes (Eb) y (E); "Al estar aquí" en G → G→Bb→G→Bb→G; medley con separador e indicador; variantes compartidas; motor `editarAcordes` (nombre, tamaño, historial, base). Registro probado con una reunión del 20-11-2026: anotó `G→Ab→A`, `G→Bb→G→Bb→G`, D y E con `reunión <id>#<pid>`. Las dos reuniones de prueba se borraron; esas 4 filas quedan en el Registro de la iglesia de prueba (el motor no borra filas). Corregido en v49: falsas variantes en "Hay poder" y el rótulo "orden modificado" con solo tonos por parte.
 3. **Esperan respuesta u OK de Lautaro:**
    - Probar en el celular: deslizar para borrar, la ruedita de Editar reunión (fecha/nombre/director) y lo del admin (ingresando en Ajustes).
