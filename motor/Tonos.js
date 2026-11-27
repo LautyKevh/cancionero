@@ -104,30 +104,45 @@ function analizarTonos_(song, tonoCrudo) {
   const cand = [...new Set(seq.concat(pistas))];
   if (!cand.length && tonoPc_(tonoInicio)) cand.push(tonoInicio);
 
-  let prev = tonoInicio;
-  B.forEach((b, i) => {
-    const ac = [].concat(...b.lines.map(acordesDe_)).filter(a => !a.paren || b.lines.length < 2);
+  // Regla (SPEC §6): solo cuenta como modulación un cambio de centro tonal sostenido (una parte entera en
+  // otro tono). Los acordes prestados o de color (Gadd6, E7(#9), D/E como E2…) no cambian el tono.
+  // Orden de prioridad: transición → "(Sube a X)" → "(SUBE)" antes del título (siguiente tono de la
+  // secuencia del título) → análisis de acordes, que solo cambia de tono con evidencia fuerte.
+  let prev = tonoInicio, iSeq = 0;
+  const sigDeSeq = (t, dir) => {
+    // Siguiente tono de la secuencia del título a partir de la posición actual, en la dirección pedida.
+    for (let k = iSeq + 1; k < seq.length; k++) { const d = intervalo_(t, seq[k]); if (seq[k] !== t && (dir > 0 ? d > 0 : d < 0)) return { t: seq[k], k }; }
+    return null;
+  };
+  B.forEach(b => {
+    const ac = [].concat(...b.lines.map(acordesDe_)).filter(a => !a.paren);
     const pista = b.lines.map(l => PISTA_RE_.exec(l.v || '')).find(Boolean);
     const tr = TRANS_RE_.exec(b.label);
+    const mod = b.sec && b.sec.mod;                      // "(SUBE)" / "(BAJA)" delante del título
     let tono = prev;
     if (tr) {
-      b.transicion = true; b.destino = tr[1];
-      tono = tr[1];
+      b.transicion = true; b.destino = tr[1]; tono = tr[1];
     } else if (pista) {
       tono = pista[1];
-    } else if (b.has && ac.length && cand.length > 1) {
-      const P = cand.map(t => ({ t, p: puntaje_(ac, t) })).sort((x, y) => y.p - x.p || (x.t === prev ? -1 : y.t === prev ? 1 : 0));
-      tono = P[0].t;
-      // Empate o diferencia mínima con el tono anterior: se queda en el anterior.
-      const pPrev = P.find(x => x.t === prev);
-      if (pPrev && P[0].p - pPrev.p < 0.75) tono = prev;
-      const seg = P.find(x => x.t !== tono);
-      if (seg && Math.abs(P.find(x => x.t === tono).p - seg.p) < 1.5) dudas.push({ parte: b.label || '(inicio)', tono, alternativa: seg.t, motivo: 'los acordes encajan casi igual en los dos tonos' });
-    } else if (b.has && ac.length && cand.length === 1 && puntaje_(ac, cand[0]) < ac.length * 0.25) {
-      dudas.push({ parte: b.label || '(inicio)', tono, alternativa: null, motivo: 'muchos acordes fuera del tono' });
+    } else if (mod) {
+      const dir = /baja/i.test(mod) ? -1 : 1, sig = seq.length > 1 ? sigDeSeq(prev, dir) : null;
+      if (sig) tono = sig.t;
+      else {
+        // Sin secuencia en el título: el tono más probable en esa dirección.
+        const P = [1, 2, 3].map(n => tonoMas_(prev, dir * n)).map(t => ({ t, p: puntaje_(ac, t) })).sort((x, y) => y.p - x.p);
+        tono = P.length && ac.length ? P[0].t : tonoMas_(prev, dir);
+        dudas.push({ parte: b.label, tono, alternativa: null, motivo: 'dice "' + mod + '" pero el título no tiene la secuencia de tonos' });
+      }
+    } else if (b.has && ac.length >= 3 && cand.length > 1) {
+      const P = cand.map(t => ({ t, p: puntaje_(ac, t) })).sort((x, y) => y.p - x.p);
+      const pPrev = (P.find(x => x.t === prev) || { p: -Infinity }).p, mejor = P[0];
+      const encaja = mejor.p >= ac.length * 0.6;
+      if (mejor.t !== prev && mejor.p - pPrev >= 2 && encaja) tono = mejor.t;
+      else if (mejor.t !== prev && mejor.p - pPrev >= 1 && encaja) dudas.push({ parte: b.label || '(inicio)', tono: prev, alternativa: mejor.t, motivo: 'la parte podría estar en otro tono' });
     }
     b.tono = tono;
-    if (!b.transicion) prev = tono;
+    const k = seq.indexOf(tono, iSeq); if (k >= 0) iSeq = k;
+    prev = tono;
   });
 
   // Acordes puente: acordes entre paréntesis al final de una parte que no es la última.

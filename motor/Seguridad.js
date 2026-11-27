@@ -36,7 +36,8 @@ function verificarAdmin_(ig, idToken) {
   const r = UrlFetchApp.fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(idToken), { muteHttpExceptions: true });
   if (r.getResponseCode() !== 200) throw apiError_('El ingreso con Google no es válido o venció.', 'admin');
   const t = JSON.parse(r.getContentText());
-  const clientId = PropertiesService.getScriptProperties().getProperty('GOOGLE_CLIENT_ID');
+  // ID de cliente OAuth (público). Se puede reemplazar con configurarClientId() sin desplegar.
+  const clientId = PropertiesService.getScriptProperties().getProperty('GOOGLE_CLIENT_ID') || GOOGLE_CLIENT_ID_;
   if (!clientId || t.aud !== clientId) throw apiError_('El ingreso con Google no corresponde a esta app.', 'admin');
   if (t.email_verified !== 'true' && t.email_verified !== true) throw apiError_('El email de Google no está verificado.', 'admin');
   const email = String(t.email).toLowerCase();

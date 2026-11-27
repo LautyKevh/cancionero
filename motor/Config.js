@@ -5,6 +5,8 @@
 //
 // El motor solo opera sobre iglesias registradas acá y cuya carpeta raíz la cuenta dueña puede abrir.
 
+const GOOGLE_CLIENT_ID_ = '926061150112-trehviof2ot7cs8bfbn2blnbck934cl5.apps.googleusercontent.com';
+
 const IBSI = {
   rootId: '1-UJSGbhH7vfbSYpiOoygZ-R4e7MECFcD',
   planillaId: '1ocmmf1kmCtG7QJgUsnsxgl97w0ZECOJirydW1BuiwCU',

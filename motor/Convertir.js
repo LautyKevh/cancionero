@@ -62,6 +62,12 @@ function leerDocx_(blob) {
   return out;
 }
 const texto_ = p => p.runs.map(r => r.text).join('');
+/** Párrafo sin sus primeros n caracteres (conserva negrita y posiciones del resto). */
+function cortarRuns_(p, n) {
+  const runs = [];
+  p.runs.forEach(r => { const ch = Array.from(r.text); if (n >= ch.length) { n -= ch.length; return; } runs.push({ text: ch.slice(n).join(''), bold: r.bold }); n = 0; });
+  return { runs };
+}
 function xs_(p) {
   const o = []; let x = 0;
   p.runs.forEach(r => { for (const ch of r.text) { o.push(x); x += ancho_(ch, r.bold); } });
@@ -101,10 +107,15 @@ const SEC_RE = /^(Verso|Coro|Puente|Estrofa|Pre ?[Cc]oro|Intro|Final|Parte)\b[\w
 function convertirParrafos_(ps) {
   const m0 = /\[([^\]]+)\]/.exec(texto_(ps[0] || { runs: [] }));
   if (!m0) throw new Error('El primer párrafo no tiene el tono entre corchetes: "Título [Tono]".');
-  const tono = m0[1].trim(), L = [], secs = lab => labels_(lab).forEach(v => L.push({ t: 'sec', v }));
+  // "(SUBE) [Coro]" / "(Baja) [Inter] (acordes)": la indicación marca el título que sigue (SPEC §6, tono por parte).
+  let mod = null;
+  const tono = m0[1].trim(), L = [], secs = lab => labels_(lab).forEach(v => { const o = { t: 'sec', v }; if (mod) { o.mod = mod; mod = null; } L.push(o); });
   let i = 1;
   while (i < ps.length) {
-    const p = ps[i], t = texto_(p).replace(/\s+$/, ''), s = t.trim();
+    let p = ps[i], t = texto_(p).replace(/\s+$/, '');
+    const mm = /^\s*\((sube|baja|subida|bajada)\)\s*(?=\[)/i.exec(t);
+    if (mm) { mod = mm[1].toUpperCase(); p = cortarRuns_(p, Array.from(mm[0]).length); ps[i] = p; t = texto_(p).replace(/\s+$/, ''); }
+    const s = t.trim();
     if (!s) { L.push({ t: 'blank' }); i++; continue; }
     const m = LAB_RE.exec(t), lab = m ? m[1] : '';
     const rest = m ? t.slice(lab.length) : t;
