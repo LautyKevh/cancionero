@@ -269,10 +269,10 @@ function sheetRows(s, shift, mus, arr) {
     .filter((l, i, a) => l.t !== 'blank' || (i > 0 && a[i - 1].t !== 'blank' && a[i - 1].t !== 'sec' && a[i + 1] && a[i + 1].t !== 'sec'));
   // "(Sube a A)" / "(Baja a F#)" no se muestran como texto: se reemplazan por el indicador de cambio de tono.
   const SUBA = /^\(?\s*(sube|baja|subida|bajada)\s+(?:a|al)\s+([A-G][#b]?m?)\s*\)?\.?$/i;
-  const indicador = (dir, k) => `<div class="modi">${/^b/i.test(dir) ? '↓' : '↑'} ${esc(showKey(T.chord(k), P.not))}</div>`;
+  const indicador = (dir, k) => `<span class="modi">${/^b/i.test(dir) ? '↓' : '↑'} ${esc(showKey(T.chord(k), P.not))}</span>`;
   const line = l => {
     if (l.t === 'blank') return '<div class="gap"></div>';
-    if (l.t === 'ly' && SUBA.test(l.v.trim())) { const m = SUBA.exec(l.v.trim()); return indicador(m[1], m[2]); }
+    if (l.t === 'ly' && SUBA.test(l.v.trim())) { const m = SUBA.exec(l.v.trim()); return `<div>${indicador(m[1], m[2])}</div>`; }
     if (l.t === 'pair') {
       if (!mus) return `<div>${esc(l.segs.map(x => x[1]).join('').trim())}</div>`;
       const it = []; l.segs.forEach(([c, t]) => t.split(/(\s+)/).forEach((x, j) => { if (j === 0 || x) it.push({ c: j === 0 ? c : '', t: x }); }));
@@ -287,17 +287,22 @@ function sheetRows(s, shift, mus, arr) {
     return `<div>${esc(mus ? l.v : l.v.replace(/\s{2,}/g, ' ').trim())}</div>`;
   };
   // Cada parte va en su propio bloque (espacio entre partes; al imprimir nunca se corta).
-  // Una parte de una sola línea de acordes (Intro, Inter) muestra los acordes al lado del título.
+  // Una parte de un solo renglón de acordes (Intro, Inter, Final) muestra los acordes al lado del título;
+  // con 2 renglones o más van abajo. El indicador de subida o bajada va en el mismo renglón que el título.
   const partes = []; let cur = null;
   src.forEach(l => { if (l.t === 'sec' || !cur) { cur = { sec: l.t === 'sec' ? l : null, ls: [] }; partes.push(cur); if (l.t === 'sec') return; } cur.ls.push(l); });
   const rows = partes.map(pt => {
-    const ls = pt.ls.slice(); while (ls.length && ls[0].t === 'blank') ls.shift(); while (ls.length && ls[ls.length - 1].t === 'blank') ls.pop();
+    let ls = pt.ls.slice(); while (ls.length && ls[0].t === 'blank') ls.shift(); while (ls.length && ls[ls.length - 1].t === 'blank') ls.pop();
     if (!pt.sec && !ls.length) return '';
     let head = '';
     if (pt.sec) {
-      const mod = pt.sec.mod && pt.sec.tono && !ls.some(x => x.t === 'ly' && SUBA.test(x.v.trim())) ? indicador(pt.sec.mod, pt.sec.tono) : '';
-      if (ls.length === 1 && ls[0].t === 'ch') return `<section class="parte">${mod}<div class="sec inl"><span>${esc(pt.sec.v)}</span><span class="ch">${esc(T.line(ls[0].v, false))}</span></div></section>`;
-      head = mod + `<div class="sec">${esc(pt.sec.v)}</div>`;
+      const k = ls.findIndex(x => x.t === 'ly' && SUBA.test(x.v.trim()));
+      let mod = '';
+      if (k >= 0) { const m = SUBA.exec(ls[k].v.trim()); mod = indicador(m[1], m[2]); ls.splice(k, 1); while (ls.length && ls[0].t === 'blank') ls.shift(); }
+      else if (pt.sec.mod && pt.sec.tono) mod = indicador(pt.sec.mod, pt.sec.tono);
+      const uno = ls.length === 1 && (ls[0].t === 'ch' || (ls[0].t === 'mix' && ls[0].at == null)) ? ls[0] : null;
+      if (uno) return `<section class="parte"><div class="sec inl"><span>${esc(pt.sec.v)}</span>${mod}<span class="${uno.t}">${esc(T.line(uno.v, uno.t === 'mix'))}</span></div></section>`;
+      head = `<div class="sec${mod ? ' inl' : ''}"><span>${esc(pt.sec.v)}</span>${mod}</div>`;
     }
     return `<section class="parte">${head}${ls.map(line).join('')}</section>`;
   }).join('');
@@ -394,7 +399,7 @@ function fixChords(box) {
 function fitSheet() {
   const box = $('.lines'); if (!box) return; box.classList.remove('wrap');
   const avail = box.clientWidth, clear = () => box.querySelectorAll('.sg').forEach(s => s.style.marginLeft = '');
-  const widest = () => { let w = 0; box.querySelectorAll('.pair,.ch,.mix').forEach(r => { w = Math.max(w, r.scrollWidth); }); return w; };
+  const widest = () => { let w = 0; box.querySelectorAll('.pair,.ch:not(.sec .ch),.mix:not(.sec .mix),.sec.inl').forEach(r => { w = Math.max(w, r.scrollWidth); }); return w; };
   const set = f => { box.style.setProperty('--fs', f + 'px'); clear(); fixChords(box); };
   let fs = 17;
   for (let k = 0; k < 12; k++) { set(fs); const w = widest(); if (w <= avail + 1 || fs <= 11) break; fs = Math.max(11, Math.floor(fs * Math.min(.97, avail / w) * 10) / 10); }

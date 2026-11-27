@@ -134,6 +134,9 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - en mayúsculas: `CORO`, `PRE-CORO`, `PUENTE (Repite "cumple Señor")`;
   - con acordes en la misma línea: `Inter: Bb F C - Gm Dm C`, `INTERLUDIO(2x): G - D`, `FINAL /B-E-F#/` (las barras de compás se ignoran);
   - con una aclaración: `Intro: (Primera parte de la estrofa)` y `CORO (Dm)`.
+  - entre paréntesis y solo en una línea: `(Estrofa)`, `(Coro)`. Si va justo debajo de otro título ("Interlude 2" / "(Chorus)"), es una aclaración de ese título y no una parte nueva;
+  - números romanos solos al principio de línea: `I)`, `II)`, `III)` → Estrofa 1, 2, 3.
+  - Título con acordes y las veces al final, con o sin corchetes: `[Intro F# - C# - D#m-B – F#-C#  x2]` → "Intro x2" con sus acordes. Hacen falta 2 acordes o más (`[Parte D x2]` sigue siendo el título "Parte D x2").
   - Las mayúsculas se muestran como "Coro". Una línea de letra que empieza con esas palabras ("Solo hay uno digno", "Coro de ángeles…") sigue siendo letra.
   - Una línea de acordes nunca se empareja con un título como si fuera letra.
 - Una línea solo con acordes, seguida de una línea de letra, forma un par: cada acorde se ancla a una sílaba.
@@ -155,7 +158,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - `{ }` = cierre para **repetir en el mismo tono**.
   - Ejemplo de "Quiero llenar": `A/B  B  E  [B/C#-E/C# A/F#] {A Am E}` sobre "Y proclamarte Señor".
   - No cuentan para decidir el tono de la parte.
-- **Grafía:** `♭` y `♯` se aceptan como `b` y `#`.
+- **Grafía:** `♭` y `♯` se aceptan como `b` y `#`. El guion largo `–` separa acordes igual que `-`.
 - **Indicación de subida antes del título:** `(SUBE) [Coro]` o `(BAJA) [Inter]` marcan que esa parte cambia de tono. El tono nuevo es el siguiente de la secuencia del título.
 - **Qué cuenta como modulación:** solo un cambio de centro tonal sostenido, es decir, una parte entera en otro tono. Los acordes prestados o de color (Gadd6, E7(#9), D/E como E2) no son modulación ni se marcan como dudosos.
 - **Partes de transición:** son partes cuyo título indica un pasaje hacia otro tono, como "Inter para subir a A". Se marcan como transición, con el tono de destino.
@@ -198,8 +201,8 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 
 **Vista de la canción (Músico y Cantante):**
 - Cada parte va en su bloque, con un espacio claro antes del título siguiente.
-- Una parte de una sola línea de acordes (Intro, Inter) muestra los acordes al lado del título.
-- "(Sube a X)" / "(Baja a X)" no se muestran como texto: se reemplazan por el indicador "↑ X" / "↓ X", transportado.
+- Una parte de un solo renglón de acordes (Intro, Inter, Interludio, Final) muestra siempre los acordes al lado del título, sin pasarlos abajo (si no entra, se achica la letra como en el resto de la hoja). Con 2 renglones o más, van abajo del título.
+- "(Sube a X)" / "(Baja a X)" no se muestran como texto: se reemplazan por el indicador "↑ X" / "↓ X", transportado, en el mismo renglón que el título de la parte ("Coro  ↑ F").
 - Si no hay intérprete, no se muestra nada (nunca "Intérprete sin confirmar").
 
 **Imprimir / PDF:**

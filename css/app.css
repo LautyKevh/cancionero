@@ -151,10 +151,11 @@ input[type=search]::placeholder { color: var(--mute); }
 .lines .sec { font-family: Inter, sans-serif; font-weight: 600; color: var(--sec); margin-top: .8em; font-size: .85em; }
 .lines .sec:first-child { margin-top: 0; }
 .lines .parte + .parte { margin-top: 1.1em; }
-.lines .parte > .sec:first-child, .lines .parte > .modi:first-child { margin-top: 0; }
-.lines .sec.inl { display: flex; flex-wrap: wrap; gap: .2em 1em; align-items: baseline; white-space: normal; }
-.lines .sec.inl .ch { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: calc(1em / .85); white-space: pre; }
-.lines .modi { font-family: Inter, sans-serif; font-weight: 700; font-size: .8em; color: var(--acc); margin-bottom: .2em; }
+.lines .parte > .sec:first-child { margin-top: 0; }
+.lines .sec.inl { display: flex; flex-wrap: nowrap; gap: .2em 1em; align-items: baseline; white-space: nowrap; width: max-content; max-width: none; }
+.lines .sec.inl .ch, .lines .sec.inl .mix { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: calc(1em / .85); white-space: pre; }
+.lines .modi { font-family: Inter, sans-serif; font-weight: 700; font-size: .95em; color: var(--acc); }
+.lines .sec .modi { font-size: 1em; }
 .lines .gap { min-height: .4em; }
 .lines.singer { font-family: Inter, system-ui, sans-serif; line-height: 1.5; }
 .lines.singer div { white-space: pre-wrap; }
@@ -277,7 +278,7 @@ body.imprimiendo #print { display: block; width: 198mm; max-width: 100%; margin:
 #print .lines.singer { font-size: 12pt; }
 #print .lines .pair { flex-wrap: wrap; }
 #print .lines div { white-space: pre-wrap; }
-#print .lines .sec.inl { white-space: normal; }
+#print .lines .sec.inl { white-space: nowrap; }
 #print .sec { color: #000; font-weight: 700; }
 #print .sg > b, #print .ch, #print .mix, #print .modi { color: #0a3d8f; }
 #print .parte { break-inside: avoid; page-break-inside: avoid; }

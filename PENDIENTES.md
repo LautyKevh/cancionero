@@ -17,6 +17,8 @@ Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesi
 ## Revisar
 - `anclado-en-la-roca-yahweh-2`: revisar de qué archivo sale el -2 (posible duplicado). Hoy figuran "Anclado en la roca (YAHWEH) [B]" y "[C]".
 - "Inter (E B/G#m B)(…)": el bajo "G#m" no es un acorde válido, así que esa línea no se toma como título con acordes. Probable error de tipeo en el archivo.
+- "En el monte calvario", "Nos unimos al cielo" y "Ven ante su trono" (x2) no tienen títulos de parte visibles: Lautaro los corrige en el Word.
+- "Interlude 2" + "(Chorus)" en "Because He Lives" y "Coro 2" + "(final)" en "Jesucristo basta": el paréntesis queda como aclaración del título de arriba, no como parte nueva. Confirmar que es lo que se quiere.
 - Confirmar en el diálogo real de impresión (compu y celular) que no salen encabezado ni pie del navegador.
 
 ## Para una fase posterior

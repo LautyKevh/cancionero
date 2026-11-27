@@ -122,10 +122,38 @@ function tituloLibre_(s) {
   const nombre = head + (veces ? ' x' + veces : '');
   if (!r) return { v: nombre };
   if (acordesSueltos_(r)) return { v: nombre, ch: r };
+  const ta = !veces && titAcordes_(s.trim()); if (ta) return ta;
   // Nota entre paréntesis, o cualquier aclaración después de ":" → queda en el título.
   if (dos || /^\(.*\)$/.test(r)) return { v: nombre + ' ' + r };
   return null;                                                  // es una línea de letra que empieza con esa palabra
 }
+
+/**
+ * Título con acordes y las veces al final, con o sin corchetes: "Intro F# - C# - D#m-B – F#-C# x2"
+ * → { v: "Intro x2", ch: "F# - C# - D#m-B – F#-C#" }. Pide 2 acordes o más, para no partir "Parte D x2".
+ */
+function titAcordes_(v) {
+  const m = LIBRE_RE.exec(v.trim()); if (!m) return null;
+  let head = m[1].replace(/\s+/g, ' '); const r = m[2].trim();
+  const vf = /\s+(?:[xX×]\s*(\d+)|\(\s*(\d+)\s*[xX×]\s*\)|\(\s*[xX×]\s*(\d+)\s*\))$/.exec(r); if (!vf) return null;
+  const ch = r.slice(0, vf.index).trim();
+  if (!acordesSueltos_(ch) || ch.replace(/[()[\]{}]/g, '').split(/[\s\-–|/]+/).filter(Boolean).length < 2) return null;
+  if (head === head.toUpperCase()) head = head.charAt(0) + head.slice(1).toLowerCase();
+  return { v: head + ' x' + (vf[1] || vf[2] || vf[3]), ch };
+}
+
+// "(Estrofa)" solo en una línea, e "I)", "II)", "III)"… como Estrofa 1, 2, 3 (SPEC §6).
+// "(Chorus)" o "(final)" justo debajo de un título es una aclaración de ese título: no es una parte nueva.
+const ROMANOS_ = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7, VIII: 8, IX: 9, X: 10 };
+function tituloSuelto_(s, prev) {
+  const r = /^([IVX]+)\)$/.exec(s.trim());
+  if (r && ROMANOS_[r[1]]) return { v: 'Estrofa ' + ROMANOS_[r[1]] };
+  const m = new RegExp('^\\(\\s*((?:' + PARTES_ + ')(?:\\s*\\d+)?)\\s*\\)$', 'i').exec(s.trim());
+  if (!m || (prev && prev.t === 'sec')) return null;
+  const h = m[1].replace(/\s+/g, ' ');
+  return { v: h.charAt(0).toUpperCase() + h.slice(1).toLowerCase() };
+}
+const ultima_ = L => { for (let k = L.length - 1; k >= 0; k--) if (L[k].t !== 'blank') return L[k]; return null; };
 
 /**
  * Convierte los párrafos de un .docx a {tono, lineas}. Las posiciones son índices de caracteres
@@ -138,7 +166,7 @@ function convertirParrafos_(ps) {
   if (!m0) throw new Error('El primer párrafo no tiene el tono entre corchetes: "Título [Tono]".');
   // "(SUBE) [Coro]" / "(Baja) [Inter] (acordes)": la indicación marca el título que sigue (SPEC §6, tono por parte).
   let mod = null;
-  const tono = m0[1].trim(), L = [], secs = lab => labels_(lab).forEach(v => { const o = { t: 'sec', v }; if (mod) { o.mod = mod; mod = null; } L.push(o); });
+  const tono = m0[1].trim(), L = [], secs = lab => labels_(lab).forEach(v => { const ta = titAcordes_(v), o = { t: 'sec', v: ta ? ta.v : v }; if (mod) { o.mod = mod; mod = null; } L.push(o); if (ta) L.push({ t: 'ch', v: ta.ch }); });
   let i = 1;
   while (i < ps.length) {
     let p = ps[i], t = texto_(p).replace(/\s+$/, '');
@@ -150,14 +178,14 @@ function convertirParrafos_(ps) {
     const rest = m ? t.slice(lab.length) : t;
     if (m && !rest.trim()) { secs(lab); i++; continue; }
     if (!m) {
-      const tl = tituloLibre_(s);
+      const tl = tituloLibre_(s) || tituloSuelto_(s, ultima_(L));
       if (tl) { secs('[' + tl.v + ']'); if (tl.ch) L.push({ t: 'ch', v: tl.ch }); i++; continue; }
     }
     if (chordy_(rest)) {
       const nxt = i + 1 < ps.length ? ps[i + 1] : null;
       const nt = nxt ? texto_(nxt).replace(/\s+$/, '') : '';
       const nm = LAB_RE.exec(nt), nlab = nm ? nm[1] : '';
-      if (nxt && nt.trim() && !chordy_(nt.slice(nlab.length)) && nt.slice(nlab.length).trim() && !(!nlab && tituloLibre_(nt))) {
+      if (nxt && nt.trim() && !chordy_(nt.slice(nlab.length)) && nt.slice(nlab.length).trim() && !(!nlab && (tituloLibre_(nt) || tituloSuelto_(nt, null)))) {
         if (lab) secs(lab);
         if (nlab) secs(nlab);
         const cx = xs_(p), lx = xs_(nxt);
@@ -176,7 +204,8 @@ function convertirParrafos_(ps) {
           j = Math.max(0, Math.min(lyrC.length, j - off));
           j = snap_(lyr, j);
           const limpio = z => z.replace(/[[\]{}]/g, '');
-          const parts = tok.indexOf('-') >= 0 && tok.split('-').every(z => CH_RE.test(limpio(z))) ? tok.split('-') : [tok];
+          // "-" y el guion largo "–" separan acordes pegados ("D#m-B", "Bm–G").
+          const parts = /[-–]/.test(tok) && tok.split(/[-–]/).every(z => CH_RE.test(limpio(z))) ? tok.split(/[-–]/) : [tok];
           parts.forEach(c => pos.push([j, c]));
         }
         pos.sort((a, b) => a[0] - b[0]); // estable, como sorted() de Python
