@@ -61,6 +61,12 @@ function planilla_(ig) { return SpreadsheetApp.openById(ig.planillaId); }
 const norm_ = t => String(t == null ? '' : t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
   .replace(/[^a-z0-9ñ ]/g, ' ').replace(/\s+/g, ' ').trim();
 function col_(headers, re) { return headers.findIndex(h => re.test(norm_(h))); }
+const DIAS_ = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+/** "2026-11-29" → "Domingo 29-11-2026" (sin hora ni huso horario). */
+function nombreDeFecha_(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if (!m) return String(iso || '');
+  return DIAS_[new Date(+m[1], +m[2] - 1, +m[3]).getDay()] + ' ' + m[3] + '-' + m[2] + '-' + m[1];
+}
 function isoDe_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, 'America/Argentina/Buenos_Aires', 'yyyy-MM-dd');
   const s = String(v || '').trim(); let m;
@@ -115,7 +121,10 @@ function filaAReunion_(r, i) {
   let canciones = []; try { canciones = JSON.parse(r[5] || '[]'); } catch (e) {}
   // Reuniones guardadas antes de los pid: ids deterministas hasta que se vuelvan a guardar.
   canciones.forEach((it, k) => { if (!it.pid) it.pid = 'i' + k; (it.arr || []).forEach((p, j) => { if (!p.pid) p.pid = it.pid + 'p' + j; }); });
-  return { _row: i + 2, id: String(r[0]), nombre: String(r[1]), fecha: isoDe_(r[2]) || String(r[2]), director: String(r[3]),
+  const fecha = isoDe_(r[2]) || String(r[2]);
+  // Reuniones guardadas antes del arreglo: Hojas pudo haber convertido el nombre en fecha.
+  const nombre = r[1] instanceof Date ? nombreDeFecha_(isoDe_(r[1]) || fecha) : String(r[1]);
+  return { _row: i + 2, id: String(r[0]), nombre, fecha, director: String(r[3]),
            clave: String(r[4]), canciones, borrada: !!r[6], registrada: !!r[7] };
 }
 function reunionesTodas_(ig) {
@@ -162,9 +171,11 @@ function guardarReunion_(ig, r) {
   respaldar_(ig);
   const sh = hojaReuniones_(planilla_(ig), true);
   const fila = [r.id, r.nombre, r.fecha, r.director, r.clave, JSON.stringify(r.canciones || []), r.borrada ? new Date() : '', r.registrada ? 'sí' : '', new Date()];
-  if (r._row) sh.getRange(r._row, 1, 1, fila.length).setValues([fila]);
-  else sh.appendRow(fila);
-  sh.getRange(r._row || sh.getLastRow(), 3).setNumberFormat('@');
+  // Texto plano ANTES de escribir: si no, Hojas convierte "2026-11-29" o "Domingo 29-11-2026" en fecha con hora.
+  const fil = r._row || sh.getLastRow() + 1;
+  sh.getRange(fil, 1, 1, 4).setNumberFormat('@');
+  sh.getRange(fil, 1, 1, fila.length).setValues([fila]);
+  if (!r._row) r._row = fil;
   cacheDel_(ck_(ig, 'reuniones'));
 }
 
