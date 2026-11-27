@@ -578,8 +578,9 @@ function hojaImpresa(item, mus, arriba) {
   const { rows, kd } = sheetRows(item, mus);
   return `<article class="phoja">${arriba ? `<p class="pses">${esc(arriba)}</p>` : ''}<h2>${esc(tituloItem(item))} [${esc(kd)}]</h2><div class="lines ${mus ? '' : 'singer'}">${rows}</div></article>`;
 }
-// Alto útil de la hoja: A4 o carta, menos los márgenes (se usa el menor de los dos para que entre en ambos).
-const HOJA_MM = 279.4 - 2 * 9;
+// Alto de la hoja: A4 o carta (se usa el menor de los dos para que entre en ambos). El margen de 9 mm lo pone
+// el padding de .phoja, que ya está incluido en scrollHeight.
+const HOJA_MM = 279.4;
 /** Achica la letra de cada canción (hasta 8 pt) para que entre en una hoja; si aun así no entra, sigue en la siguiente. */
 function ajustarHojas(box) {
   const mm = 96 / 25.4, alto = HOJA_MM * mm;
@@ -679,6 +680,8 @@ function parts(r, i) {
   const c = r.canciones[i], s = c && songBy(c.id); if (!s) return editSes(r);
   setTabs(null);
   const AB = blocksOf(s), B = AB.filter(b => b.has);
+  // Letra de una parte para el resumen: sin "(Sube a X)"; si el bloque solo trae esa indicación, la del bloque que repite.
+  const letra = id => blockText(contenidoDe(s, id)).filter(t => !SUBA.test(t));
   // Tono de cada parte, calculado igual que en la hoja (tonosDelItem).
   const TD = tonosDelItem(c, { [s.id]: s }), modul = TD.modulante, PT = TD.partes;
   const ant = j => { for (let k = j - 1; k >= 0; k--) if (!PT[k].transicion) return PT[k]; return null; };
@@ -708,12 +711,12 @@ function parts(r, i) {
   <div class="modbox"><label class="sw"><input type="checkbox" id="mo"${modul ? ' checked' : ''}> Modulante</label><p class="hint">Permite cambiar de tono entre partes</p>
     <div class="edr"><label>Tono de inicio<select id="ti">${opts(c.tono || keyOption(s), '')}</select></label></div></div>
   <ol class="list parts">${c.arr.map((e, j) => `<li class="ed"><div class="edh">
-    <button type="button" class="pv" data-v="${j}" aria-expanded="false"><b>${esc(base(e.label || '') || '(inicio)')}</b><small>${esc(blockText(AB[e.src])[0] || 'Sin letra (instrumental)')}</small></button>
+    <button type="button" class="pv" data-v="${j}" aria-expanded="false"><b>${esc(base(e.label || '') || '(inicio)')}</b><small>${esc(letra(e.src)[0] || 'Sin letra (instrumental)')}</small></button>
     <span class="tools"><span class="repc"><button type="button" data-m="${j}" aria-label="Menos repeticiones"${rOf(e) > 1 ? '' : ' disabled'}>−</button><span class="rep">x${rOf(e)}</span><button type="button" data-p="${j}" aria-label="Más repeticiones"${rOf(e) < 9 ? '' : ' disabled'}>+</button></span>
     <button type="button" data-u="${j}" aria-label="Subir"${j ? '' : ' disabled'}>▲</button><button type="button" data-d="${j}" aria-label="Bajar"${j < c.arr.length - 1 ? '' : ' disabled'}>▼</button><button type="button" data-c="${j}" aria-label="Duplicar">⧉</button><button type="button" data-x="${j}" aria-label="Quitar">✕</button></span></div>
     ${tonoDe(e, j)}${mostrarDe(e, j)}
-    <div class="pvb" hidden><div class="pvb-in">${blockText(AB[e.src]).map(t => `<div>${esc(t)}</div>`).join('') || '<div>Sin letra (instrumental)</div>'}</div></div></li>`).join('')}</ol>
-  <div class="form"><label>Agregar parte<select id="ap"><option value="">Elegir…</option>${B.map(b => `<option value="${b.id}">${esc((b.label || '(inicio)') + ' — ' + (blockText(b)[0] || 'instrumental'))}</option>`).join('')}</select></label>
+    <div class="pvb" hidden><div class="pvb-in">${letra(e.src).map(t => `<div>${esc(t)}</div>`).join('') || '<div>Sin letra (instrumental)</div>'}</div></div></li>`).join('')}</ol>
+  <div class="form"><label>Agregar parte<select id="ap"><option value="">Elegir…</option>${B.map(b => `<option value="${b.id}">${esc((b.label || '(inicio)') + ' — ' + (letra(b.id)[0] || 'instrumental'))}</option>`).join('')}</select></label>
     ${modul ? `<label>+ Agregar sección (copia de una parte, con tono nuevo)<select id="as"><option value="">Elegir…</option>${secciones.map(([e, j]) => `<option value="${j}">${esc((base(e.label || '') || '(inicio)') + ' — ' + PT[j].tono)}</option>`).join('')}</select></label>` : ''}
     <button type="button" id="rs">Volver al orden original</button><button type="button" class="primary" id="ok">Listo</button></div>`;
   const re = () => { persist(r); const y = scrollY; parts(r, i); scrollTo(0, y); };
@@ -834,5 +837,18 @@ async function load(force) {
   catch (e) { app.innerHTML = `<p class="err">${esc(e.message)} Revisá la conexión y recargá la página.</p>`; return; }
   navInit(); paintStatus(); render();
   if (ds.info) ds.info().then(i => { INFO = i || {}; const c = document.querySelector('.church'); if (c && INFO.nombre) c.textContent = 'Alabanza · ' + INFO.nombre; }).catch(() => {});
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator) {
+    // Versión nueva: al abrir la app o al volver a ella (desde segundo plano) se busca un sw.js nuevo; cuando
+    // toma el control, la página se recarga sola en la misma pantalla (después de terminar los guardados pendientes).
+    // Si antes no había service worker (primera visita) no se recarga.
+    let ctl = navigator.serviceWorker.controller, recargando = false;
+    navigator.serviceWorker.addEventListener('controllerchange', async () => {
+      const antes = ctl; ctl = navigator.serviceWorker.controller;
+      if (!antes || recargando) return; recargando = true;
+      await colaGuardar; location.reload();
+    });
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+    }).catch(() => {});
+  }
 })();

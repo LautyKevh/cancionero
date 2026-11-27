@@ -287,7 +287,9 @@ svg .bk { fill: currentColor; stroke: none; }
 @page { margin: 0; }
 body.imprimiendo > *:not(#print) { display: none !important; }
 body.imprimiendo { background: #fff; color: #000; min-height: 0; display: block; }
-body.imprimiendo #print { display: block; width: 198mm; max-width: 100%; margin: 0 auto; font: 11pt/1.3 Inter, system-ui, sans-serif; color: #000; }
+/* Se mide con el ancho del papel más angosto (A4, 210 mm), no con el de la pantalla: en el celular, medir a 375 px
+   partía los renglones y achicaba la letra de más. Sin tamaño en @page: el papel se elige en el diálogo. */
+body.imprimiendo #print { display: block; width: 210mm; max-width: none; margin: 0 auto; font: 11pt/1.3 Inter, system-ui, sans-serif; color: #000; }
 #print .phoja { padding: 9mm 9mm; box-sizing: border-box; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 #print .pses { margin: 0 0 2mm; font-size: 10pt; color: #444; }
 #print .phoja h2 { font: 700 15pt/1.2 Fraunces, Georgia, serif; margin: 0 0 4mm; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
