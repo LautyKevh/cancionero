@@ -61,7 +61,7 @@ const padre = h => {
   if (p.length <= 2) return p[0] === 'reunion' || p[0] === 'reuniones' ? '#/reuniones' : '#/canciones';
   return '#/' + p.slice(0, -1).join('/');
 };
-let NIVEL = 0, IGNORAR = 0, DESTINO = null;
+let NIVEL = 0, IGNORAR = 0, DESTINO = null, SALIR = 0, ULTIMO0 = '#/canciones';
 const st = d => ({ nav: 1, d });
 const go = (hash, dir) => {
   const t = nivel(hash);
@@ -75,7 +75,9 @@ function navInit() {
   const h = location.hash || '#/canciones';
   if (history.state && history.state.nav) { NIVEL = history.state.d; return; }   // recarga: el historial ya está armado
   const cadena = []; for (let x = h; x; x = padre(x)) cadena.unshift(x);
-  history.replaceState(st(0), '', cadena[0]);
+  // Debajo del nivel 0 queda una entrada "salida": atrás en la pantalla principal pide confirmar.
+  history.replaceState(st(-1), '', cadena[0]);
+  history.pushState(st(0), '', cadena[0]);
   for (let k = 1; k < cadena.length; k++) history.pushState(st(k), '', cadena[k]);
   NIVEL = cadena.length - 1;
 }
@@ -84,6 +86,11 @@ addEventListener('popstate', e => {
   const s = e.state;
   if (!s || !s.nav) {                                           // URL tipeada a mano o entrada vieja: se adopta como está
     NIVEL = nivel(location.hash); history.replaceState(st(NIVEL), '', location.hash || '#/canciones'); return render();
+  }
+  if (s.d === -1) {                                             // atrás en la pantalla principal
+    if (Date.now() - SALIR < 2500) { history.back(); return; }  // segundo toque: sale de la app
+    SALIR = Date.now(); history.pushState(st(0), '', ULTIMO0); NIVEL = 0;
+    toast('Tocá atrás de nuevo para salir'); return;
   }
   if (s.d > NIVEL) { IGNORAR = 1; history.go(NIVEL - s.d); return; }   // "adelante": nunca vuelve a donde estaba
   NIVEL = s.d; NAVDIR = 'back';
@@ -109,6 +116,7 @@ function transition(fn) {
 
 
 function render() {
+  if (nivel(location.hash) === 0) ULTIMO0 = location.hash || '#/canciones';
   const h = decodeURIComponent(location.hash.slice(1) || '/');
   const p = h.split('/').filter(Boolean);
   transition(() => {
