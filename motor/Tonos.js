@@ -54,9 +54,11 @@ function arrBase_(song) { return bloques_(song.lineas).map(b => ({ src: b.has ? 
 
 // ---------- Acordes ----------
 const ACORDE_RE_ = /^\(?([A-G])([#b]?)((?:maj|min|m|sus|add|dim|aug|M|º|°)?)[^/()]*?(?:\/[A-G][#b]?)?\)?[,.]?$/;
+const textoAcordes_ = l => l.t === 'pair' ? l.segs.map(s => s[0]).filter(Boolean).join(' ') : (l.t === 'ch' || l.t === 'mix') ? String(l.v) : '';
+// [ ] (puente para modular) y { } (cierre para repetir) no cuentan para decidir el tono de la parte.
+const sinGrupos_ = t => t.replace(/\[[^\]]*\]|\{[^}]*\}/g, ' ');
 function acordesDe_(l) {
-  const toks = l.t === 'pair' ? l.segs.map(s => s[0]).filter(Boolean)
-    : (l.t === 'ch' || l.t === 'mix') ? String(l.v).split(/[\s\-–|]+/) : [];
+  const toks = sinGrupos_(textoAcordes_(l)).split(/[\s\-–|]+/).filter(Boolean);
   const out = [];
   toks.forEach(tok => String(tok).split('-').forEach(c => {
     const m = ACORDE_RE_.exec(c.trim()); if (!m) return;
@@ -150,8 +152,15 @@ function analizarTonos_(song, tonoCrudo) {
     if (i === B.length - 1 || b.transicion) return;
     const ult = [...b.lines].reverse().find(l => l.t === 'pair' || l.t === 'ch');
     if (!ult) return;
-    const fin = ult.t === 'pair' ? ult.segs.map(s => s[0]).filter(Boolean).join(' ') : String(ult.v);
+    const fin = sinGrupos_(textoAcordes_(ult)).trim();
     if (/\)\s*$/.test(fin) && /\(/.test(fin)) ult.puente = true;
+  });
+  // [ ] al final = acordes para modular (se muestran si la parte siguiente cambia de tono);
+  // { } al final = cierre para repetir en el mismo tono (se muestran si la siguiente queda igual). SPEC §6.
+  song.lineas.forEach(l => {
+    const t = textoAcordes_(l);
+    if (/\[[^\]]*\]/.test(t)) l.modula = true; else delete l.modula;
+    if (/\{[^}]*\}/.test(t)) l.repite = true; else delete l.repite;
   });
 
   B.forEach(b => {

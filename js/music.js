@@ -51,13 +51,13 @@ export function transposer(song, sh, not) {
   };
   const chord = c => {
     if (not === 2) {
-      return c.replace(/^([(\[]*)([A-G][#b]?)([^/\])]*)/, (m, p, r, q) => {
+      return c.replace(/^([(\[{]*)([A-G][#b]?)([^/\])}]*)/, (m, p, r, q) => {
         let d = degOf(FL[(idx(r) + sh + 120) % 12], tonic);
         if (/^m(?!aj)/.test(q)) { d = d.replace(/[IV]+/, x => x.toLowerCase()); q = q.slice(1); }
         return p + d + q;
       }).replace(/\/([A-G][#b]?)/, (m, r) => '/' + degOf(FL[(idx(r) + sh + 120) % 12], tonic));
     }
-    return c.replace(/^([(\[]*)([A-G][#b]?)/, (m, p, r) => p + note(r)).replace(/\/([A-G][#b]?)/, (m, r) => '/' + note(r));
+    return c.replace(/^([(\[{]*)([A-G][#b]?)/, (m, p, r) => p + note(r)).replace(/\/([A-G][#b]?)/, (m, r) => '/' + note(r));
   };
   const line = (text, strict) => {
     let out = '', pend = 0;

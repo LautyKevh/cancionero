@@ -133,6 +133,14 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - El admin puede corregirlo.
 - **Modulante:** la canción es Modulante si sus partes no están todas en el mismo tono. El conversor la marca sola y el admin puede cambiarlo.
 - **Acordes puente:** son los acordes entre paréntesis al final de una parte que preparan la siguiente (`(Eb)`, `(E)`, `(D/F# - E/Ab)`). Se marcan como puente; no son los acordes de paso entre paréntesis dentro de una línea, como `(C - G)`.
+- **Acordes `[ ]` y `{ }` al final de una parte** (convención de la iglesia). Ambos son acordes y se transportan. Van en la misma línea de acordes que la letra, así que la línea de letra queda pegada a sus acordes.
+  - `[ ]` = acordes puente para **modular**.
+  - `{ }` = cierre para **repetir en el mismo tono**.
+  - Ejemplo de "Quiero llenar": `A/B  B  E  [B/C#-E/C# A/F#] {A Am E}` sobre "Y proclamarte Señor".
+  - No cuentan para decidir el tono de la parte.
+- **Grafía:** `♭` y `♯` se aceptan como `b` y `#`.
+- **Indicación de subida antes del título:** `(SUBE) [Coro]` o `(BAJA) [Inter]` marcan que esa parte cambia de tono. El tono nuevo es el siguiente de la secuencia del título.
+- **Qué cuenta como modulación:** solo un cambio de centro tonal sostenido, es decir, una parte entera en otro tono. Los acordes prestados o de color (Gadd6, E7(#9), D/E como E2) no son modulación ni se marcan como dudosos.
 - **Partes de transición:** son partes cuyo título indica un pasaje hacia otro tono, como "Inter para subir a A". Se marcan como transición, con el tono de destino.
 - Lo detectado (tono por parte, transiciones, puentes, Modulante) lo puede corregir el admin. Esas correcciones van en `Datos/correcciones.json` (ver 5).
 
@@ -216,6 +224,9 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - No se reemplazan por otro acorde: se transportan según el tono de la parte **siguiente**, así conservan su función respecto del destino. Por ejemplo, "(Eb)" antes de Ab queda "(F#)" si el destino pasa a B.
   - Las transiciones (interludios como "Inter para subir a A") siguen la misma regla: todos sus acordes se transportan según el tono de destino, sin importar su largo.
   - Si la parte siguiente queda en el mismo tono que la actual, el puente y la transición se ocultan por defecto. Hay una opción **"Mostrar igual"**, para quien quiera tocar el interludio aunque no module.
+  - **`[ ]` (modular):** se muestran solo si la parte siguiente cambia de tono, transportados según el tono de destino, igual que los puentes entre paréntesis.
+  - **`{ }` (repetir):** se muestran solo si la parte siguiente queda en el mismo tono.
+  - Las dos marcas conviven con "Mostrar igual" y con el modo Modulante. Con Modulante apagado no hay cambios de tono, así que se ven los `{ }` y se ocultan los `[ ]`.
   - Si la transición original no sirve para el nuevo salto, en esa reunión los músicos pueden editar sus acordes (ver "Arreglo compartido"). Si el arreglo de la base está mal, lo corrige el admin (ver 5).
 
 **Medley (fase posterior; todavía sin implementar):**

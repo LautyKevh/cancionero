@@ -76,7 +76,8 @@ function xs_(p) {
 
 // ---------- Reglas (idénticas a convert.py) ----------
 function chordy_(t) {
-  const toks = t.replace(/[()]/g, '').replace(/\/\//g, '').split(/[\s\-–|]+/).filter(Boolean);
+  // [ ] = puente para modular, { } = cierre para repetir en el mismo tono: también son acordes (SPEC §6).
+  const toks = t.replace(/[()[\]{}]/g, '').replace(/\/\//g, '').split(/[\s\-–|]+/).filter(Boolean);
   return toks.length > 0 && toks.every(x => CH_RE.test(x));
 }
 function starts_(w) {
@@ -105,6 +106,8 @@ const SEC_RE = /^(Verso|Coro|Puente|Estrofa|Pre ?[Cc]oro|Intro|Final|Parte)\b[\w
  * (como en Python); se trabaja con Array.from para no partir caracteres.
  */
 function convertirParrafos_(ps) {
+  // ♭/♯ se aceptan como b/# (mismo largo: no cambia la posición de los acordes).
+  ps.forEach(p => p.runs.forEach(r => { r.text = r.text.replace(/♭/g, 'b').replace(/♯/g, '#'); }));
   const m0 = /\[([^\]]+)\]/.exec(texto_(ps[0] || { runs: [] }));
   if (!m0) throw new Error('El primer párrafo no tiene el tono entre corchetes: "Título [Tono]".');
   // "(SUBE) [Coro]" / "(Baja) [Inter] (acordes)": la indicación marca el título que sigue (SPEC §6, tono por parte).
@@ -143,7 +146,8 @@ function convertirParrafos_(ps) {
           let j = 0; for (let q = 1; q < lx.length; q++) if (Math.abs(lx[q] - x) < Math.abs(lx[j] - x)) j = q;
           j = Math.max(0, Math.min(lyrC.length, j - off));
           j = snap_(lyr, j);
-          const parts = tok.indexOf('-') >= 0 && tok.split('-').every(z => CH_RE.test(z)) ? tok.split('-') : [tok];
+          const limpio = z => z.replace(/[[\]{}]/g, '');
+          const parts = tok.indexOf('-') >= 0 && tok.split('-').every(z => CH_RE.test(limpio(z))) ? tok.split('-') : [tok];
           parts.forEach(c => pos.push([j, c]));
         }
         pos.sort((a, b) => a[0] - b[0]); // estable, como sorted() de Python
