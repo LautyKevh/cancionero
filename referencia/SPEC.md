@@ -40,9 +40,9 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 
 | Rol | Cómo entra | Puede |
 |---|---|---|
-| Miembro (músico/cantante) | Sin cuenta | Ver canciones y reuniones, transponer, usar sin conexión. Editar los **acordes** del arreglo de una reunión (queda su nombre); nunca la estructura ni los tonos |
-| Director | Sin cuenta, con la clave de 4 dígitos de su reunión | Crear reuniones; editar o borrar las suyas, incluida la estructura del arreglo de cada canción |
-| Admin de iglesia | Google Sign-In (solo para acciones de admin) | Configurar carpetas, aprobar canciones, corregir la canción base, dar de alta personas, otros admins y editores, actualizar versión |
+| Miembro (músico/cantante) | Sin cuenta | Ver canciones y reuniones, transponer, usar sin conexión. Editar los **acordes** del arreglo de una reunión (queda su nombre); nunca la estructura ni los tonos. Completar datos de canciones (intérprete, BPM, tono original, link vacío). Sugerir correcciones y proponer canciones nuevas, que quedan pendientes de revisión |
+| Director | Sin cuenta, con la clave de 4 dígitos de su reunión | Crear reuniones; editar o borrar las suyas, incluida la estructura del arreglo de cada canción y la **letra** de cualquier parte del arreglo de su reunión |
+| Admin de iglesia | Google Sign-In (solo para acciones de admin) | Configurar carpetas, revisar la bandeja "Pendientes de revisión" (aprobar o rechazar correcciones y canciones nuevas), importar desde la carpeta, corregir la canción base, dar de alta personas, otros admins y editores, actualizar versión |
 | Superadmin | Lautaro | Publicar versiones; opcional: código de invitación para altas |
 
 - Hay un solo link por iglesia (`…/app/?c=<id>`). No existe un "link de admin": el ingreso con Google aparece solo en Ajustes.
@@ -53,6 +53,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - nombre obligatorio;
   - un límite de tamaño por parte;
   - un límite de ediciones por minuto.
+- **Otras acciones sin clave** (completar datos de canciones, sugerir correcciones, proponer canciones nuevas): mismas validaciones del motor (nombre obligatorio, límites de tamaño y de envíos por minuto).
 
 ## 5. Estructura en el Drive de cada iglesia (la crea el configurador)
 
@@ -66,7 +67,12 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 ```
 
 **Canciones:**
-- Columnas: ID, Título, Intérprete, Tono original, BPM, Estado (oficial / borrador / sin cifrado), Archivo fuente, Confianza.
+- Columnas: ID, Título, Intérprete, Tono original, BPM, Estado (oficial / borrador / sin cifrado), Archivo fuente, Confianza, **Link**.
+  - **Link:** columna nueva, normalmente el video de YouTube. La completa la gente desde la app (ver 7, "Datos de la canción") o el admin. La app nunca busca links por su cuenta.
+- **Celda B1 ("Ver tonos de:"):** desplegable con validación de datos desde `Personas!A2:A`, así se actualiza solo con los nombres que agrega la app. El motor lo crea en toda planilla de iglesia (prueba y nuevas).
+- **Datos editables desde la app** (intérprete, BPM, tono original, link): cada cambio guarda quién y cuándo, con historial y "deshacer" (en `Datos/ediciones.json`; el formato se define al implementarlo).
+  - Gana lo editado en la app. Si después el archivo trae otro valor, aparece como conflicto en "Revisar cambios en la carpeta" y el admin elige.
+  - El BPM cargado desde la app cuenta como confirmado (tiene nombre, historial y "deshacer"), sin importar la columna Confianza.
 - Puede haber varias versiones de una misma canción, con distinto ID e intérprete.
 - **Canción base:** es el Word de la iglesia (la versión de la casa, no la original del intérprete).
   - Todo bloque del Word es válido aunque no exista en la original. Por ejemplo, el [Final] en F# de "Al estar aquí" lo agregó la iglesia y es parte de la base.
@@ -82,7 +88,9 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - acordes de transición;
   - posición de acordes.
 
-  Se aplican después de cada reimportación del Word. Los cambios de cada domingo **nunca** van ahí: van en la reunión.
+  Las correcciones aprobadas se reaplican siempre en cada importación. Los archivos modificados en la carpeta nunca se aplican solos: van por "Revisar cambios en la carpeta" (ver 9). Los cambios de cada domingo **nunca** van ahí: van en la reunión.
+  - También van ahí las **sugerencias de corrección aprobadas** por el admin (ver 9, "Pendientes de revisión"), incluidas las de letra.
+  - Las correcciones aprobadas **nunca se pierden** por una importación (ver 9, "Importación desde la carpeta").
 
 **Registro:**
 - Columnas: Fecha, Canción (ID), Tono, Quién, Origen (domingo / reunión / planilla vieja).
@@ -110,7 +118,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - `cancion`: de qué canción es la parte (medley).
   - `tono`: tono absoluto en que se toca la parte. Solo cuenta con Modulante encendido. Si falta, se calcula desde el tono escrito, manteniendo el intervalo original con la parte anterior.
   - `mostrar: true` = "Mostrar igual": el puente o la transición se muestran aunque la parte siguiente quede en el mismo tono.
-  - `lineas`: acordes editados de esa parte para esta reunión (mismo formato que la canción). Si falta, se usan los de la base.
+  - `lineas`: acordes editados de esa parte para esta reunión (mismo formato que la canción); también la **letra**, si la editó el director con clave. Si falta, se usan los de la base.
   - `cambios`: historial de ediciones de acordes, `[{ quien, fecha, lineas }]`, con la versión anterior a cada cambio.
   - "+ Agregar sección" crea una entrada más de `arr`, copia de otra parte, con su propio `tono`.
 - Se pueden borrar. El borrado es lógico, con papelera.
@@ -179,6 +187,22 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - Repeticiones: un bloque ya mostrado aparece solo con su título ("Coro x2").
 - Junto al tono original se muestra el BPM, solo si está confirmado.
 
+**Imprimir / PDF:**
+- Botón **"Imprimir"** en cada canción y en cada reunión (la reunión entera, en orden).
+- Imprime lo que se está viendo: tono elegido, arreglo de la reunión y modo Músico (con acordes) o Cantante (solo letra).
+- Versión limpia para papel: sin botones ni menús, acordes alineados, salto de página entre canciones.
+- Usa el diálogo de impresión del sistema. En la compu abre la impresión de siempre; en el celular el mismo diálogo ofrece "Guardar como PDF".
+
+**Datos de la canción:**
+- **"▶ Escuchar":** aparece en la canción solo si tiene link. Abre el link en otra pestaña.
+- **Completar datos (cualquiera, sin clave):** intérprete, BPM, tono original y link.
+  - Tono: se elige de una lista, nunca texto libre. En las canciones modulantes hay una lista por cada tono de la secuencia, con opción de agregar o quitar tonos. BPM: solo número.
+  - Antes de guardar: "¿Estás seguro de guardar estos cambios?".
+  - Pide el nombre una vez; queda guardado en el dispositivo.
+  - Cada cambio guarda quién y cuándo, con historial y "deshacer".
+  - El link se completa directo solo si está vacío. Cambiar un link existente va como sugerencia de corrección (ver 9).
+- **"Sugerir corrección":** botón al pie de cada canción (ver 9).
+
 **Vista Cantante:**
 - Solo letra.
 - Mismo ajuste de ancho, con un tamaño inicial más grande y su propio A+/A−.
@@ -206,6 +230,8 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Subir, bajar, duplicar (⧉) y quitar.
   - Agregar parte (las opciones muestran su primera línea).
   - Volver al orden original.
+- **Letra (con clave):** el director puede editar la letra de cualquier parte del arreglo de su reunión, igual que los acordes. Solo vale para esa reunión; nunca toca la base.
+- **"Proponer para todas las versiones":** convierte los cambios de esa reunión en una sugerencia de corrección de la base (ver 9). No reescribe nada: la sugerencia queda pendiente de revisión.
 - **Borrar (con clave):** con confirmación dentro de la página.
 
 **Tono por parte y Modulante (fase posterior; todavía sin implementar):**
@@ -281,20 +307,44 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 
 ## 9. Carga de canciones nuevas
 
-1. **"Sin cifrado" desde la reunión:** si la canción no existe, "Agregar igual" con nombre, intérprete, tono y link opcional. Va a la lista Pendientes.
-2. **"Pedir canción":** nombre, intérprete, link y quién la pide. Va a Pendientes.
-3. **"Pegar cifrado":**
-   - Se pega el texto copiado de LaCuerda, CifraClub o WhatsApp.
-   - Ese texto viene en ancho fijo, así que los acordes se alinean por columna, de forma exacta.
-   - Se muestra una vista previa (secciones, acordes, transposición) antes de guardar.
-   - Se guarda como borrador.
-4. **Subir Word/PDF:** misma conversión que la sección 6. Se guarda como borrador.
-
-Además:
-- **Detección de duplicados** al escribir el título: busca en título y letra.
+**Generales:**
 - **Borradores:** se pueden usar en reuniones con la marca "sin revisar". El admin los aprueba.
 - **Modo "corregir acordes" (admin):** tocar un acorde y moverlo a otra sílaba. Corrige la base: se guarda en `Datos/correcciones.json` (ver 5).
 - La app NUNCA busca ni copia cifrados de internet por su cuenta.
+
+**Canción nueva (cualquiera, sin clave).** Cuatro formas:
+1. **Pegar cifrado:** el texto copiado de LaCuerda, CifraClub o WhatsApp. Viene en ancho fijo, así que los acordes se alinean por columna, de forma exacta. Vista previa (secciones, acordes, transposición) antes de enviar.
+2. **Subir archivo** (Word o PDF): misma conversión que la sección 6.
+3. **Sin cifrado (solo letra):** también desde una reunión, con "Agregar igual" si la canción no existe. Tono opcional.
+4. **"Pedir canción":** sin letra; "quién la pide" es el nombre que se pide siempre.
+- Datos:
+  - nombre (obligatorio);
+  - intérprete (obligatorio, con la opción "No sé");
+  - link (opcional);
+  - "Comentario" libre (opcional): un pedazo de letra, de dónde la conocen, un link, la versión, etc.
+- Aviso de duplicados con dos criterios: **nombre + intérprete** (hay versiones distintas con el mismo nombre) y búsqueda en la **letra**.
+- Queda como borrador "sin revisar". El director la puede usar en su reunión igual.
+
+**"Sugerir corrección" (cualquiera, sin clave):**
+- Botón al pie de cada canción. Se edita la letra y/o los acordes (y el link existente) y se envía.
+- Pide nombre y un comentario opcional.
+- Atajo desde una reunión: "Proponer para todas las versiones" (ver 7).
+
+**Pendientes de revisión (admin de cada iglesia, en Ajustes, con Google):** una sola bandeja con los dos tipos de pedido.
+- **Correcciones:** antes/después con los cambios marcados → Aprobar / Rechazar (con motivo).
+- **Canciones nuevas:** se ven ya convertidas (partes, acordes alineados, tonos detectados). El admin puede corregirlas ahí mismo y aprobar, o rechazar con motivo. Si el intérprete dice "No sé", lo completa.
+- Lo aprobado pasa a la base para todos.
+
+**Importación desde la carpeta (Ajustes, admin):** dos botones.
+- **"Agregar canciones nuevas"** (ayuda: "Trae las canciones que subiste a la carpeta y todavía no están en la app"). Solo archivos que no estaban.
+- **"Revisar cambios en la carpeta"** (ayuda: "Busca canciones que editaste en la carpeta y te muestra los cambios antes de aplicarlos").
+  - Mira solo los archivos modificados desde la última importación (fecha en Drive).
+  - Nunca aplica solo.
+  - Sin conflicto: antes/después → Aplicar.
+  - Con conflicto (la misma parte tiene una corrección aprobada en la app): las dos versiones lado a lado; el admin elige por parte "Quedarme con la app" o "Usar la del archivo".
+- Las correcciones aprobadas nunca se pierden por una importación.
+- En la lista de canciones del admin, una marca visible en las que tienen correcciones hechas en la app.
+- En la interfaz no se usa la palabra "Word": se dice "archivo" y "carpeta".
 
 ## 10. Diseño
 
@@ -311,7 +361,7 @@ Además:
 - Carpeta raíz: `Música - Cancionero` (Drive del ministerio: adoracion.ibsi@gmail.com).
 - Planilla actual: "Cancionero IBSI MAS" (Canciones, Registro, Personas).
 - 35 documentos de domingos: `Domingo DD-MM-AAAA.docx`.
-- Correcciones manuales de intérprete:
+- Correcciones manuales de intérprete (primero en la iglesia de prueba; en la planilla real de IBSI, solo con OK explícito):
   - Roca firme → Eric Bustamante
   - Medley Hermoso Nombre → Evangelina Crubinca
   - Alabadle y Santo, Santo, Santo → Marcos Witt
