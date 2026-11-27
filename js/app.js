@@ -42,6 +42,11 @@ const fechaLarga = f => f ? diaDe(f) + ' ' + fmt(f) : '';
 /** Nombre de reunión para mostrar: si viene roto (fecha en inglés con hora y huso), se arma desde la fecha. */
 const nombreSes = r => !r.nombre || /GMT|\d{1,2}:\d{2}:\d{2}|^(Sun|Mon|Tue|Wed|Thu|Fri|Sat) /.test(r.nombre) ? fechaLarga(r.fecha) : r.nombre;
 
+// Alto real visible: en Android (app instalada, pantalla completa) 100dvh incluye la barra de navegación
+// del sistema y el pie quedaba debajo, obligando a hacer scroll.
+const fijarAlto = () => document.documentElement.style.setProperty('--alto', innerHeight + 'px');
+fijarAlto(); addEventListener('resize', fijarAlto);
+
 // ---------- Navegación ----------
 // Historial por niveles: 0 = Canciones/Reuniones · 1 = una canción, una reunión, Ajustes · 2 = vista Cantante/Músico
 // (y edición) · 3 = partes de una canción en la edición. La entrada k del historial siempre es de nivel k:
