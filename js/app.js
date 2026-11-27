@@ -499,12 +499,20 @@ function parts(r, i) {
 }
 
 // ---------- Ajustes (admin con Google) ----------
-let ADMIN = null;                 // { token, email } solo en memoria
+// { token, email, exp }: se guarda en este dispositivo hasta que vence el token de Google (~1 h);
+// después Google vuelve a ingresar solo (auto_select) o pregunta con un toque.
+const ADM_KEY = 'cancionero.admin';
+const jwtDe = t => { try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); } catch (e) { return {}; } };
+let ADMIN = (() => { try { const a = JSON.parse(localStorage.getItem(ADM_KEY)); return a && a.exp * 1000 > Date.now() + 60000 ? a : null; } catch (e) { return null; } })();
+const setAdmin = tok => {
+  if (!tok) { ADMIN = null; try { localStorage.removeItem(ADM_KEY); } catch (e) {} return; }
+  const j = jwtDe(tok); ADMIN = { token: tok, email: j.email || '', exp: j.exp || 0 };
+  try { localStorage.setItem(ADM_KEY, JSON.stringify(ADMIN)); } catch (e) {}
+};
 const GSI = 'https://accounts.google.com/gsi/client';
 const loadGsi = () => window.google?.accounts?.id ? Promise.resolve() : new Promise((ok, ko) => {
   const s = document.createElement('script'); s.src = GSI; s.async = true; s.onload = ok; s.onerror = () => ko(new Error('No se pudo cargar el ingreso de Google.')); document.head.appendChild(s);
 });
-const emailDe = t => { try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).email; } catch (e) { return ''; } };
 
 function settings() {
   setTabs(null);
@@ -516,11 +524,13 @@ function settings() {
   if (DEMO || !ds.importar) { box.innerHTML = '<p class="hint">En modo demo no hay acciones de administrador.</p>'; return; }
   if (!CONFIG.googleClientId) { box.innerHTML = '<p class="hint">El ingreso de administrador todavía no está configurado.</p>'; return; }
   if (!st.online) { box.innerHTML = '<p class="hint">Hace falta conexión.</p>'; return; }
+  if (ADMIN && ADMIN.exp * 1000 < Date.now() + 60000) setAdmin(null);
   if (!ADMIN) {
     box.innerHTML = '<p class="hint">Solo para quien administra el cancionero de la iglesia.</p><div id="gbtn"></div><p class="err" id="er" role="alert"></p>';
     loadGsi().then(() => {
-      google.accounts.id.initialize({ client_id: CONFIG.googleClientId, callback: r => { ADMIN = { token: r.credential, email: emailDe(r.credential) }; settings(); } });
+      google.accounts.id.initialize({ client_id: CONFIG.googleClientId, auto_select: true, callback: r => { setAdmin(r.credential); settings(); } });
       google.accounts.id.renderButton($('#gbtn'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'es' });
+      google.accounts.id.prompt();
     }).catch(e => { $('#er').textContent = e.message; });
     return;
   }
@@ -528,7 +538,7 @@ function settings() {
     <button type="button" class="primary" id="imp">Importar canciones de Drive</button>
     <p class="hint">Convierte los Word de “Letra y Acordes”. Solo procesa los nuevos o modificados; si son muchos puede tardar varios minutos.</p>
     <div id="res" role="status"></div><button type="button" id="out">Salir</button>`;
-  $('#out').onclick = () => { ADMIN = null; window.google?.accounts?.id?.disableAutoSelect(); settings(); };
+  $('#out').onclick = () => { setAdmin(null); window.google?.accounts?.id?.disableAutoSelect(); settings(); };
   $('#imp').onclick = async () => {
     const b = $('#imp'), res = $('#res'); b.disabled = true;
     try {
@@ -542,7 +552,7 @@ function settings() {
         : `<p class="err">Quedaron ${r.pendientes} archivos sin procesar. Tocá de nuevo para seguir.</p>`;
       if (r.completo) { await load(true); INFO = await ds.info().catch(() => INFO); paintStatus(); }
     } catch (x) {
-      if (x.code === 'admin') ADMIN = null;
+      if (x.code === 'admin') setAdmin(null);
       res.innerHTML = `<p class="err">${esc(x.message)}</p>`;
     } finally { b.disabled = false; }
   };
