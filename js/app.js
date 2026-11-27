@@ -38,6 +38,8 @@ const itemOk = c => c.tipo === 'medley' ? (c.canciones || []).some(x => songBy(x
 const tituloItem = c => c.tipo === 'medley' ? (c.nombre || (c.canciones || []).map(x => (songBy(x.id) || {}).titulo).filter(Boolean).join(' + '))
   : ((songBy(c.id) || {}).titulo || '');
 /** Ítem con el transporte personal del músico (d semitonos): tono de inicio y tonos por parte. */
+// Cambiar el tono de inicio corre también los tonos elegidos por parte, así se conservan las subidas.
+const cambiarInicio = (c, t) => { const d = intervalo(c.tono, t); c.tono = t; (c.arr || []).forEach(p => { if (p.tono) p.tono = tonoMas(p.tono, d); }); };
 const conDelta = (c, d) => !d ? c : { ...c, tono: tonoMas(c.tono, d), arr: (c.arr || []).map(p => p.tono ? { ...p, tono: tonoMas(p.tono, d) } : p) };
 
 // ---------- Fechas (siempre en español; la fecha de una reunión es solo día: AAAA-MM-DD) ----------
@@ -652,7 +654,7 @@ function editSes(r) {
   $$('[data-up]').forEach(b => b.onclick = () => swap(+b.dataset.up - 1, +b.dataset.up));
   $$('[data-dn]').forEach(b => b.onclick = () => swap(+b.dataset.dn, +b.dataset.dn + 1));
   $$('[data-rm]').forEach(b => b.onclick = () => { r.canciones.splice(+b.dataset.rm, 1); re(); });
-  $$('[data-k]').forEach(x => x.onchange = () => { r.canciones[+x.dataset.k].tono = x.value; persist(r); });
+  $$('[data-k]').forEach(x => x.onchange = () => { cambiarInicio(r.canciones[+x.dataset.k], x.value); persist(r); });
   $$('[data-q]').forEach(x => wirePerson(x, v => { r.canciones[+x.dataset.q].quien = v; persist(r); }));
   $$('[data-pa]').forEach(b => b.onclick = () => go(`#/reunion/${r.id}/editar/${b.dataset.pa}`));
   const ad = $('#ad'), sg = $('#sg');
@@ -675,13 +677,42 @@ function parts(r, i) {
   const c = r.canciones[i], s = c && songBy(c.id); if (!s) return editSes(r);
   setTabs(null);
   const AB = blocksOf(s), B = AB.filter(b => b.has);
-  app.innerHTML = `${back('Editar reunión', '#/reunion/' + r.id + '/editar')}<h2 class="title">${esc(s.titulo)}</h2><p class="meta">Orden de las partes · tono ${esc(c.tono)}</p>
+  // Tono de cada parte, calculado igual que en la hoja (tonosDelItem).
+  const TD = tonosDelItem(c, { [s.id]: s }), modul = TD.modulante, PT = TD.partes;
+  const ant = j => { for (let k = j - 1; k >= 0; k--) if (!PT[k].transicion) return PT[k]; return null; };
+  const sig = j => { for (let k = j + 1; k < PT.length; k++) if (!PT[k].transicion) return PT[k]; return null; };
+  const opts = (t, extra) => extra + [...Array(12)].map((_, n) => tonoMas(/m$/.test(t) ? 'Cm' : 'C', n))
+    .map(k => `<option value="${k}"${extra || intervalo(k, t) ? '' : ' selected'}>${esc(k)}</option>`).join('');
+  const DIF = [[0, '='], [1, '+½'], [2, '+1'], [-1, '−½']];
+  const tonoDe = (e, j) => {
+    const o = PT[j];
+    if (o.transicion) return modul ? `<div class="tn">Toma el tono de la parte siguiente${o.ver ? ' · ' + esc(o.tono) : ''}</div>` : '';
+    if (!modul) return '';
+    const a = ant(j);
+    if (!a) return `<div class="tn">Tono <b>${esc(o.tono)}</b> · inicio</div>`;
+    const d = intervalo(a.tono, o.tono);
+    return `<div class="tn">Tono <b>${esc(o.tono)}</b><span class="tnb">${DIF.map(([n, t]) => `<button type="button" data-t="${j}" data-n="${n}" aria-pressed="${d === n}" aria-label="${n ? t + ' respecto de la parte anterior' : 'Igual que la parte anterior'}">${t}</button>`).join('')}</span>
+      <select data-ta="${j}" aria-label="Tono de la parte">${e.tono ? `<option value="">Original</option>` : `<option value="" selected>Original (${esc(o.tono)})</option>`}${[...Array(12)].map((_, n) => tonoMas(/m$/.test(o.tono) ? 'Cm' : 'C', n)).map(k => `<option value="${k}"${e.tono && !intervalo(k, o.tono) ? ' selected' : ''}>${esc(k)}</option>`).join('')}</select></div>`;
+  };
+  // "Mostrar igual": en las transiciones y en las partes con acordes puente o [ ], cuando la siguiente queda en el mismo tono.
+  const conPuente = e => { const b = AB[e.src]; return !!(b && b.lines.some(l => l.puente || l.modula)); };
+  const mostrarDe = (e, j) => {
+    const o = PT[j]; if (!sig(j) || !(o.transicion || conPuente(e)) || (o.cambia && !e.mostrar)) return '';
+    return `<label class="mi"><input type="checkbox" data-mi="${j}"${e.mostrar ? ' checked' : ''}> Mostrar igual ${o.transicion ? 'esta transición' : 'los acordes puente'}</label>`;
+  };
+  const secciones = c.arr.map((e, j) => [e, j]).filter(([e, j]) => !PT[j].transicion && AB[e.src])
+    .filter(([e], k, a) => a.findIndex(([x]) => x.src === e.src) === k);
+  app.innerHTML = `${back('Editar reunión', '#/reunion/' + r.id + '/editar')}<h2 class="title">${esc(s.titulo)}</h2><p class="meta">Orden de las partes</p>
+  <div class="modbox"><label class="sw"><input type="checkbox" id="mo"${modul ? ' checked' : ''}> Modulante</label><p class="hint">Permite cambiar de tono entre partes</p>
+    <div class="edr"><label>Tono de inicio<select id="ti">${opts(c.tono || keyOption(s), '')}</select></label></div></div>
   <ol class="list parts">${c.arr.map((e, j) => `<li class="ed"><div class="edh">
     <button type="button" class="pv" data-v="${j}" aria-expanded="false"><b>${esc(base(e.label || '') || '(inicio)')}</b><small>${esc(blockText(AB[e.src])[0] || 'Sin letra (instrumental)')}</small></button>
     <span class="tools"><span class="repc"><button type="button" data-m="${j}" aria-label="Menos repeticiones"${rOf(e) > 1 ? '' : ' disabled'}>−</button><span class="rep">x${rOf(e)}</span><button type="button" data-p="${j}" aria-label="Más repeticiones"${rOf(e) < 9 ? '' : ' disabled'}>+</button></span>
     <button type="button" data-u="${j}" aria-label="Subir"${j ? '' : ' disabled'}>▲</button><button type="button" data-d="${j}" aria-label="Bajar"${j < c.arr.length - 1 ? '' : ' disabled'}>▼</button><button type="button" data-c="${j}" aria-label="Duplicar">⧉</button><button type="button" data-x="${j}" aria-label="Quitar">✕</button></span></div>
+    ${tonoDe(e, j)}${mostrarDe(e, j)}
     <div class="pvb" hidden><div class="pvb-in">${blockText(AB[e.src]).map(t => `<div>${esc(t)}</div>`).join('') || '<div>Sin letra (instrumental)</div>'}</div></div></li>`).join('')}</ol>
   <div class="form"><label>Agregar parte<select id="ap"><option value="">Elegir…</option>${B.map(b => `<option value="${b.id}">${esc((b.label || '(inicio)') + ' — ' + (blockText(b)[0] || 'instrumental'))}</option>`).join('')}</select></label>
+    ${modul ? `<label>+ Agregar sección (copia de una parte, con tono nuevo)<select id="as"><option value="">Elegir…</option>${secciones.map(([e, j]) => `<option value="${j}">${esc((base(e.label || '') || '(inicio)') + ' — ' + PT[j].tono)}</option>`).join('')}</select></label>` : ''}
     <button type="button" id="rs">Volver al orden original</button><button type="button" class="primary" id="ok">Listo</button></div>`;
   const re = () => { persist(r); const y = scrollY; parts(r, i); scrollTo(0, y); };
   const sw = (a, b) => { [c.arr[a], c.arr[b]] = [c.arr[b], c.arr[a]]; re(); };
@@ -689,7 +720,18 @@ function parts(r, i) {
   $('#ok').onclick = async () => { await colaGuardar; go('#/reunion/' + r.id + '/editar', 'back'); };
   $$('[data-u]').forEach(b => b.onclick = () => sw(+b.dataset.u - 1, +b.dataset.u));
   $$('[data-d]').forEach(b => b.onclick = () => sw(+b.dataset.d, +b.dataset.d + 1));
-  $$('[data-c]').forEach(b => b.onclick = () => { const j = +b.dataset.c; c.arr.splice(j + 1, 0, { ...c.arr[j] }); re(); });
+  // La copia va sin pid: el motor le da uno nuevo (y la app lo toma al guardar).
+  const copia = j => { const x = { ...c.arr[j] }; delete x.pid; return x; };
+  $$('[data-c]').forEach(b => b.onclick = () => { const j = +b.dataset.c; c.arr.splice(j + 1, 0, copia(j)); re(); });
+  $('#mo').onchange = e => { c.modulante = e.target.checked; re(); };
+  $('#ti').onchange = e => { cambiarInicio(c, e.target.value); re(); };
+  $$('[data-t]').forEach(b => b.onclick = () => { const j = +b.dataset.t, a = ant(j); c.arr[j].tono = tonoMas(a.tono, +b.dataset.n); re(); });
+  $$('[data-ta]').forEach(x => x.onchange = () => { const e = c.arr[+x.dataset.ta]; if (x.value) e.tono = x.value; else delete e.tono; re(); });
+  $$('[data-mi]').forEach(x => x.onchange = () => { const e = c.arr[+x.dataset.mi]; if (x.checked) e.mostrar = true; else delete e.mostrar; re(); });
+  // "+ Agregar sección": copia de la parte elegida al final, medio tono arriba de la última parte.
+  if ($('#as')) $('#as').onchange = e => { const j = +e.target.value; if (e.target.value === '' || !c.arr[j]) return;
+    const x = copia(j), ult = [...PT].reverse().find(o => !o.transicion); delete x.mostrar;
+    x.tono = tonoMas(ult ? ult.tono : c.tono, 1); c.arr.push(x); re(); };
   $$('[data-v]').forEach(b => b.onclick = () => {
     const li = b.closest('li'), box = li.querySelector('.pvb'), open = li.classList.toggle('open');
     b.setAttribute('aria-expanded', String(open));

@@ -258,22 +258,25 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - **"Proponer para todas las versiones":** convierte los cambios de esa reunión en una sugerencia de corrección de la base (ver 9). No reescribe nada: la sugerencia queda pendiente de revisión.
 - **Borrar (con clave):** con confirmación dentro de la página.
 
-**Tono por parte y Modulante (fase posterior; todavía sin implementar):**
-- En la configuración de cada canción de la reunión (Editar, con clave) hay un interruptor **"Modulante"**, con la ayuda "Permite cambiar de tono entre partes".
+**Tono por parte y Modulante** (editor hecho; falta la parte nueva escrita a mano):
+- En la configuración de cada canción de la reunión (Editar, con clave → Editar partes) hay un interruptor **"Modulante"**, con la ayuda "Permite cambiar de tono entre partes", y el **tono de inicio**.
 - **Apagado:** toda la canción en un solo tono.
   - Todas las partes se transportan al tono elegido.
   - Los acordes puente y las partes de transición se ocultan.
 - **Encendido:** se desbloquea el tono por parte.
   1. Se elige el tono de inicio. Por defecto se conservan los intervalos originales entre partes.
-  2. En cada parte hay botones `=` / `+½` / `+1` / `−½` respecto de la parte anterior, o se elige un tono absoluto.
+  2. En cada parte hay botones `=` / `+½` / `+1` / `−½` respecto de la parte anterior, o se elige un tono absoluto. Se marca el botón que corresponde al tono actual. "Original" vuelve al tono calculado desde el Word (manteniendo el intervalo con la parte anterior). La primera parte va en el tono de inicio; las transiciones toman el tono de la parte siguiente.
+     - Cambiar el tono de inicio (en Partes o en Editar reunión) corre también los tonos elegidos por parte, así se conservan las subidas.
   3. El director decide cuántas subidas hace (puede quitarlas o dejar `=` en cualquiera) y en qué tono termina.
-  4. **"+ Agregar sección":** duplica una parte (a elección) y le asigna un tono nuevo, por ejemplo un coro extra en D. Solo existe con Modulante encendido.
+  4. **"+ Agregar sección":** duplica una parte (a elección) y le asigna un tono nuevo, por ejemplo un coro extra en D. Solo existe con Modulante encendido. La copia va al final, medio tono arriba de la última parte; después se ajusta con los botones y se mueve con ▲▼.
+- Al apagar Modulante, los tonos elegidos por parte quedan guardados (no cuentan) y vuelven al encenderlo.
+- Una copia (⧉ o "+ Agregar sección") va sin `pid`: el motor le da uno nuevo.
 - **Parte nueva:** el director puede crear en la reunión una parte que no existe en la base (por ejemplo, un interludio) con acordes escritos a mano.
 - Las canciones marcadas como Modulante arrancan con el interruptor encendido y los tonos originales.
 - **Acordes puente y partes de transición:**
   - No se reemplazan por otro acorde: se transportan según el tono de la parte **siguiente**, así conservan su función respecto del destino. Por ejemplo, "(Eb)" antes de Ab queda "(F#)" si el destino pasa a B.
   - Las transiciones (interludios como "Inter para subir a A") siguen la misma regla: todos sus acordes se transportan según el tono de destino, sin importar su largo.
-  - Si la parte siguiente queda en el mismo tono que la actual, el puente y la transición se ocultan por defecto. Hay una opción **"Mostrar igual"**, para quien quiera tocar el interludio aunque no module.
+  - Si la parte siguiente queda en el mismo tono que la actual, el puente y la transición se ocultan por defecto. Hay una opción **"Mostrar igual"**, para quien quiera tocar el interludio aunque no module. En el editor aparece en las transiciones y en las partes con acordes puente o `[ ]` cuando la parte siguiente queda en el mismo tono (también con Modulante apagado).
   - **`[ ]` (modular):** se muestran solo si la parte siguiente cambia de tono, transportados según el tono de destino, igual que los puentes entre paréntesis.
   - **`{ }` (repetir):** se muestran solo si la parte siguiente queda en el mismo tono.
   - **Última parte de la canción:** con Modulante encendido, si tiene `[ ]`, se muestran siempre, transportados al tono de esa parte (es un tag o cierre final).
