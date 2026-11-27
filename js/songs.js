@@ -63,11 +63,13 @@ export const isoOf = t => t.getFullYear() + '-' + String(t.getMonth() + 1).padSt
 /** ISO (AAAA-MM-DD) → DD-MM-AAAA */
 export const fmt = f => f ? f.split('-').reverse().join('-') : '';
 
-/** Registros de una canción: registro histórico + canciones de reuniones. */
+/** Registros de una canción (id o lista de ids: versiones del mismo título en otros tonos)
+ *  = registro histórico + canciones de reuniones. */
 export function historyOf(id, registro, reuniones) {
-  const a = registro.filter(x => x.id === id).map(x => ({ ...x }));
+  const ids = new Set([].concat(id)), has = x => ids.has(x);
+  const a = registro.filter(x => has(x.id)).map(x => ({ ...x }));
   // Las reuniones ya volcadas a Registro (registrada) no se cuentan dos veces.
-  reuniones.filter(r => !r.registrada).forEach(r => r.canciones.forEach(c => { if (c.id === id) a.push({ f: r.fecha, id, t: c.tono, q: c.quien }); }));
+  reuniones.filter(r => !r.registrada).forEach(r => r.canciones.forEach(c => { if (has(c.id)) a.push({ f: r.fecha, id: c.id, t: c.tono, q: c.quien }); }));
   return a.sort((x, y) => (x.f || '').localeCompare(y.f || ''));
 }
 

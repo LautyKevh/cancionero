@@ -28,7 +28,9 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const $ = s => app.querySelector(s), $$ = s => [...app.querySelectorAll(s)];
 const songBy = id => SONGS.find(s => s.id === id);
 const sesBy = id => SES.find(r => r.id === id);
-const perOf = id => summary(id, REG, SES).per;
+// Versiones del mismo título (otro tono, otro archivo) comparten historial.
+const versiones = id => { const s = songBy(id); return s ? SONGS.filter(x => x.titulo.toLowerCase() === s.titulo.toLowerCase()).map(x => x.id) : [id]; };
+const perOf = id => summary(versiones(id), REG, SES).per;
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const interp = s => s.interprete && s.interprete !== '-' ? s.interprete : '';
 
@@ -163,7 +165,7 @@ function songList() {
 
 function pickMode(s) {
   setTabs(null);
-  const { last, per } = summary(s.id, REG, SES), names = Object.keys(per);
+  const { last, per } = summary(versiones(s.id), REG, SES), names = Object.keys(per);
   const hist = !last && !names.length ? '<div class="hist empty">Sin registros todavía.</div>'
     : `<div class="hist">${last ? `<div class="hist-row"><span>Última vez</span><b>${esc(fmt(last.f))}</b> · ${last.q ? esc(last.q) : '<i>sin registrar quién</i>'}</div>
        <div class="hist-row"><span>Tono última vez</span><b class="kc">${esc(last.t)}</b></div>` : ''}
@@ -376,7 +378,10 @@ function openSes(r) {
   <div class="ctl"><button type="button" id="sm2" class="modebtn" title="Cambiar modo">${P.modos[r.id] === 'm' ? ICON.piano : ICON.mic}Modo: ${P.modos[r.id] === 'm' ? 'Músico' : 'Cantante'} ⇄</button><span class="sp"></span>
     <button type="button" id="ed">Editar</button><button type="button" id="del">Borrar</button></div>
   <div id="ask" class="askwrap"></div>
-  <ol class="list setlist">${rows || '<li class="empty">Sin canciones todavía. Tocá “Editar” para agregarlas.</li>'}</ol>`;
+  <ol class="list setlist">${rows || '<li class="empty">Sin canciones todavía. Tocá “Editar” para agregarlas.</li>'}</ol>
+  ${!ds.registrarUso || !r.canciones.length ? '' : r.registrada
+    ? '<p class="hint reg">✓ Canciones anotadas en el historial.</p>'
+    : r.fecha <= isoOf(new Date()) ? '<div class="ctl"><button type="button" id="reg">Anotar en el historial</button></div><p class="hint">Cuando termina la reunión: suma estas canciones al historial de la iglesia. Se hace una sola vez.</p>' : ''}`;
   $$('[data-o]').forEach(b => b.onclick = () => go(`#/reunion/${r.id}/${b.dataset.o}`));
   $('#sm2').onclick = () => { P.modos[r.id] = P.modos[r.id] === 'm' ? 'c' : 'm'; savePrefs(); openSes(r); };
   const ask = (what, run) => {
@@ -393,6 +398,12 @@ function openSes(r) {
       catch (x) { $('#er').textContent = x instanceof ClaveError ? x.message : 'No se pudo verificar la clave.'; kk.select(); } };
   };
   $('#ed').onclick = () => ask('Editar', () => go(`#/reunion/${r.id}/editar`));
+  const reg = $('#reg');
+  if (reg) reg.onclick = () => ask('Anotar', async clave => {
+    reg.disabled = true; reg.textContent = 'Anotando…'; $('#ask').innerHTML = '';
+    try { await ds.registrarUso(r.id, clave); r.registrada = true; REG = await ds.getRegistro().catch(() => REG); openSes(r); }
+    catch (x) { reg.disabled = false; $('#ask').innerHTML = `<p class="err">${esc(x.message)}</p>`; }
+  });
   $('#del').onclick = () => ask('Borrar', clave => {
     const a = $('#ask');
     a.innerHTML = `<div class="askf confirm"><span>¿Borrar “${esc(r.nombre)}”?</span><button type="button" class="danger" id="y">Sí, borrar</button><button type="button" id="n">No</button></div>`;

@@ -80,7 +80,7 @@ function tabla_(ss, nombre) {
 /** Mapa título normalizado → id, a partir del cancionero. */
 function idPorTitulo_(ig) {
   const m = {};
-  try { cancionero_(ig).forEach(s => { m[norm_(s.titulo)] = s.id; m[norm_(s.id)] = s.id; }); } catch (e) {}
+  try { cancionero_(ig).forEach(s => { const k = norm_(s.titulo); if (!m[k] || s.id.length < m[k].length) m[k] = s.id; m[norm_(s.id)] = s.id; }); } catch (e) {}
   return m;
 }
 
