@@ -571,7 +571,7 @@ const loadGsi = () => window.google?.accounts?.id ? Promise.resolve() : new Prom
 });
 
 function settings() {
-  setTabs(null);
+  setTabs(null); document.body.dataset.screen = 'ajustes';
   const st = ds.status();
   app.innerHTML = `${back('Canciones', '#/canciones')}<h2 class="title">Ajustes</h2>
     <p class="meta">${esc(INFO.nombre || (DEMO ? 'Modo demo' : ''))}${INFO.actualizado ? ' · canciones importadas el ' + esc(fmt(INFO.actualizado.slice(0, 10))) : ''}</p>
