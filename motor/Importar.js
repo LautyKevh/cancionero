@@ -24,17 +24,23 @@ function catalogo_(ig) {
 // Paréntesis del nombre del archivo que son el intérprete (persona o grupo). Los demás ("(Simple)", "(New)",
 // "(Con subida)", subtítulos como "(Abba Padre)" o nombres dudosos) quedan en el título.
 const INTERPRETES_ = ['Anástasis', 'Jaime Murrel', 'Elevation', 'Hillsong', 'Majo Solis', 'Marcos Brunet'];
+// Paréntesis que son una versión de la canción: quedan en el título sin aviso.
+const VERSIONES_ = ['simple', 'new', 'con subida', 'chorus', 'himno', 'en vivo', 'live', 'acustico', 'version corta'];
+// Un paréntesis que no es intérprete conocido ni versión (p. ej. un nombre abreviado: "(Evan)") no se adivina:
+// queda en el título y se marca en el registro de importación para que el admin complete el intérprete.
 
 /** "Título (Intérprete) [Tono] (Versión).docx" → { titulo, tono, interprete } */
 function nombreArchivo_(n, conocidos) {
   const base = n.replace(/\.docx$/i, '').trim(), m = /^(.*?)\s*\[([^\]]+)\]\s*(\(.*\))?\s*$/.exec(base);
   let titulo = m ? m[1].trim() + (m[3] ? ' ' + m[3].trim() : '') : base, interprete = '';
+  const dudosos = [];
   const lista = INTERPRETES_.concat(conocidos || []).map(norm_);
   titulo = titulo.replace(/\s*\(([^()]+)\)/g, (all, x) => {
     if (!interprete && lista.indexOf(norm_(x)) >= 0) { interprete = x.trim(); return ''; }
+    if (VERSIONES_.indexOf(norm_(x).trim()) < 0) dudosos.push(x.trim());
     return all;
   }).trim();
-  return { titulo, tono: m ? m[2].trim() : '', interprete };
+  return { titulo, tono: m ? m[2].trim() : '', interprete, dudosos };
 }
 
 // Apps Script corta cada ejecución a los 6 min: la importación avanza por tandas.
@@ -59,7 +65,7 @@ function importarCanciones_(ig, desdeCero) {
     if (Date.now() - t0 > TANDA_MS) { pendientes++; continue; }
     try {
       if (f.getMimeType() !== DOCX) throw new Error('No es un .docx (' + f.getMimeType() + ')');
-      const { titulo, tono: tonoArchivo, interprete: intArchivo } = nombreArchivo_(nombre, conocidos);
+      const { titulo, tono: tonoArchivo, interprete: intArchivo, dudosos } = nombreArchivo_(nombre, conocidos);
       const conv = convertirDocx_(f.getBlob());
       const c = cat[norm_(titulo)] || {};
       // id estable: se conserva el de una importación anterior del mismo archivo
@@ -76,6 +82,8 @@ function importarCanciones_(ig, desdeCero) {
       if (!song.lineas.length) throw new Error('El documento no tiene letra.');
       // Tono por parte, transiciones, puentes y Modulante (SPEC §6). song.tono pasa a ser el tono de inicio.
       const dudas = analizarTonos_(song, song.tono);
+      if (!song.interprete && dudosos.length)
+        dudas.push({ parte: 'Intérprete', motivo: 'Sin intérprete. ¿"(' + dudosos.join('), (') + ')" del nombre del archivo es el intérprete? Completalo como corrección.' });
       escribirJson_(dirCanciones, id + '.json', song);
       estado.canciones[id] = song;
       estado.archivos[fid] = { upd, v: CONV_V, nombre, id, enPlanilla: !!c.titulo, dudas };
@@ -134,7 +142,9 @@ function corregirCancion_(ig, id, correccion) {
   if (correccion == null) delete corr[id];
   else {
     if (typeof correccion !== 'object' || JSON.stringify(correccion).length > 50000) throw apiError_('Corrección inválida.', 'formato');
-    corr[id] = { modulante: correccion.modulante == null ? undefined : !!correccion.modulante, partes: correccion.partes || {} };
+    corr[id] = { modulante: correccion.modulante == null ? undefined : !!correccion.modulante, partes: correccion.partes || {},
+                 titulo: correccion.titulo ? String(correccion.titulo).slice(0, 200) : undefined,
+                 interprete: correccion.interprete ? String(correccion.interprete).slice(0, 200) : undefined };
   }
   escribirJson_(datos, 'correcciones.json', corr);
   const song = corr[id] ? aplicarCorreccion_(base, corr[id]) : base;

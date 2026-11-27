@@ -77,6 +77,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - **Canción base:** es el Word de la iglesia (la versión de la casa, no la original del intérprete).
   - Todo bloque del Word es válido aunque no exista en la original. Por ejemplo, el [Final] en F# de "Al estar aquí" lo agregó la iglesia y es parte de la base.
   - Cambiar el arreglo de una reunión nunca modifica la canción base.
+- **Paréntesis en el nombre del archivo:** si es un intérprete conocido (nombre completo, o uno que ya figura en la planilla), pasa al campo Intérprete. Si es una versión ("(Simple)", "(New)", "(Con subida)") o un subtítulo, queda en el título. Si es un nombre abreviado ("(Evan)"), el conversor no adivina: lo deja en el título y lo marca en el registro de importación para que el admin complete el intérprete como corrección.
 - Tono original de una canción modulante: la secuencia de tonos, como en el título del Word (`G-Ab-A-Bb-C`). El primero es el tono de inicio.
 - En el JSON de cada canción (`Datos/canciones/<id>.json`):
   - cada parte guarda su **tono escrito** y si es **de transición**;
@@ -86,7 +87,8 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - tonos detectados por parte;
   - marcas de transición;
   - acordes de transición;
-  - posición de acordes.
+  - posición de acordes;
+  - título e intérprete (por ejemplo, un intérprete abreviado en el nombre del archivo).
 
   Las correcciones aprobadas se reaplican siempre en cada importación. Los archivos modificados en la carpeta nunca se aplican solos: van por "Revisar cambios en la carpeta" (ver 9). Los cambios de cada domingo **nunca** van ahí: van en la reunión.
   - También van ahí las **sugerencias de corrección aprobadas** por el admin (ver 9, "Pendientes de revisión"), incluidas las de letra.

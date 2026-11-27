@@ -213,6 +213,9 @@ function aplicarCorreccion_(song, c) {
     }
   });
   if (c.modulante != null) s.modulanteManual = !!c.modulante;
+  // Datos de la canción corregidos por el admin (p. ej. intérprete que venía abreviado en el nombre del archivo).
+  if (c.titulo) s.titulo = c.titulo;
+  if (c.interprete) s.interprete = c.interprete;
   completarTonos_(s, null, s.tono);
   s.corregida = true;
   return s;
