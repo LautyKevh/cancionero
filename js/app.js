@@ -390,17 +390,19 @@ function sheetRows(item, mus, vari, ed) {
     // Un título que nombra un tono ("Inter para subir a A") lo transporta igual que los acordes.
     const label = tituloTransportado(labOf(e), p.sh, k => showKey(k, P.not));
     if (!label && !ind && !L.length) return sep;
-    // ✎ (Músico, en una reunión): editar los acordes de esta parte; resaltado si ya tiene acordes editados.
-    const edb = ed && base_ && base_.some(l => l.t !== 'blank')
-      ? `<button type="button" class="edac${e.lineas ? ' on' : ''}" data-ac="${k}" aria-haspopup="dialog" aria-label="Acordes de ${esc(label || 'la parte')}${e.lineas && e.editado ? ' (editados por ' + esc(e.editado.quien) + ')' : ''}">✎</button>` : '';
+    // Modo edición (✎ junto al nombre de la canción): cada parte con acordes se toca para editarlos.
+    // Fuera de ese modo la hoja no muestra nada nuevo.
+    const edP = ed && base_ && base_.some(l => l.t !== 'blank');
+    const tag = edP && e.lineas ? `<span class="edtag">editada${e.editado ? ' · ' + esc(e.editado.quien) : ''}</span>` : '';
+    const sec = edP ? `<section class="parte edp" data-ac="${k}" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Editar acordes de ${esc(label || 'la parte')}${e.lineas ? ' (editada)' : ''}">` : '<section class="parte">';
     // Una parte de un solo renglón de acordes (Intro, Inter, Final) los muestra al lado del título; con 2 o más, abajo.
     if (label && ls.length === 1 && L.length === 1 && (ls[0].t === 'ch' || (ls[0].t === 'mix' && ls[0].at == null)))
-      return `${sep}<section class="parte"><div class="sec inl"><span>${esc(label)}</span>${ind}<span class="${ls[0].t}">${esc(textoCh(ls[0]))}</span>${edb}</div></section>`;
-    // Variantes (Músico, en una reunión): el nombre de la parte es un chip para elegir otra ("es el Coro 2").
-    const nv = vari && e.src != null && !e.nueva ? variantesDe(s, e.src).length : 0;
+      return `${sep}${sec}<div class="sec inl"><span>${esc(label)}</span>${ind}<span class="${ls[0].t}">${esc(textoCh(ls[0]))}</span></div>${tag}</section>`;
+    // Variantes (Músico, en una reunión): el nombre de la parte es un chip para elegir otra ("es el Coro 2"). No en modo edición.
+    const nv = vari && !ed && e.src != null && !e.nueva ? variantesDe(s, e.src).length : 0;
     const nomP = nv ? `<button type="button" class="varc" data-var="${k}" aria-haspopup="dialog" aria-label="${esc(label || 'Parte')}: elegir otra variante (hay ${nv})">${esc(label || 'Parte')} <span class="vart" aria-hidden="true">▾</span></button>` : `<span>${esc(label)}</span>`;
-    const head = label || ind || nv || edb ? `<div class="sec${ind ? ' inl' : ''}">${nomP}${ind}${edb}</div>` : '';
-    return `${sep}<section class="parte">${head}${L.join('')}</section>`;
+    const head = label || ind || nv ? `<div class="sec${ind ? ' inl' : ''}">${nomP}${ind}</div>` : '';
+    return `${sep}${sec}${head}${tag}${L.join('')}</section>`;
   }).join('');
   return { rows, kd, info, arr: R.arr };
 }
@@ -411,8 +413,10 @@ function drawSheet(anim) {
   const item = c ? conDelta(c, shift - shiftTo(s, c.tono)) : { id: s.id, tono: keyAt(s, shift), arr: defArr(s) };
   // Variantes: solo en Músico dentro de una reunión, si el orden difiere del Word o es un medley.
   const vari = !!(mus && c && (c.tipo === 'medley' || ((c.arr || []).length && !mismoOrden(s, c.arr))));
-  // Acordes compartidos: en Músico, dentro de una reunión, cada parte tiene ✎ para editar sus acordes.
-  const ed = !!(mus && c && ctx.ses);
+  // Acordes compartidos: en Músico, dentro de una reunión, el ✎ junto al nombre de la canción abre el modo edición
+  // (vale solo para esta canción de esta reunión: al pasar a otra, se sale).
+  const puedeEd = !!(mus && c && ctx.ses), claveEd = puedeEd ? ctx.ses.id + '#' + ctx.i : '';
+  const ed = puedeEd && view.editAc === claveEd;
   const { rows, kd, info, arr: arrUsado } = sheetRows(item, mus, vari, ed);
 
   const ctl = (mus ? `<button type="button" id="dn" aria-label="Bajar medio tono">−½</button>
@@ -436,10 +440,11 @@ function drawSheet(anim) {
     + (ctx && ctx.quien ? `</p><p class="meta"><b>Dirige ${esc(ctx.quien)}</b>` : '');
   app.innerHTML = `${r ? back(nombreSes(r), '#/reunion/' + r.id) : back('Canciones', '#/canciones')}
   <article class="sheet">
-    <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${meta}</p></div>
+    <header class="songhead"><div><h2 class="title">${esc(s.titulo)}${puedeEd ? `<button type="button" class="edm${ed ? ' on' : ''}" id="edm" aria-pressed="${ed}" aria-label="${ed ? 'Salir del modo edición' : 'Editar acordes'}" title="Editar acordes">✎</button>` : ''}</h2><p class="meta">${meta}</p></div>
       ${mus ? stamp(kd, shift ? 'Ahora' : 'Tono') : ''}</header>
     <div class="ctl" role="toolbar" aria-label="Controles">${ctl}</div>
-    <div class="lines ${mus ? '' : 'singer'}">${rows}</div>
+    ${ed ? '<div class="edbar" role="status"><span><b>Modo edición</b>Tocá una parte para cambiar sus acordes.</span><button type="button" class="primary" id="edok">Listo</button></div>' : ''}
+    <div class="lines ${mus ? '' : 'singer'}${ed ? ' editando' : ''}">${rows}</div>
     <div class="sheetend"><button type="button" id="pr">Imprimir o guardar PDF</button></div>
   </article>${nav}`;
 
@@ -466,7 +471,18 @@ function drawSheet(anim) {
   };
   $('#pr').onclick = () => imprimir(hojaImpresa(item, mus), s.titulo);
   if (vari) $$('[data-var]').forEach(b => b.onclick = () => hojaVariante(r, i, +b.dataset.var));
-  if (ed) $$('[data-ac]').forEach(b => b.onclick = () => hojaAcordes(r, i, +b.dataset.ac, info[+b.dataset.ac], arrUsado));
+  if (puedeEd) {
+    const modo = on => { view.editAc = on ? claveEd : null; const y = scrollY; drawSheet(); scrollTo(0, y); if (!on) $('#edm')?.focus({ preventScroll: true }); };
+    $('#edm').onclick = () => modo(!ed);
+    if (ed) {
+      $('#edok').onclick = () => modo(false);
+      $$('[data-ac]').forEach(b => {
+        const abrir = () => hojaAcordes(r, i, +b.dataset.ac, info[+b.dataset.ac], arrUsado);
+        b.onclick = abrir;
+        b.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); abrir(); } };
+      });
+    }
+  }
   if (r) {
     $('#pv') && ($('#pv').onclick = () => go(`#/reunion/${r.id}/${i - 1}`, 'back'));
     $('#nx') && ($('#nx').onclick = () => go(`#/reunion/${r.id}/${i + 1}`));
@@ -698,7 +714,8 @@ function fixChords(box) {
 // Ajuste automático: achica hasta que entre la línea más larga (mín. 11 px); si no entra, corta entre palabras.
 function fitSheet() {
   const box = $('.lines'); if (!box) return; box.classList.remove('wrap');
-  const avail = box.clientWidth, clear = () => box.querySelectorAll('.sg').forEach(s => s.style.marginLeft = '');
+  // En modo edición cada parte tiene 10 px de sangría a la izquierda (más 2 de margen).
+  const avail = box.clientWidth - (box.classList.contains('editando') ? 12 : 0), clear =() => box.querySelectorAll('.sg').forEach(s => s.style.marginLeft = '');
   const widest = () => { let w = 0; box.querySelectorAll('.pair,.ch:not(.sec .ch),.mix:not(.sec .mix),.sec.inl').forEach(r => { w = Math.max(w, r.scrollWidth); }); return w; };
   const set = f => { box.style.setProperty('--fs', f + 'px'); clear(); fixChords(box); };
   let fs = 17;
