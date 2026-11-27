@@ -43,8 +43,58 @@ const fechaLarga = f => f ? diaDe(f) + ' ' + fmt(f) : '';
 const nombreSes = r => !r.nombre || /GMT|\d{1,2}:\d{2}:\d{2}|^(Sun|Mon|Tue|Wed|Thu|Fri|Sat) /.test(r.nombre) ? fechaLarga(r.fecha) : r.nombre;
 
 // ---------- Navegación ----------
-const go = (hash, dir) => { NAVDIR = dir || 'fwd'; if (location.hash === hash) render(); else location.hash = hash; };
+// Historial por niveles: 0 = Canciones/Reuniones · 1 = una canción, una reunión, Ajustes · 2 = vista Cantante/Músico
+// (y edición) · 3 = partes de una canción en la edición. La entrada k del historial siempre es de nivel k:
+// entrar más profundo apila UN paso, el mismo nivel reemplaza, volver es history.go(-n). "Adelante" se anula.
 let NAVDIR = 'fwd';
+const segs = h => decodeURIComponent((h || '').replace(/^#/, '') || '/').split('/').filter(Boolean);
+const nivel = h => {
+  const p = segs(h);
+  if (!p.length || (p[0] === 'canciones' || p[0] === 'reuniones') && !p[1]) return 0;
+  if (p[0] === 'cancion') return p[2] ? 2 : 1;
+  if (p[0] === 'reunion') return Math.min(p.length - 1, 3);
+  return 1;                                                    // ajustes, reuniones/nueva, otros
+};
+const padre = h => {
+  const p = segs(h);
+  if (nivel(h) === 0) return null;
+  if (p.length <= 2) return p[0] === 'reunion' || p[0] === 'reuniones' ? '#/reuniones' : '#/canciones';
+  return '#/' + p.slice(0, -1).join('/');
+};
+let NIVEL = 0, IGNORAR = 0, DESTINO = null;
+const st = d => ({ nav: 1, d });
+const go = (hash, dir) => {
+  const t = nivel(hash);
+  if (t > NIVEL) { NAVDIR = dir || 'fwd'; history.pushState(st(t), '', hash); NIVEL = t; return render(); }
+  if (t === NIVEL) { NAVDIR = dir || 'fwd'; history.replaceState(st(t), '', hash); return render(); }
+  NAVDIR = 'back'; DESTINO = hash; history.go(t - NIVEL);     // vuelve; popstate dibuja
+};
+const replaceHash = hash => { history.replaceState(st(NIVEL), '', hash); };
+const atras = () => { if (NIVEL > 0) { NAVDIR = 'back'; history.back(); } else go(location.hash || '#/canciones', 'back'); };
+function navInit() {
+  const h = location.hash || '#/canciones';
+  if (history.state && history.state.nav) { NIVEL = history.state.d; return; }   // recarga: el historial ya está armado
+  const cadena = []; for (let x = h; x; x = padre(x)) cadena.unshift(x);
+  history.replaceState(st(0), '', cadena[0]);
+  for (let k = 1; k < cadena.length; k++) history.pushState(st(k), '', cadena[k]);
+  NIVEL = cadena.length - 1;
+}
+addEventListener('popstate', e => {
+  if (IGNORAR) { IGNORAR--; return; }
+  const s = e.state;
+  if (!s || !s.nav) {                                           // URL tipeada a mano o entrada vieja: se adopta como está
+    NIVEL = nivel(location.hash); history.replaceState(st(NIVEL), '', location.hash || '#/canciones'); return render();
+  }
+  if (s.d > NIVEL) { IGNORAR = 1; history.go(NIVEL - s.d); return; }   // "adelante": nunca vuelve a donde estaba
+  NIVEL = s.d; NAVDIR = 'back';
+  if (DESTINO && location.hash !== DESTINO) history.replaceState(st(NIVEL), '', DESTINO);
+  DESTINO = null; render();
+});
+// Links internos (#/…): pasan por go para respetar los niveles.
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#/"]'); if (!a || e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  e.preventDefault(); a.hasAttribute('data-back') ? atras() : go(a.getAttribute('href'));
+});
 
 function transition(fn) {
   document.documentElement.dataset.dir = NAVDIR; NAVDIR = 'fwd';
@@ -57,7 +107,6 @@ function transition(fn) {
   setTimeout(() => { if (!done) { vt.skipTransition?.(); once(); } }, 300);
 }
 
-addEventListener('hashchange', () => render());
 
 function render() {
   const h = decodeURIComponent(location.hash.slice(1) || '/');
@@ -70,7 +119,7 @@ function render() {
     if (p[0] === 'cancion') { const s = songBy(p[1]); if (!s) return songList(); return p[2] ? openSheet(s, p[2], null) : pickMode(s); }
     if (p[0] === 'reunion') {
       const r = sesBy(p[1]); if (!r) return sesList();
-      if (p[2] === 'editar') { if (!unlocked[r.id]) return go('#/reunion/' + r.id); return p[3] != null ? parts(r, +p[3]) : editSes(r); }
+      if (p[2] === 'editar') { if (!unlocked[r.id]) { setTimeout(() => go('#/reunion/' + r.id)); return openSes(r); } return p[3] != null ? parts(r, +p[3]) : editSes(r); }
       if (p[2] != null) return openSesSong(r, +p[2]);
       return openSes(r);
     }
@@ -108,7 +157,6 @@ const songItem = ({ s, snip, who }, attr) => `<li><button type="button" ${attr}=
   <span class="key">${esc(s.tono)}</span></button></li>`;
 
 const back = (label, hash) => `<a class="back" href="${hash}" data-back>← ${esc(label)}</a>`;
-app.addEventListener('click', e => { const a = e.target.closest('[data-back]'); if (a) { e.preventDefault(); go(a.getAttribute('href'), 'back'); } });
 
 function personSelect(attr, val) {
   return `<select ${attr}>${PERS.map(p => `<option${p === val ? ' selected' : ''}>${esc(p)}</option>`).join('')}<option value="__new">+ Agregar otro nombre…</option></select>`;
@@ -267,7 +315,7 @@ function drawSheet(anim) {
   $('#sw').onclick = () => {
     view.mode = mus ? 'c' : 'm';
     if (r) { P.modos[r.id] = view.mode; savePrefs(); drawSheet(); }
-    else history.replaceState(null, '', `#/cancion/${s.id}/${view.mode}`), transition(() => drawSheet());
+    else replaceHash(`#/cancion/${s.id}/${view.mode}`), transition(() => drawSheet());
   };
   if (r) {
     $('#pv') && ($('#pv').onclick = () => go(`#/reunion/${r.id}/${i - 1}`, 'back'));
@@ -366,7 +414,7 @@ function newSes() {
     try {
       const r = await ds.createReunion({ nombre: fn.value.trim(), fecha: fd.value, director: $('[name=p]').value, clave: fk.value });
       SES.unshift(r); unlocked[r.id] = fk.value; P.modos[r.id] = P.modos[r.id] || 'm'; savePrefs();
-      history.replaceState(null, '', '#/reuniones'); go('#/reunion/' + r.id + '/editar');
+      replaceHash('#/reunion/' + r.id); go('#/reunion/' + r.id + '/editar');
     } catch (x) { er.textContent = x.message; }
   };
 }
@@ -582,7 +630,7 @@ async function load(force) {
 (async () => {
   try { await load(); }
   catch (e) { app.innerHTML = `<p class="err">${esc(e.message)} Revisá la conexión y recargá la página.</p>`; return; }
-  paintStatus(); render();
+  navInit(); paintStatus(); render();
   if (ds.info) ds.info().then(i => { INFO = i || {}; const c = document.querySelector('.church'); if (c && INFO.nombre) c.textContent = 'Alabanza · ' + INFO.nombre; }).catch(() => {});
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
