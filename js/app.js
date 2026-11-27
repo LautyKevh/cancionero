@@ -15,7 +15,7 @@ const ds = DEMO ? new LocalDataSource({ seedFn: demoSeed }) : new ApiDataSource(
 
 // ---------- Estado ----------
 const prefs = (() => { try { return JSON.parse(localStorage.getItem('cancionero:prefs') || '{}'); } catch (e) { return {}; } })();
-const P = { not: prefs.not || 0, adj: prefs.adj || 0, sadj: prefs.sadj || 0, modos: prefs.modos || {}, yo: prefs.yo || '' };
+const P = { not: prefs.not || 0, adj: prefs.adj || 0, sadj: prefs.sadj || 0, modos: prefs.modos || {} };
 const savePrefs = () => { try { localStorage.setItem('cancionero:prefs', JSON.stringify(P)); } catch (e) {} };
 
 let SONGS = [], REG = [], SES = [], PERS = [], INFO = {};
@@ -383,8 +383,7 @@ function sheetRows(item, mus, vari) {
       return `${sep}<section class="parte"><div class="sec inl"><span>${esc(label)}</span>${ind}<span class="${ls[0].t}">${esc(textoCh(ls[0]))}</span></div></section>`;
     // Variantes (Músico, en una reunión): el nombre de la parte es un chip para elegir otra ("es el Coro 2").
     const nv = vari && e.src != null && !e.nueva ? variantesDe(s, e.src).length : 0;
-    const quien = e.variante && e.variante.quien ? `<small class="varq">elegida por ${esc(e.variante.quien)}</small>` : '';
-    const nomP = nv ? `<button type="button" class="varc" data-var="${k}" aria-haspopup="dialog" aria-label="${esc(label || 'Parte')}: elegir otra variante (hay ${nv})">${esc(label || 'Parte')} <span aria-hidden="true">▾</span></button>${quien}` : `<span>${esc(label)}</span>`;
+    const nomP = nv ? `<button type="button" class="varc" data-var="${k}" aria-haspopup="dialog" aria-label="${esc(label || 'Parte')}: elegir otra variante (hay ${nv})">${esc(label || 'Parte')} <span class="vart" aria-hidden="true">▾</span></button>` : `<span>${esc(label)}</span>`;
     const head = label || ind || nv ? `<div class="sec${ind ? ' inl' : ''}">${nomP}${ind}</div>` : '';
     return `${sep}<section class="parte">${head}${L.join('')}</section>`;
   }).join('');
@@ -473,25 +472,20 @@ function hojaVariante(r, i, k) {
   w.innerHTML = `<div class="veil"></div><div class="tsheet" role="dialog" aria-modal="true" aria-labelledby="vh-t"><div class="bar"></div>
     <h3 id="vh-t">¿Qué ${esc(labOf(e) || 'parte')} es?</h3><p>Misma letra, otros acordes. El cambio queda en la reunión para todos.</p>
     <div class="vars">${V.map(b => `<button type="button" data-vs="${b.id}" aria-pressed="${b.id === e.src}"><b>${esc(b.label || '(inicio)')}</b><small>${esc(primerAcorde(b)) || 'sin acordes'}</small></button>`).join('')}</div>
-    <label class="vq">Tu nombre <select id="vq"><option value="">Elegir…</option>${PERS.map(p => `<option${p === P.yo ? ' selected' : ''}>${esc(p)}</option>`).join('')}<option value="__new">+ Agregar otro nombre…</option></select></label>
-    <p class="err" id="ve" hidden></p>
     <button type="button" class="ok">Cancelar</button></div>`;
   app.append(w);
-  const cerrar = () => { w.remove(); document.removeEventListener('keydown', tecla); const b = $(`[data-var="${k}"]`); if (b) b.focus(); };
+  const cerrar = () => { w.remove(); document.removeEventListener('keydown', tecla); const b = $(`[data-var="${k}"]`); if (b) b.focus({ preventScroll: true, focusVisible: false }); };
   const tecla = ev => { if (ev.key === 'Escape') cerrar(); };
   document.addEventListener('keydown', tecla);
   w.querySelector('.veil').onclick = cerrar; w.querySelector('.ok').onclick = cerrar;
-  const vq = w.querySelector('#vq'); wirePerson(vq, v => { P.yo = v; savePrefs(); });
-  const err = m => { const x = w.querySelector('#ve'); x.textContent = m; x.hidden = !m; };
   w.querySelectorAll('[data-vs]').forEach(b => b.onclick = async () => {
     const src = +b.dataset.vs; if (src === e.src) return cerrar();
-    const quien = P.yo || ''; if (!quien) return err('Elegí tu nombre para guardar el cambio.');
     const nb = blocksOf(s)[src], antes = { src: e.src, label: e.label, variante: e.variante };
     // Se ve enseguida; si el servidor no lo guarda, vuelve como estaba.
     const de = e.variante ? e.variante.de : e.src;
-    e.src = src; e.label = nb.label; if (src === de) delete e.variante; else e.variante = { de, quien, fecha: new Date().toISOString() };
-    cerrar(); const y = scrollY; drawSheet(); scrollTo(0, y);
-    try { const p = await ds.elegirVariante({ id: r.id, i, k, item: c.pid, parte: e.pid, src, label: nb.label, quien });
+    e.src = src; e.label = nb.label; if (src === de) delete e.variante; else e.variante = { de, fecha: new Date().toISOString() };
+    w.remove(); document.removeEventListener('keydown', tecla); const y = scrollY; drawSheet(); scrollTo(0, y);
+    try { const p = await ds.elegirVariante({ id: r.id, i, k, item: c.pid, parte: e.pid, src, label: nb.label });
       if (p) { e.src = p.src; e.label = p.label; if (p.variante) e.variante = p.variante; else delete e.variante; } }
     catch (x) { Object.assign(e, antes); if (!antes.variante) delete e.variante; const y2 = scrollY; drawSheet(); scrollTo(0, y2); toast(x.message || 'No se pudo guardar.'); }
   });

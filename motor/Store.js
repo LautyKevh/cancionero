@@ -317,15 +317,12 @@ function editarAcordes_(ig, r, itemPid, partePid, lineas, quien) {
   return p;
 }
 
-/** Otra variante de una parte (misma letra, otros acordes), elegida por un músico (sin clave). */
-function elegirVariante_(ig, r, itemPid, partePid, src, label, quien) {
-  quien = String(quien || '').trim().slice(0, 40);
-  if (!quien) throw apiError_('Elegí tu nombre para guardar el cambio.', 'nombre');
+/** Otra variante de una parte (misma letra, otros acordes), elegida por un músico (sin clave ni nombre; queda la fecha). */
+function elegirVariante_(ig, r, itemPid, partePid, src, label) {
   src = +src; if (!(src >= 0 && src < 500)) throw apiError_('Variante inválida.', 'formato');
   const cache = CacheService.getScriptCache(), min = Math.floor(Date.now() / 60000);
-  const k1 = 'acordes:' + ig.rootId + ':' + min, k2 = k1 + ':' + norm_(quien);
-  const n1 = +(cache.get(k1) || 0), n2 = +(cache.get(k2) || 0);
-  if (n1 >= LIM_ACORDES_.porMinuto || n2 >= LIM_ACORDES_.porPersonaMinuto) throw apiError_('Demasiados cambios seguidos. Esperá un minuto.', 'limite');
+  const k1 = 'acordes:' + ig.rootId + ':' + min, n1 = +(cache.get(k1) || 0);
+  if (n1 >= LIM_ACORDES_.porMinuto) throw apiError_('Demasiados cambios seguidos. Esperá un minuto.', 'limite');
   const it = (r.canciones || []).find(x => x.pid === itemPid);
   const p = it && (it.arr || []).find(x => x.pid === partePid);
   if (!p || p.nueva) throw apiError_('Esa parte ya no está en la reunión. Recargá.', 'no-existe');
@@ -333,9 +330,9 @@ function elegirVariante_(ig, r, itemPid, partePid, src, label, quien) {
   // Los acordes editados eran de la otra variante: quedan en el historial.
   if (p.lineas != null) { p.cambios = [{ quien: p.editado ? p.editado.quien : '', fecha: p.editado ? p.editado.fecha : '', lineas: p.lineas }].concat(p.cambios || []).slice(0, LIM_ACORDES_.cambios); delete p.lineas; delete p.editado; }
   p.src = src; p.label = label == null ? null : String(label).slice(0, 80);
-  if (src === de) delete p.variante; else p.variante = { de: de, quien: quien, fecha: new Date().toISOString() };
+  if (src === de) delete p.variante; else p.variante = { de: de, fecha: new Date().toISOString() };
   guardarReunion_(ig, r);
-  cache.put(k1, String(n1 + 1), 120); cache.put(k2, String(n2 + 1), 120);
+  cache.put(k1, String(n1 + 1), 120);
   return p;
 }
 
