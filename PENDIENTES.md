@@ -1,6 +1,6 @@
 # Pendientes
 
-Estado al 27-11-2026 (rama `desarrollo`, app v48; motor de PRUEBA: implementación @29). Nada en `main` ni en IBSI.
+Estado al 27-11-2026 (rama `desarrollo`, app v49; motor de PRUEBA: implementación @29). Nada en `main` ni en IBSI.
 
 ## Hecho hoy (en desarrollo)
 - Aprobado en el celular: etapa C (tono por parte, Modulante, guardado, sin conexión), medley (etapa D), variantes de una parte.
@@ -17,7 +17,12 @@ Estado al 27-11-2026 (rama `desarrollo`, app v48; motor de PRUEBA: implementaci�
 
 ## Próximo, en orden
 Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesia de prueba; la planilla real de IBSI no se toca sin OK.
-1. **Etapa E: prueba en la iglesia de prueba** (tono por parte, Modulante, medley, variantes y arreglo compartido con reuniones reales). No empezada.
+1. **Etapa E: prueba en la iglesia de prueba**, hecha en la compu (27-11) con la reunión "Prueba etapa E" (30-12-2026, dirige Test, clave 2468). Resultado:
+   - Bien: "Hay poder" con 2 subidas (G, =, =, +½, =, +½) → G→G→G→Ab→Ab→A, puentes (Eb) y (E), los otros ocultos, Registro `G→Ab→A`. "Al estar aquí" en G → G→Bb→G→Bb→G, puente (Eb/G - F/A), Inter a Bb. Medley Digno de adorar + Roca firme (+1 → E) con separador e indicador. Variante elegida desde Músico, guardada por el motor y vista por todos. Motor `editarAcordes`: pide nombre, limita el tamaño, guarda historial y restaura la base.
+   - Corregido (v49): los coros de "Hay poder" salían como variantes (son los mismos acordes en otro tono; la comparación se trababa con "(C - G)" y con el puente final). Con solo tonos por parte, la lista decía "orden modificado" y aparecía el ▾ de variantes: ahora dice "tonos por parte" y el ▾ sale solo si cambió el orden.
+   - **Falta en la app** (el motor ya lo tiene): que los músicos editen los acordes de una parte (nombre, historial, "Restaurar acordes") y que la vista muestre esos acordes editados; y al agregar una canción, "Como la última vez" / "Versión base". Es lo que sigue.
+   - El Registro no se probó (la reunión es a futuro): el 31-12 se anota sola en el Registro de la iglesia de prueba, salvo que se borre antes.
+   - Para mirar: el título "Inter para subir a A" sigue diciendo "A" aunque, empezando en G, sube a Bb.
 2. **Esperan respuesta u OK de Lautaro:**
    - Probar en el celular: deslizar para borrar, la ruedita de Editar reunión (fecha/nombre/director) y lo del admin (ingresando en Ajustes).
    - OK final al editor de partes rediseñado, ahora con deslizar para borrar (el ✕ ya no está en la tarjeta; queda "Quitar" en ⋯).

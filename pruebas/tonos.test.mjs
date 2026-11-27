@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { tonosDelItem, transposer, keyAt } from '../js/music.js';
-import { blocksOf, defArr, contenidoDe } from '../js/songs.js';
+import { blocksOf, defArr, contenidoDe, variantesDe } from '../js/songs.js';
 
 const dir = new URL('.', import.meta.url);
 const SONGS = JSON.parse(fs.readFileSync(new URL('canciones-prueba.json', dir), 'utf8'));
@@ -147,6 +147,15 @@ const puente = (r, s, re) => {
   igual(motor(item, songs), tonosDelItem(item, songs).secuencias.map(x => x.tonos), 'arr vacío: igual que el motor');
   item = { tipo: 'medley', tono: 'A', quien: 'X', canciones: [{ id: b.id }, { id: a.id }], arr: [] };
   igual(motor(item, songs), tonosDelItem(item, songs).secuencias.map(x => x.tonos), 'Medley con arr vacío: igual que el motor');
+}
+
+// ---------- Variantes de una parte ----------
+// Los coros de "Hay poder" son los mismos acordes en otro tono (con "(C - G)" de paso y un puente final que
+// cambia según el destino): no son variantes.
+{
+  const h = SONGS['hay-poder-2'];
+  const coros = blocksOf(h).filter(b => b.has && /coro/i.test(b.label));
+  igual(coros.map(b => variantesDe(h, b.id).length), coros.map(() => 0), 'Hay poder: los coros en otro tono no son variantes');
 }
 
 // ---------- Comparación con el motor en todo el cancionero (opcional) ----------

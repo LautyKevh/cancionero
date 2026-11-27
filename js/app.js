@@ -4,7 +4,7 @@ import { ApiDataSource } from './apidatasource.js';
 import { CONFIG } from './config.js';
 import { demoSeed } from './demo.js';
 import { KEYS, keyAt, shiftTo, keyOption, showKey, transposer, tonosDelItem, tonoMas, intervalo, enTonos, CHORD } from './music.js';
-import { prepare, blocksOf, contenidoDe, SUBA, defArr, isDefArr, variantesDe, blockText, base, rOf, labOf, summary, historyOf, search, fmt, isoOf } from './songs.js';
+import { prepare, blocksOf, contenidoDe, SUBA, defArr, isDefArr, mismoOrden, variantesDe, blockText, base, rOf, labOf, summary, historyOf, search, fmt, isoOf } from './songs.js';
 import { GRUPOS } from './grupos.js';
 
 // Motor real si hay iglesia (?c= o config) y no se pidió ?demo=1; si no, modo demo local.
@@ -403,7 +403,7 @@ function drawSheet(anim) {
   const c = ctx && ctx.item;
   const item = c ? conDelta(c, shift - shiftTo(s, c.tono)) : { id: s.id, tono: keyAt(s, shift), arr: defArr(s) };
   // Variantes: solo en Músico dentro de una reunión, si el orden difiere del Word o es un medley.
-  const vari = !!(mus && c && (c.tipo === 'medley' || ((c.arr || []).length && !isDefArr(s, c.arr))));
+  const vari = !!(mus && c && (c.tipo === 'medley' || ((c.arr || []).length && !mismoOrden(s, c.arr))));
   const { rows, kd } = sheetRows(item, mus, vari);
 
   const ctl = (mus ? `<button type="button" id="dn" aria-label="Bajar medio tono">−½</button>
@@ -607,7 +607,9 @@ function openSes(r) {
     return;
   }
   const rows = r.canciones.map((c, i) => { if (!itemOk(c)) return '';
-    const extra = c.tipo === 'medley' ? ' · medley' : isDefArr(songBy(c.id), c.arr) ? '' : ' · orden modificado';
+    const sc = songBy(c.id), arr = c.arr || [];
+    const extra = c.tipo === 'medley' ? ' · medley' : !arr.length || isDefArr(sc, arr) ? ''
+      : !mismoOrden(sc, arr) ? ' · orden modificado' : arr.some(e => e.tono) ? ' · tonos por parte' : ' · arreglo modificado';
     return `<li><button type="button" class="row" data-o="${i}"><span class="num">${i + 1}</span><span class="row-main"><b>${esc(tituloItem(c))}</b>
       <small>Dirige ${esc(c.quien)}${extra}</small></span><span class="key">${esc(c.tono)}</span></button></li>`; }).join('');
   app.innerHTML = `${head}

@@ -44,12 +44,19 @@ export function blocksOf(s) {
  * Devuelve los bloques (uno por cada juego de acordes distinto, empezando por el de `src`); [] si no tiene variantes.
  */
 export function variantesDe(s, src) {
+  // Acordes de una línea para comparar: sin los grupos [ ] / { } ni el puente final "(Eb)" (dependen del tono
+  // de la parte siguiente), sin paréntesis de paso "(C - G)" ni separadores.
+  const acordes = (txt, puente) => {
+    let t = String(txt).replace(/\[[^\]]*\]|\{[^}]*\}/g, ' ');
+    if (puente) t = t.replace(/\([^()]*\)?\s*$/, ' ');
+    return t.replace(/[()|/]\s*(?=\s|$)|[()]/g, ' ').split(/[\s\-–]+/).filter(x => /^[A-G]/.test(x)).join(' ');
+  };
   const B = blocksOf(s), huella = b => {
     let ly = '', ch = '';
     b.lines.forEach(l => {
-      if (l.t === 'pair') { ly += l.segs.map(x => x[1]).join(''); ch += ' ' + l.segs.map(x => x[0]).filter(Boolean).join(' '); }
+      if (l.t === 'pair') { ly += l.segs.map(x => x[1]).join(''); ch += ' ' + acordes(l.segs.map(x => x[0]).filter(Boolean).join(' '), l.puente); }
       else if (l.t === 'ly') { if (!SUBA.test(l.v.trim())) ly += ' ' + l.v; }
-      else if (l.t === 'ch' || l.t === 'mix') ch += ' ' + l.v;
+      else if (l.t === 'ch' || l.t === 'mix') ch += ' ' + acordes(l.v, l.puente);
     });
     return { ly: norm(ly).replace(/[^a-z]/g, ''), ch: ch.replace(/\s+/g, ' ').trim() };
   };
@@ -85,7 +92,9 @@ export function contenidoDe(s, id) {
 }
 
 export const defArr = s => blocksOf(s).map(b => ({ src: b.has ? b.id : b.ref, label: b.label, rep: repOf(b.label) }));
-export const isDefArr = (s, arr) => JSON.stringify((arr || []).map(e => ({ src: e.src, label: e.label, rep: e.rep }))) === JSON.stringify(defArr(s)) && !(arr || []).some(e => e.tono || e.nueva || e.lineas);
+/** Mismas partes, en el mismo orden y con las mismas repeticiones que el Word (sin mirar tonos ni acordes editados). */
+export const mismoOrden = (s, arr) => JSON.stringify((arr || []).map(e => ({ src: e.nueva ? null : e.src, label: e.label, rep: e.rep }))) === JSON.stringify(defArr(s));
+export const isDefArr = (s, arr) => mismoOrden(s, arr) && !(arr || []).some(e => e.tono || e.nueva || e.lineas);
 
 /** Líneas a mostrar según el arreglo. En modo músico los bloques repetidos se muestran solo con su título. */
 export function arrLines(s, arr, musician) {
