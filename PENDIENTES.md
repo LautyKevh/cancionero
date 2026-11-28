@@ -1,6 +1,16 @@
 # Pendientes
 
-Estado al 27-11-2026 (rama `desarrollo`, app v51; motor de PRUEBA: implementación @30). Nada en `main` ni en IBSI.
+Estado al 28-11-2026 (rama `desarrollo`, app v53; motor de PRUEBA: implementación @38, conversor 11; última importación de PRUEBA: 28-11 01:06, 296 canciones). Nada en `main` ni en IBSI.
+
+## Hecho 27/28-11 (en desarrollo)
+- Paréntesis `( )`: se ven siempre, tal cual, transportados con su parte (también los que funcionan como puente). Solo `[ ]` y `{ }` se ocultan según la parte siguiente.
+- Reglas en la SPEC: Word locales (no se comparan con Drive), nombres de archivo de Drive intactos, el tono lo manda la primera línea del Word, título "… en X" fija el tono de la parte, la barra en "[C/D - Eb]" separa tonos, el motor saca caracteres invisibles.
+- Agrupación: regla 1 (tono original del intérprete), "Conservá X" primero en el grupo, 7 grupos nuevos (Aquí estoy [D], Con tu sangre, El Dios que adoramos, Él nos ama, El victorioso, No voy a caer, Por siempre).
+- Cambios del ensayo (acordes, variante, tono) solo de esa reunión, sin nombre ni clave.
+- Datos de la canción en la ficha (intérprete, tono original, BPM): vacío lo completa cualquiera con confirmación; con valor, solo el admin. `Datos/datos-canciones.json`, cargados los de Lautaro del 27-11.
+- Barra "Actualizado… / Actualizar" solo en Ajustes. Botón propio "Iniciar sesión" en Ajustes.
+- `referencia/tareas-drive.md` regenerado: 46 Word se pueden borrar, 34 con diferencias (sección 2).
+
 
 ## Hecho hoy (en desarrollo)
 - Aprobado en el celular: etapa C (tono por parte, Modulante, guardado, sin conexión), medley (etapa D), variantes de una parte.
@@ -17,8 +27,9 @@ Estado al 27-11-2026 (rama `desarrollo`, app v51; motor de PRUEBA: implementaci�
 
 ## Próximo, en orden
 Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesia de prueba; la planilla real de IBSI no se toca sin OK.
-1. **Probar en el celular (v51, Lautaro):**
-   - Acordes de los músicos: en una reunión, modo Músico, un solo ✎ al lado del nombre de la canción → modo edición (barra con "Listo"; las partes se tocan) → hoja con los acordes encima de la letra, nombre (queda guardado), "Guardar acordes", "Restaurar acordes" (Versión base / Como la última vez) e "Historial de esta parte". La vista y la impresión muestran los acordes editados. Probado en el demo y, del lado del motor, contra la iglesia de prueba.
+1. **Probar (Lautaro):**
+   - **Ingreso con Google** desde el botón propio "Iniciar sesión" de Ajustes, y con la sesión iniciada el **✎ de admin en datos que ya tienen valor** (intérprete, tono original, BPM). Sin probar con una sesión real (Claude no puede ingresar con Google).
+   - Acordes de los músicos: en una reunión, modo Músico, un solo ✎ al lado del nombre de la canción → modo edición → hoja con los acordes encima de la letra, sin nombre, "Guardar acordes", "Restaurar acordes" e "Historial de esta parte".
    - Al agregar una canción que ya se tocó sola: hoja "Como la última vez" (copia partes, orden, tonos y acordes editados de la última reunión anterior) o "Versión base". Si nunca se tocó, se agrega directo.
    - Títulos con tono: "Inter para subir a A" se transporta como los acordes (empezando en G, "Inter para subir a Bb"), también en el editor de partes.
 2. **Etapa E (hecha, 27-11):** "Hay poder" con 2 subidas → G→G→G→Ab→Ab→A con puentes (Eb) y (E); "Al estar aquí" en G → G→Bb→G→Bb→G; medley con separador e indicador; variantes compartidas; motor `editarAcordes` (nombre, tamaño, historial, base). Registro probado con una reunión del 20-11-2026: anotó `G→Ab→A`, `G→Bb→G→Bb→G`, D y E con `reunión <id>#<pid>`. Las dos reuniones de prueba se borraron; esas 4 filas quedan en el Registro de la iglesia de prueba (el motor no borra filas). Corregido en v49: falsas variantes en "Hay poder" y el rótulo "orden modificado" con solo tonos por parte.
@@ -41,7 +52,9 @@ Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesi
 - `temprano-yo-te-buscare-2`: en el Word los acordes no caen sobre la sílaba (por ejemplo, "Oh! tu diestra me ha sostenido" con G/E y C/A al principio, y "Porque tu diestra" con C y Am corridos). En la versión 1 están bien.
 - `anclado-en-la-roca-yahweh-2`: revisar de qué archivo sale el -2 (posible duplicado). Hoy figuran "Anclado en la roca (YAHWEH) [B]" y "[C]".
 - "Inter (E B/G#m B)(…)": el bajo "G#m" no es un acorde válido, así que esa línea no se toma como título con acordes. Probable error de tipeo en el archivo.
-- Sin títulos de parte: En el monte Calvario y Ven ante Su trono [Eb] (ninguno); Atráeme a ti (falta el de los primeros 7 renglones). Nos unimos al cielo tiene solo [Coro]: bien si la canción es solo eso. Lautaro los corrige en el Word.
+- Sin títulos de parte: En el monte Calvario [C] y Ven ante Su trono [Eb] (ninguno). Nos unimos al cielo [G] tiene solo [Coro]: bien si la canción es solo eso.
+- Atráeme a ti [A]: agregar [Estrofa] arriba de los primeros 7 renglones (lo hace Lautaro).
+- Word repetidos para borrar del Drive (lo hace Lautaro, cuando quiera): lista en `referencia/tareas-drive.md`, sección 2a. Después hay que sacar esos ids de `js/grupos.js`.
 - "Interlude 2" + "(Chorus)" en "Because He Lives" y "Coro 2" + "(final)" en "Jesucristo basta": el paréntesis queda como aclaración del título de arriba, no como parte nueva. Confirmar que es lo que se quiere.
 - "Al estar aquí": el segundo "Verso 1" trae "(Baja a F#)" y además el último renglón con otros acordes; se muestra tal cual. Decidido: Lautaro lo corrige en el Word más adelante; la app no tiene una regla especial.
 - Confirmar en el diálogo real de impresión (compu y celular) que no salen encabezado ni pie del navegador.
@@ -54,7 +67,7 @@ Detalle en `referencia/SPEC.md`: §4 (roles), §5 (modelo de datos), §6 (conver
 - **Conversor:**
   - tono escrito por parte (acordes, secuencia del título, "(Sube a X)", "(Baja a X)");
   - marca Modulante y secuencia de tonos;
-  - acordes puente;
+  - ( ) al final de una parte (se marcan, pero se ven siempre);
   - partes de transición.
 - **Admin (Ajustes → Canciones, con Google):** corrige la base (tonos por parte, transiciones, acordes de transición, posición de acordes). Las correcciones van en `Datos/correcciones.json` y se aplican después de cada reimportación.
 - **Arreglo por reunión:**
@@ -67,12 +80,12 @@ Detalle en `referencia/SPEC.md`: §4 (roles), §5 (modelo de datos), §6 (conver
   - parte nueva.
 - **Músicos (sin clave):**
   - editan solo los acordes de una parte;
-  - nombre guardado en el dispositivo;
+  - sin nombre ni clave, solo en esa reunión;
   - historial por parte;
   - "Restaurar acordes" (base / como la última vez);
   - gana el último guardado, con LockService.
 - **Al agregar una canción:** "Como la última vez" / "Versión base".
-- **Puentes y transiciones:** se transportan según el tono de la parte siguiente. Se ocultan si no cambia el tono, con "Mostrar igual".
+- **Paréntesis, [ ] y transiciones:** los ( ) se ven siempre, transportados con su parte. Las transiciones y los [ ] se transportan según el tono de la parte siguiente y se ocultan si no cambia el tono, con "Mostrar igual".
 - **Medley:** mismo mecanismo; siempre Modulante.
 - **Vistas:**
   - canción continua;
