@@ -48,7 +48,7 @@ function nombreArchivo_(n, conocidos) {
 const TANDA_MS = 4.5 * 60 * 1000;
 // Subir cuando cambia Convertir.js o Tonos.js. Los Word sin cambios se reconvierten desde la copia de sus
 // párrafos (Datos/import-parrafos.json, sin volver a bajarlos) y solo se reescriben las canciones cuyo resultado cambia.
-const CONV_V = 11; // 11: "Coro en Eb" en el título fija el tono de la parte; sin caracteres invisibles
+const CONV_V = 12; // 12: "[Parte] [x2]" es un solo título. 11: "Coro en Eb" en el título fija el tono de la parte; sin caracteres invisibles
 // Subir cuando cambia leerDocx_ (lo que se guarda de cada Word): descarta la copia de los párrafos.
 const LECTOR_V = 1;
 

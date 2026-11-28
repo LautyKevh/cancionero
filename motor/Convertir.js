@@ -115,7 +115,11 @@ function snap_(w, j) {
 function labels_(s) {
   // Acepta ":" y x2/X2/×2 después del corchete (SPEC §6): "[Parte 1]: x2" → "Parte 1 x2"
   const out = [], re = /\[([^\]]+)\]:?\s*(?:[xX×](\d+))?/g; let m;
-  while ((m = re.exec(s))) out.push((m[1] + (m[2] ? ' x' + m[2] : '')).trim());
+  // "[Puente 2a] [x2]": un corchete que solo dice las veces es parte del título anterior, no una parte nueva.
+  while ((m = re.exec(s))) {
+    const v = (m[1] + (m[2] ? ' x' + m[2] : '')).trim(), n = /^[xX×]\s*(\d+)$/.exec(v);
+    if (n && out.length) out[out.length - 1] += ' x' + n[1]; else out.push(v);
+  }
   return out;
 }
 const SEC_RE = /^(Verso|Coro|Puente|Estrofa|Pre ?[Cc]oro|Intro|Final|Parte)\b[\wÀ-ÿ ]*$/;
