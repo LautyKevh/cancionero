@@ -25,6 +25,8 @@ Una línea por decisión. Lo que está acá ya se decidió: no volver a pregunta
 - 2026-11-28 · Confirmaciones: el texto arriba; abajo a la derecha "No" primero y "Sí, …" después; rojo solo para borrar. (§7)
 - 2026-11-27 · La barra "Actualizado… / Actualizar" aparece solo en Ajustes. El login de admin es un botón propio "Iniciar sesión". (§4, §8)
 - 2026-11-27 · La app abre siempre en Canciones; solo al recargar dentro de la app se queda donde estaba. (§8)
+- 2026-11-28 · Colores: todos en variables del tema (`css/app.css`, claro y oscuro); ningún color escrito a mano en CSS ni JS. Excepciones: las etiquetas `theme-color` de `index.html` y el `manifest` (el navegador las lee antes del CSS). (§10)
+- 2026-11-28 · "¿Qué versión?" construida: dos Word de un grupo son la misma versión si sus partes con contenido, en orden, tienen los mismos acordes contados desde la tónica; no cuentan el nombre de la parte, las repeticiones, el tono ni la posición de los acordes. Aparece al abrir desde la lista o el buscador, al agregar a una reunión y al armar un medley. (§5)
 - 2026-11-28 · Impresión: si el Word entra en una hoja, la app también (compacta como el Word; mínimo 7,5 pt). Un renglón de aire después del título si entra. El nombre de la reunión en cada hoja, chico y en el margen ("Bautismo - fecha" si el nombre no trae fecha), sin cambiar la cantidad de hojas; desde la lista no va. (§7)
 
 ### 0.1 Forma de trabajo
@@ -459,6 +461,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - Agregar animaciones sutiles y con propósito: transiciones entre pantallas, despliegue de la vista previa de partes, cambio de tono, aparición de resultados. Siempre respetar `prefers-reduced-motion`.
 - Prioridad absoluta: legible en el celular durante el culto. Objetivos táctiles de al menos 34 px en los controles compactos y 44 px en los botones principales.
 - Modo claro y oscuro.
+- Colores: siempre con las variables del tema (`--…` en `:root`, redefinidas para oscuro). Ningún color escrito a mano fuera de esas definiciones.
 
 ## 11. Datos iniciales de IBSI (para migrar cuando esté el motor)
 

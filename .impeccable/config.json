@@ -1,0 +1,39 @@
+{
+  "hook": {
+    "enabled": true,
+    "limits": {
+      "maxFindings": 5,
+      "maxChars": 8000
+    }
+  },
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "atkinson hyperlegible",
+        "createdAt": "2026-11-28T15:56:50.972Z",
+        "reason": "Claude: fuente de una dirección propuesta en referencia/propuestas (maqueta, no la app)"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "ibm plex mono",
+        "createdAt": "2026-11-28T15:56:51.110Z",
+        "reason": "Claude: fuente de una dirección propuesta en referencia/propuestas (maqueta, no la app)"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "newsreader",
+        "createdAt": "2026-11-28T15:56:51.241Z",
+        "reason": "Claude: fuente de una dirección propuesta en referencia/propuestas (maqueta, no la app)"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "source sans 3",
+        "createdAt": "2026-11-28T15:56:51.352Z",
+        "reason": "Claude: fuente de una dirección propuesta en referencia/propuestas (maqueta, no la app)"
+      }
+    ]
+  }
+}

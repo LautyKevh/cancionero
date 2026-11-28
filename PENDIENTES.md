@@ -1,11 +1,11 @@
 # Pendientes
 
-Estado al 28-11-2026: rama `desarrollo`, app v65; motor de PRUEBA @39, conversor 12; PRUEBA reimportada el 28-11 (294 canciones). Nada en `main` ni en IBSI.
+Estado al 28-11-2026: rama `desarrollo`, app v66; motor de PRUEBA @39, conversor 12; PRUEBA reimportada el 28-11 (294 canciones). Nada en `main` ni en IBSI.
 Antes de empezar: leer `referencia/SPEC.md` §0 (Registro de decisiones).
 
 ## 1. En curso / sin terminar (estado real)
-- **PRIMERO: construir la hoja "¿Qué versión?"** (no hecha). Ninguna versión puede quedar escondida: hoy el grupo muestra un solo Word y los arreglos distintos no se pueden elegir. Al abrir o agregar a una reunión: una opción por versión con pista de la diferencia, la sugerida (regla del tono) primero; dentro de la reunión queda la elegida. Grupos que la usan (diferencias medidas el 28-11 tras la reimportación, acordes distintos llevados al mismo tono): Al que está sentado en el trono [B]/[C] (6, en el Inter); El Cordero y el León [A] vs [C]/[D] (8, Puente); Por su gracia [A]/[G] (6, Estrofa 1); Roca firme [A]/[Bb]/[C] vs [G] (2 a 5, Coro 2); Solo Cristo [A] vs [B]/[C] (12, "a dos manos"); Más que vencedor [Am]/[Dm] (2); Digno (Elevation) [C]/[D]/[Eb] (4); Cantaré [Bb]/[F] (4). Revisar también Aquí te esperaré, Santo y Nada más (hoy 0 acordes distintos: confirmar con Lautaro si hay otra diferencia de arreglo). Recalcular la lista al construirla.
-- **Agrupación con "¿Qué versión?"** — Parcial. Hecho (v58): una canción por título + letra; Word que son solo transporte quedan agrupados y se muestra uno, el del tono original (`js/grupos.js`, `CONSERVA` para Solo Cristo [A]); datos de las 17 canciones revisadas cargados en PRUEBA. Jesús en el centro: dos canciones (Danilo Montero G 140 / Israel & New Breed A 129). **Falta:** la hoja "¿Qué versión?" no está construida (hoy ningún grupo tiene arreglos distintos que la necesiten), y la versión elegida dentro de la reunión.
+- **"¿Qué versión?"** — Hecha (v66): hoja al abrir desde la lista/buscador, al agregar a una reunión y al armar un medley; la sugerida (regla del tono) primero y marcada; en la reunión queda el Word elegido. **Falta decidir (Lautaro):** con el criterio de la SPEC (no cuentan nombre de parte ni repeticiones) hoy la usan 24 grupos, no los 8 previstos. Además de los 8: Con tu sangre, El Dios que adoramos, El victorioso, No voy a caer, Agnus Dei, Alabaré al Señor, Aquí estoy, Because He lives, Digno es el Señor, Hermoso - No volveré atrás, Lo harás otra vez, No hay lugar más alto, No hay otro nombre, Santo por siempre, Solo hay uno, Toma tu lugar, Ven ante Su trono. Digno (Elevation) da una sola versión (sus 4 diferencias serían de posición). Varios son los "acorde distinto por error del Word" de la sección Revisar.
+- **Agrupación** — Hecho (v58): una canción por título + letra; Word que son solo transporte quedan agrupados y se muestra uno, el del tono original (`js/grupos.js`, `CONSERVA` para Solo Cristo [A]). La elección entre arreglos distintos es la hoja "¿Qué versión?" (arriba).
 - **Edición de letra y acordes por parte** — Hecho (v56/v57): editor por parte entera, vista previa con avisos, todas las apariciones, "Restaurar", "Versiones anteriores". **Falta:** OK de Lautaro en el celular; probarlo en un medley.
 - **Etiquetas Tono original / habitual / registrado** — Hecho (v55 encabezado; v59 lista, buscador, agregar a reunión y apertura usan la misma regla). Verificado en el navegador.
 - **Títulos con [ ] y aclaración en el mismo renglón** — Hecho (v60–v62, v65: repeticiones afuera, "[Coro] x2"). Probado en Músico y Cantante a 375 px; impresión medida, no vista en el diálogo real.
@@ -22,7 +22,7 @@ Antes de empezar: leer `referencia/SPEC.md` §0 (Registro de decisiones).
 - Atráeme a ti [A]: agregar [Estrofa] arriba de los primeros 7 renglones.
 
 ## 4. Próximo
-- Base visual con las skills Impeccable y Emil Kowalski: `DESIGN.md` → 2 o 3 propuestas → aplicar la elegida.
+- Base visual: `DESIGN.md` hecho; 3 direcciones en `referencia/propuestas/` (Zafiro afinado, Escenario, Cuaderno). Falta que Lautaro elija una y aplicarla.
 
 ## 5. Después
 - "Pendientes de revisión" / "Sugerir corrección" (bandeja por iglesia; canción nueva; antes/después; aprobar o rechazar con motivo).

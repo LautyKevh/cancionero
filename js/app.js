@@ -5,7 +5,7 @@ import { CONFIG } from './config.js';
 import { demoSeed } from './demo.js';
 import { KEYS, keyAt, shiftTo, keyOption, showKey, transposer, tonosDelItem, tonoMas, intervalo, enTonos, tituloTransportado, CHORD } from './music.js';
 import { lineasATexto, textoALineas } from './texto.js';
-import { prepare, blocksOf, contenidoDe, SUBA, defArr, isDefArr, mismoOrden, variantesDe, blockText, base, rOf, labOf, summary, historyOf, search, fmt, isoOf } from './songs.js';
+import { prepare, blocksOf, contenidoDe, SUBA, defArr, isDefArr, mismoOrden, variantesDe, versionesDe, blockText, base, rOf, labOf, summary, historyOf, search, fmt, isoOf } from './songs.js';
 import { GRUPOS, CONSERVA } from './grupos.js';
 
 // Motor real si hay iglesia (?c= o config) y no se pidió ?demo=1; si no, modo demo local.
@@ -22,7 +22,10 @@ function aplicarTema() {
   const t = P.tema === 'light' || P.tema === 'dark' ? P.tema : '';
   if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   const metas = document.querySelectorAll('meta[name="theme-color"]');
-  metas.forEach((m, k) => { m.content = t === 'dark' ? '#1c2031' : t === 'light' ? '#f2f5fa' : (k ? '#1c2031' : '#f2f5fa'); });
+  // Los colores salen de las etiquetas de index.html (una por esquema): sin tema forzado, cada una vuelve a su color.
+  metas.forEach(m => { if (!m.dataset.orig) m.dataset.orig = m.content; });
+  const de = esq => [...metas].find(m => m.media.includes(esq))?.dataset.orig;
+  metas.forEach(m => { m.content = t ? de(t) : m.dataset.orig; });
 }
 aplicarTema();
 const savePrefs = () => { try { localStorage.setItem('cancionero:prefs', JSON.stringify(P)); } catch (e) {} };
@@ -303,7 +306,7 @@ function songList() {
     if (!reduced()) res.animate([{ opacity: .35 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' });
   };
   q.oninput = paint; paint();
-  res.onclick = e => { const b = e.target.closest('[data-id]'); if (b) go('#/cancion/' + b.dataset.id); };
+  res.onclick = e => { const b = e.target.closest('[data-id]'); if (b) hojaVersion(songBy(b.dataset.id), v => go('#/cancion/' + v.id)); };
 }
 
 function pickMode(s) {
@@ -648,6 +651,35 @@ function ultimaVezItem(r, id) {
   const prev = SES.filter(x => x !== r && x.id !== r.id && !x.borrada && x.fecha && x.fecha < r.fecha).sort((a, b) => b.fecha.localeCompare(a.fecha));
   for (const x of prev) { const it = (x.canciones || []).find(c => c.tipo !== 'medley' && c.id === id); if (it) return { r: x, it }; }
   return null;
+}
+/** Versiones distintas del grupo de `s` (la sugerida por la regla del tono primero); [] si solo cambia el tono. */
+const versionesGrupo = s => { const ids = GR[s.id]; if (!ids) return [];
+  const rep = REP[s.id] ? REP[s.id].id : ids[0];
+  return versionesDe([rep, ...ids.filter(x => x !== rep)].map(songBy)); };
+/**
+ * "¿Qué versión?": si el grupo tiene Word con acordes o arreglo distintos (más que transporte), una opción por
+ * versión, la sugerida primero y marcada. `elegir(s)` recibe el Word elegido; sin versiones distintas, elige directo.
+ */
+const porQue = s => { const R = REP[s.id] || {}, o = String(s.tonoOriginal || '').split(/\s*[-→]\s*/)[0];
+  return CONSERVA.includes(s.id) ? `La que usa la iglesia (se toca en ${o || s.tono})` : R.regla === 1 ? 'En el tono original'
+    : R.regla === 2 ? 'En el tono más usado' : 'La primera de la carpeta'; };
+function hojaVersion(s, elegir) {
+  const V = versionesGrupo(s); if (!V.length) return elegir(s);
+  const w = document.createElement('div'); w.className = 'tsheetw';
+  w.innerHTML = `<div class="veil"></div><div class="tsheet" role="dialog" aria-modal="true" aria-labelledby="qv-t"><div class="bar"></div>
+    <h3 id="qv-t">¿Qué versión?</h3><p>${esc(s.titulo)} tiene ${V.length} arreglos distintos en la carpeta.</p>
+    <div class="vars">${V.map((v, k) => `<button type="button" data-qv="${esc(v.s.id)}" aria-pressed="${!k}"><b>${k ? 'Versión ' + (k + 1) : 'Sugerida'} · archivo en ${esc(v.s.tono)}${v.ids.length > 1 ? ` (y ${v.ids.length - 1} más en otro tono)` : ''}</b><small>${k ? esc(v.pista) : esc(porQue(v.s))}</small></button>`).join('')}</div>
+    <button type="button" class="ok">Cancelar</button></div>`;
+  document.body.append(w);   // en el body: dentro de main quedaría debajo de la barra de pestañas
+  const cerrar = () => { w.remove(); document.removeEventListener('keydown', tecla); removeEventListener('popstate', cerrar); };
+  addEventListener('popstate', cerrar);
+  const tecla = ev => { if (ev.key === 'Escape') cerrar(); };
+  document.addEventListener('keydown', tecla);
+  w.querySelector('.veil').onclick = cerrar; w.querySelector('.ok').onclick = cerrar;
+  w.querySelectorAll('[data-qv]').forEach(b => b.onclick = () => { cerrar(); elegir(songBy(b.dataset.qv)); });
+  w.querySelector('[data-qv]').focus({ preventScroll: true });
+  if (!reduced()) { w.querySelector('.tsheet').animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.7,.2,1)' });
+                    w.querySelector('.veil').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 }); }
 }
 /** Hoja al agregar una canción que ya se tocó: "Como la última vez" o "Versión base". */
 function hojaComoUltima(s, ult, base, agregar) {
@@ -1094,14 +1126,16 @@ function editSes(r) {
   ad.onblur = () => setTimeout(() => { if (document.activeElement !== ad) sg.innerHTML = ''; }, 150);
   sg.onmousedown = e => e.preventDefault(); // que tocar una opción no cierre la lista antes del click
   // Al elegirla: "Como la última vez" (copia el arreglo de la última reunión donde se tocó) o "Versión base".
-  sg.onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; const s = songBy(b.dataset.a);
+  sg.onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return;
+    if (versionesGrupo(songBy(b.dataset.a)).length) { ad.blur(); sg.innerHTML = ''; }
+    hojaVersion(songBy(b.dataset.a), s => {
     const agregar = it => { r.canciones.push(it); re(); $('#ad')?.focus(); };
     const base = { id: s.id, tono: tonoInicial(s), quien: r.director, desde: 'base', arr: defArr(s) };
     const ult = ultimaVezItem(r, s.id);
     if (!ult) return agregar(base);
     ad.blur(); sg.innerHTML = '';
     hojaComoUltima(s, ult, base, agregar);
-  };
+  }); };
   // ---- Crear medley: canciones (búsqueda en vivo) y tono de inicio; después se abre el editor de partes.
   const med = [], mbx = $('#mbx'), mbq = $('#mbq'), mbs = $('#mbs'), mbt = $('#mbt');
   let tonoElegido = false;
@@ -1129,8 +1163,8 @@ function editSes(r) {
   mbq.onfocus = mbq.onclick = () => { if (mbs.innerHTML) return; showMb(); openAnim(mbs); };
   mbq.onblur = () => setTimeout(() => { if (document.activeElement !== mbq) mbs.innerHTML = ''; }, 150);
   mbs.onmousedown = e => e.preventDefault();
-  mbs.onclick = e => { const b = e.target.closest('[data-mb]'); if (!b) return; const s = songBy(b.dataset.mb); if (!s) return;
-    med.push(s); mbq.value = ''; showMb(); pintaMed(); };
+  mbs.onclick = e => { const b = e.target.closest('[data-mb]'); if (!b) return; const s0 = songBy(b.dataset.mb); if (!s0) return;
+    hojaVersion(s0, s => { med.push(s); mbq.value = ''; showMb(); pintaMed(); }); };
   $('#mbok').onclick = () => {
     if (med.length < 2) return;
     // Un medley es siempre modulante; sus partes son las de todas las canciones, en orden, cada una con su canción.

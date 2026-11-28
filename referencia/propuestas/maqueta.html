@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cancionero · propuestas</title>
+<!-- Maqueta estática de las 3 direcciones visuales (no es la app). Uso: maqueta.html?d=1|2|3&p=lista|cancion|reunion -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ Base común ============ */
+* { box-sizing: border-box; min-width: 0; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-ui); -webkit-font-smoothing: antialiased; }
+::selection { background: var(--ch-soft); color: var(--ink); }
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
+svg.i { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.app { min-height: 100dvh; display: flex; flex-direction: column; }
+main { flex: 1; padding: 14px var(--gut) 24px; }
+.screen { display: none; } .screen.on { display: block; }
+.back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--acc); font-weight: 600; }
+.key { font: 700 var(--key-fs) var(--f-mono); color: var(--ch); background: var(--ch-soft); border-radius: var(--r-key); min-width: 44px; height: 32px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; letter-spacing: -.01em; }
+.key.up { background: var(--key-up); color: var(--on-key); }
+.row { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 2px; border-bottom: 1px solid var(--line); }
+.row .tx { flex: 1; display: grid; }
+.row b { font-weight: 600; } .row small { color: var(--mute); font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border: 1px solid var(--line); background: var(--card); border-radius: var(--r-input); color: var(--mute); margin: 8px 0 6px; }
+.tabs { position: sticky; bottom: 0; display: grid; grid-template-columns: 1fr 1fr; padding: 6px var(--gut) 10px; background: var(--bar); border-top: 1px solid var(--line); }
+.tabs button { display: grid; justify-items: center; gap: 2px; min-height: 52px; font-size: 12px; font-weight: 600; color: var(--mute); border-radius: var(--r-card); }
+.tabs button.on { color: var(--acc); background: var(--acc-soft); }
+/* Hoja de la canción */
+.sheet { font-size: var(--sheet-fs); line-height: 1.3; }
+.parte + .parte { margin-top: 1.05em; }
+.sec { display: flex; align-items: baseline; gap: .7em; font: var(--sec-w) .82em var(--f-ui); color: var(--sec); letter-spacing: var(--sec-ls); text-transform: var(--sec-tt); margin-bottom: .2em; }
+.sec .mod { color: var(--ch); font-family: var(--f-mono); font-weight: 700; text-transform: none; letter-spacing: 0; }
+.ln { display: flex; flex-wrap: wrap; align-items: flex-end; margin-bottom: .12em; font-family: var(--f-lyric); }
+.sg { display: inline-flex; flex-direction: column; white-space: pre; }
+.sg b { font: 700 .92em/1.25 var(--f-chord); color: var(--ch); min-height: 1.25em; width: 0; overflow: visible; white-space: nowrap; }
+.rep { color: var(--sec); font: var(--sec-w) .82em var(--f-ui); letter-spacing: var(--sec-ls); text-transform: var(--sec-tt); }
+.head { display: flex; gap: 14px; justify-content: space-between; align-items: flex-start; margin: 2px 0 14px; }
+.title { font: var(--title-w) var(--title-fs)/1.08 var(--f-title); letter-spacing: var(--title-ls); margin: 2px 0 4px; text-wrap: balance; }
+.meta { color: var(--mute); font-size: 14px; margin: 0; }
+.dir { font-size: 14px; font-weight: 600; margin: 4px 0 0; }
+.fin { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fin button { min-height: 64px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--card); text-align: left; padding: 10px 14px; display: grid; }
+.fin small { color: var(--mute); font-size: 12.5px; } .fin .nx { text-align: right; border-color: var(--acc); }
+/* Reunión */
+.rhead { margin: 2px 0 12px; }
+.actions { display: flex; gap: 8px; margin: 10px 0 14px; }
+.btn { min-height: 44px; padding: 0 14px; border-radius: var(--r-btn); font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+.btn.neutral { border: 1px solid var(--line); background: var(--card); }
+.btn.quiet { color: var(--danger); margin-left: auto; padding: 0 6px; }
+.btn.primary { background: var(--acc); color: var(--on-acc); }
+.n { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--acc-soft); color: var(--acc); font: 700 13px var(--f-ui); flex: none; }
+.chev { color: var(--mute); }
+/* Etiqueta de dirección (solo maqueta) */
+.tag { position: fixed; right: 8px; top: 8px; z-index: 9; font: 600 10px/1 var(--f-ui); padding: 4px 7px; border-radius: 99px; background: var(--ink); color: var(--bg); opacity: .78; }
+
+/* ============ 1 · Zafiro afinado (evolución) ============ */
+[data-d="1"] {
+  --f-ui: Inter, system-ui, sans-serif; --f-lyric: Inter, system-ui, sans-serif; --f-title: Fraunces, Georgia, serif; --f-mono: "JetBrains Mono", monospace; --f-chord: Inter, sans-serif;
+  --bg: #f2f5fa; --card: #fff; --bar: rgba(255,255,255,.94); --ink: #1d2236; --mute: #566380; --line: #d8e0ec;
+  --ch: #0474c4; --ch-soft: #e2edf9; --acc: #06457f; --acc-soft: #dfe8f5; --on-acc: #fff; --sec: #c2410c; --danger: #b42318; --key-up: #0474c4; --on-key: #fff;
+  --r-key: 99px; --r-btn: 12px; --r-card: 14px; --r-input: 99px; --gut: 16px; --key-fs: 14px;
+  --title-w: 600; --title-fs: 30px; --title-ls: -.01em; --sec-w: 600; --sec-ls: 0; --sec-tt: none; --sheet-fs: 16px;
+}
+@media (prefers-color-scheme: dark) { [data-d="1"] {
+  --bg: #1c2031; --card: #262b40; --bar: rgba(38,43,64,.94); --ink: #e8ecf5; --mute: #9aa6c0; --line: #353d58;
+  --ch: #7fb6f2; --ch-soft: #243655; --acc: #c9d9f2; --acc-soft: #323a57; --on-acc: #1c2031; --sec: #ff9a5c; --danger: #ff6b5e; --key-up: #7fb6f2; --on-key: #14192a;
+} }
+[data-d="1"] .stamp { display: grid; justify-items: center; min-width: 66px; padding: 7px 10px 6px; border-radius: 14px; background: var(--ch-soft); color: var(--ch); }
+[data-d="1"] .stamp b { font: 700 28px/1 var(--f-mono); } [data-d="1"] .stamp small { font-size: 11px; font-weight: 600; }
+[data-d="1"] .ctl { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; margin: 0 0 16px; }
+[data-d="1"] .seg { display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--card); border-radius: 12px; height: 44px; }
+[data-d="1"] .seg button { height: 42px; min-width: 42px; padding: 0 8px; font-weight: 600; font-size: 14px; }
+[data-d="1"] .seg .cur { font: 700 16px var(--f-mono); color: var(--ch); min-width: 44px; border-inline: 1px solid var(--line); }
+[data-d="1"] .seg button:disabled { color: var(--mute); opacity: .6; }
+[data-d="1"] .vista { justify-self: end; }
+[data-d="1"] .hero { background: #06457f; color: #f2f5fa; border-radius: 20px; padding: 16px 18px; margin: 4px 0 10px; display: grid; gap: 6px; box-shadow: 0 12px 28px -18px rgba(6,69,127,.9); }
+[data-d="1"] .hero .when { font-weight: 700; font-size: 13px; color: #a8c4ec; }
+[data-d="1"] .hero .nm { font: 600 24px/1.1 var(--f-title); }
+[data-d="1"] .hero .key { background: rgba(168,196,236,.18); color: #cfe0f7; height: 26px; min-width: 38px; font-size: 13px; }
+[data-d="1"] .hero .s { display: flex; gap: 10px; align-items: center; font-size: 15px; }
+[data-d="1"] .brand { font: 600 34px/1.05 var(--f-title); letter-spacing: -.015em; margin: 6px 0 2px; }
+
+/* ============ 2 · Escenario (alto contraste, de noche primero) ============ */
+[data-d="2"] {
+  --f-ui: "Atkinson Hyperlegible", system-ui, sans-serif; --f-lyric: "Atkinson Hyperlegible", sans-serif; --f-title: "Atkinson Hyperlegible", sans-serif; --f-mono: "IBM Plex Mono", monospace; --f-chord: "IBM Plex Mono", monospace;
+  --bg: #fbfbf8; --card: #fff; --bar: #fff; --ink: #0d1020; --mute: #4d566b; --line: #cfd4de;
+  --ch: #0050b3; --ch-soft: #dde9fb; --acc: #0d1020; --acc-soft: #e7e9ef; --on-acc: #fff; --sec: #b23b00; --danger: #b42318; --key-up: #0050b3; --on-key: #fff;
+  --r-key: 6px; --r-btn: 8px; --r-card: 8px; --r-input: 8px; --gut: 14px; --key-fs: 15px;
+  --title-w: 700; --title-fs: 30px; --title-ls: -.02em; --sec-w: 700; --sec-ls: .06em; --sec-tt: uppercase; --sheet-fs: 17px;
+}
+@media (prefers-color-scheme: dark) { [data-d="2"] {
+  --bg: #0b0c10; --card: #15171e; --bar: #15171e; --ink: #f4f1e8; --mute: #a3a7b4; --line: #2a2d38;
+  --ch: #6cc4ff; --ch-soft: #13263a; --acc: #f4f1e8; --acc-soft: #23262f; --on-acc: #0b0c10; --sec: #ffb347; --danger: #ff6b5e; --key-up: #6cc4ff; --on-key: #0b0c10;
+} }
+[data-d="2"] .stamp { display: grid; justify-items: center; min-width: 64px; padding: 6px 8px; border: 2px solid var(--ch); border-radius: 8px; color: var(--ch); }
+[data-d="2"] .stamp b { font: 700 30px/1 var(--f-mono); } [data-d="2"] .stamp small { font: 700 10px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; }
+[data-d="2"] .sg b { font-weight: 700; }
+[data-d="2"] .dock { position: sticky; bottom: 0; display: grid; grid-template-columns: 52px 1fr 52px 52px 52px; gap: 6px; padding: 8px var(--gut) 12px; background: var(--bar); border-top: 2px solid var(--line); }
+[data-d="2"] .dock button { height: 52px; border-radius: 8px; border: 1px solid var(--line); font-weight: 700; font-size: 15px; display: grid; place-items: center; }
+[data-d="2"] .dock .cur { font: 700 22px var(--f-mono); color: var(--ch); border-color: var(--ch); line-height: 1; display: grid; }
+[data-d="2"] .dock .cur small { font: 700 9px var(--f-ui); letter-spacing: .08em; color: var(--mute); }
+[data-d="2"] .brand { font: 700 30px/1 var(--f-title); letter-spacing: -.02em; margin: 8px 0 2px; }
+[data-d="2"] .hero { border: 2px solid var(--ink); border-radius: 8px; padding: 14px; margin: 6px 0 10px; display: grid; gap: 6px; }
+[data-d="2"] .hero .when { font: 700 12px var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--sec); }
+[data-d="2"] .hero .nm { font: 700 22px/1.1 var(--f-title); }
+[data-d="2"] .hero .s { display: flex; gap: 10px; align-items: center; font-size: 16px; }
+[data-d="2"] .hero .key { height: 28px; min-width: 40px; }
+[data-d="2"] .row b { font-weight: 700; font-size: 17px; }
+[data-d="2"] .n { border-radius: 6px; background: var(--ink); color: var(--bg); }
+
+/* ============ 3 · Cuaderno (papel, como la hoja impresa) ============ */
+[data-d="3"] {
+  --f-ui: "Source Sans 3", system-ui, sans-serif; --f-lyric: "Source Sans 3", sans-serif; --f-title: Newsreader, Georgia, serif; --f-mono: "Source Sans 3", sans-serif; --f-chord: "Source Sans 3", sans-serif;
+  --bg: #f6f2e9; --card: #fffdf8; --bar: #fffdf8; --ink: #22201c; --mute: #6b655a; --line: #e2dccd;
+  --ch: #1f4fa3; --ch-soft: #e3e9f4; --acc: #1f4fa3; --acc-soft: #e9e5da; --on-acc: #fff; --sec: #b0471f; --danger: #a8321c; --key-up: #1f4fa3; --on-key: #fff;
+  --r-key: 4px; --r-btn: 10px; --r-card: 12px; --r-input: 12px; --gut: 18px; --key-fs: 15px;
+  --title-w: 600; --title-fs: 32px; --title-ls: -.015em; --sec-w: 600; --sec-ls: 0; --sec-tt: none; --sheet-fs: 16.5px;
+}
+@media (prefers-color-scheme: dark) { [data-d="3"] {
+  --bg: #191714; --card: #221f1b; --bar: #221f1b; --ink: #ece6d8; --mute: #a59d8d; --line: #37322a;
+  --ch: #8db3f0; --ch-soft: #24304a; --acc: #8db3f0; --acc-soft: #2d2923; --on-acc: #191714; --sec: #f0946a; --danger: #ff7a5e; --key-up: #8db3f0; --on-key: #191714;
+} }
+[data-d="3"] .key { background: transparent; border: 1.5px solid currentColor; height: 30px; font-weight: 700; }
+[data-d="3"] .key.up { background: var(--key-up); border-color: var(--key-up); }
+[data-d="3"] .key::before { content: "["; opacity: .45; margin-right: 1px; } [data-d="3"] .key::after { content: "]"; opacity: .45; margin-left: 1px; }
+[data-d="3"] .stamp { text-align: right; } [data-d="3"] .stamp b { display: block; font: 600 40px/1 var(--f-title); color: var(--ch); } [data-d="3"] .stamp small { font-size: 12px; color: var(--mute); }
+[data-d="3"] .sec { font-family: var(--f-title); font-style: italic; font-size: .9em; }
+[data-d="3"] .rep { font-family: var(--f-title); font-style: italic; }
+[data-d="3"] .pill { position: sticky; bottom: 14px; margin: 0 auto; width: max-content; display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 99px; background: var(--ink); color: var(--bg); box-shadow: 0 10px 24px -10px rgba(0,0,0,.45); }
+[data-d="3"] .pill button { height: 44px; min-width: 44px; padding: 0 12px; border-radius: 99px; font-weight: 600; font-size: 15px; }
+[data-d="3"] .pill .cur { background: var(--bg); color: var(--ch); font: 700 17px var(--f-ui); min-width: 56px; }
+[data-d="3"] .pill .sep { width: 1px; height: 22px; background: currentColor; opacity: .2; margin: 0 4px; }
+[data-d="3"] .brand { font: 600 36px/1 var(--f-title); letter-spacing: -.02em; margin: 6px 0 2px; }
+[data-d="3"] .hero { border-top: 2px solid var(--ink); border-bottom: 1px solid var(--line); padding: 12px 0 14px; margin: 8px 0 8px; display: grid; gap: 6px; }
+[data-d="3"] .hero .when { font: italic 600 15px var(--f-title); color: var(--sec); }
+[data-d="3"] .hero .nm { font: 600 26px/1.05 var(--f-title); }
+[data-d="3"] .hero .s { display: flex; gap: 10px; align-items: center; font-size: 16px; }
+[data-d="3"] .row b { font: 600 18px/1.25 var(--f-title); }
+[data-d="3"] .search { background: transparent; }
+[data-d="3"] .n { background: none; color: var(--sec); font: italic 600 20px var(--f-title); width: 24px; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <span class="tag" id="tag"></span>
+
+  <!-- ===== Lista de canciones ===== -->
+  <section class="screen" data-p="lista">
+    <main>
+      <div class="meta">Alabanza · IBSI MAS</div>
+      <h1 class="brand">Cancionero</h1>
+      <div class="hero">
+        <span class="when">Mañana · 29-11</span>
+        <span class="nm">Domingo 29-11-2026</span>
+        <span class="meta hero-dir" style="color:inherit;opacity:.8">Dirige Camilo</span>
+        <span class="s"><span class="key">G</span>Quién más</span>
+        <span class="s"><span class="key">A</span>Roca firme</span>
+      </div>
+      <div class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar canción, frase o director</div>
+      <div class="row"><div class="tx"><b>Quién más</b><small>Gateway Worship Español / Miel San Marcos</small></div><span class="key">Ab</span></div>
+      <div class="row"><div class="tx"><b>Roca firme</b><small>Eric Bustamante</small></div><span class="key">G</span></div>
+      <div class="row"><div class="tx"><b>Tumbas a jardines</b><small>Elevation Worship / Miel San Marcos</small></div><span class="key">C</span></div>
+      <div class="row"><div class="tx"><b>Hermoso nombre + Eres digno de adorar</b><small>Evangelina Crubinca</small></div><span class="key">G</span></div>
+      <div class="row"><div class="tx"><b>A ti me rindo</b><small>Hillsong</small></div><span class="key">F</span></div>
+    </main>
+    <nav class="tabs"><button class="on"><svg class="i" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Canciones</button><button><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Reuniones</button></nav>
+  </section>
+
+  <!-- ===== Canción en Músico ===== -->
+  <section class="screen" data-p="cancion">
+    <main>
+      <span class="back">← Domingo 29-11-2026</span>
+      <div class="head"><div><h2 class="title">Quién más</h2><p class="meta">Gateway Worship Español · Tono habitual Ab · 68 BPM</p><p class="dir">Dirige Camilo</p></div>
+        <div class="stamp"><b>G</b><small>Reunión</small></div></div>
+      <!-- Dirección 1: barra en una fila que entra (transporte agrupado + "Vista") -->
+      <div class="ctl d1only"><span class="seg"><button aria-label="Bajar medio tono">−½</button><button class="cur">G</button><button aria-label="Subir medio tono">+½</button></span>
+        <span class="seg"><button disabled>Orig.</button></span>
+        <span class="seg vista"><button style="display:inline-flex;gap:6px;align-items:center;padding:0 12px"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M4 7h16M4 12h10M4 17h7"/></svg>Vista</button></span></div>
+      <div class="sheet">
+        <div class="parte"><div class="sec">[Coro]</div>
+          <div class="ln"><span class="sg"><b>G</b>//Quién más es digno </span><span class="sg"><b></b>quién más es </span><span class="sg"><b>C/A</b>digno</span></div>
+          <div class="ln"><span class="sg"><b></b>No hay </span><span class="sg"><b>G/E</b>nadie, solo </span><span class="sg"><b>C9</b>Tú, Cristo//</span></div></div>
+        <div class="parte"><div class="sec">[Estrofa 1] <span class="mod">↑ Ab</span></div>
+          <div class="ln"><span class="sg"><b></b>Un </span><span class="sg"><b>Ab</b>instrumento soy de exal</span><span class="sg"><b>Ebsus4</b>tación</span></div>
+          <div class="ln"><span class="sg"><b></b>Y </span><span class="sg"><b>Ab/F</b>yo nací </span><span class="sg"><b>Eb11</b>para tu </span><span class="sg"><b>C#9</b>nombre levantar</span></div>
+          <div class="ln"><span class="sg"><b></b>Tú es</span><span class="sg"><b>Ab</b>cuchas el cantar de la crea</span><span class="sg"><b>Eb4</b>ción</span></div></div>
+        <div class="parte"><span class="rep">[Coro] x2</span></div>
+        <div class="parte"><div class="sec">[Puente] x4</div>
+          <div class="ln"><span class="sg"><b>C#9</b>Cordero ungido, </span><span class="sg"><b>Eb2</b>reinará</span></div>
+          <div class="ln"><span class="sg"><b>Ab/F</b>Sentado en el trono </span><span class="sg"><b>Ab</b>está, </span><span class="sg"><b>Eb/G</b>Santo</span></div></div>
+      </div>
+      <div class="fin"><button><small>← Anterior</small>—</button><button class="nx"><small>Siguiente →</small>Roca firme</button></div>
+    </main>
+    <!-- Dirección 2: dock fijo abajo, al alcance del pulgar -->
+    <div class="dock d2only"><button aria-label="Bajar medio tono">−½</button><button class="cur">G<small>REUNIÓN</small></button><button aria-label="Subir medio tono">+½</button><button>A±</button><button aria-label="Más opciones"><svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></div>
+    <!-- Dirección 3: píldora flotante -->
+    <div class="pill d3only"><button aria-label="Bajar medio tono">−½</button><button class="cur">G</button><button aria-label="Subir medio tono">+½</button><span class="sep"></span><button>Aa</button><button>Letra</button></div>
+  </section>
+
+  <!-- ===== Reunión ===== -->
+  <section class="screen" data-p="reunion">
+    <main>
+      <span class="back">← Reuniones</span>
+      <div class="rhead"><h2 class="title">Domingo 29-11-2026</h2><p class="meta">Dirige Camilo · 4 canciones</p></div>
+      <div class="actions"><button class="btn primary"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v10M12 4v10M16 4v10"/></svg>Músico</button><button class="btn neutral">Editar</button><button class="btn neutral">Imprimir</button><button class="btn quiet">Borrar</button></div>
+      <div class="row"><span class="n">1</span><div class="tx"><b>Quién más</b><small>Dirige Camilo · orden modificado</small></div><span class="key">G</span></div>
+      <div class="row"><span class="n">2</span><div class="tx"><b>Roca firme</b><small>Dirige Virgi</small></div><span class="key up">↑ A</span></div>
+      <div class="row"><span class="n">3</span><div class="tx"><b>Tumbas a jardines</b><small>Dirige Camilo</small></div><span class="key">C</span></div>
+      <div class="row"><span class="n">4</span><div class="tx"><b>Hermoso nombre + Eres digno</b><small>Medley · Dirige Kelly</small></div><span class="key">G</span></div>
+    </main>
+    <nav class="tabs"><button><svg class="i" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Canciones</button><button class="on"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Reuniones</button></nav>
+  </section>
+</div>
+<script>
+  const q = new URLSearchParams(location.search), d = q.get('d') || '1', p = q.get('p') || 'lista';
+  document.documentElement.dataset.d = d;
+  document.querySelector(`[data-p="${p}"]`).classList.add('on');
+  document.querySelectorAll('.d1only,.d2only,.d3only').forEach(e => { if (!e.classList.contains('d' + d + 'only')) e.remove(); });
+  document.getElementById('tag').textContent = { 1: 'Zafiro afinado', 2: 'Escenario', 3: 'Cuaderno' }[d];
+</script>
+</body>
+</html>

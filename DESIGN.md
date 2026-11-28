@@ -219,9 +219,9 @@ En oscuro `--ch` y `--acc` son el mismo #a8c4ec: acordes y acciones pasan a tene
 ### Especiales
 - **Hero** `--hero` #06457f con `--hero-ink` y `--hero-chip` #a8c4ec: tarjeta "Próxima reunión", igual en los dos temas.
 - **Peligro** `--danger` #b42318 / #ff6b5e: "Sí, borrar", errores, "Quitar" en menús.
-- **Verde en línea** #2f9e5b (sin token): punto de estado y "ok" en Ajustes.
+- **Verde en línea** `--ok` #2f9e5b: punto de estado y "ok" en Ajustes.
 - **Impresión**: negro sobre blanco; acordes #0a3d8f.
-- Fuera de tokens: chip de tono `.k.up` #0474c4 / `.k.dn` #06457f y botones presionados de la hoja de tono (#0474c4) están fijos y no cambian en oscuro; borde de borrar deslizando #c0392b.
+- Todos los colores son tokens (28-11-2026): texto sobre acción/peligro (`--on-acc`, `--on-danger`), chip que sube/baja (`--key-up`, `--key-dn` y sus `--on-`), botón elegido en hojas (`--sel`, `--on-sel`), sombras (`--sh-*`), velo (`--veil`), verde de estado (`--ok`), borrar deslizando (`--swipe`) e impresión (`--print-*`). En oscuro, el chip que sube y el botón elegido toman #a8c4ec y el que baja #5379ae.
 
 ## Typography
 
@@ -336,7 +336,7 @@ Recuadro dentro de la página (no modal), fondo tarjeta, borde 1 px (rojo si bor
 
 Lo que se ve inconsistente hoy (capturas en `referencia/capturas/`):
 
-1. **Colores fijos que no cambian con el tema:** el chip de tono que sube/baja (`.k.up`/`.k.dn`), los botones elegidos de la hoja de tono y de variantes (#0474c4) y el verde de estado están escritos a mano; en oscuro quedan con el azul del modo claro.
+1. ~~**Colores fijos que no cambian con el tema:**~~ Resuelto el 28-11 (todo en tokens). Antes: el chip de tono que sube/baja (`.k.up`/`.k.dn`), los botones elegidos de la hoja de tono y de variantes (#0474c4) y el verde de estado están escritos a mano; en oscuro quedan con el azul del modo claro.
 2. **En oscuro, acordes y acciones son el mismo color** (#a8c4ec para `--ch` y `--acc`): se pierde la distinción "azul = música / azul oscuro = acción" que sí existe en claro (captura 14).
 3. **Demasiados radios:** 6, 8, 9, 10, 12, 13, 14, 18, 20 y 99 px conviven sin regla; el botón principal (10) y los neutros (8) que van uno al lado del otro tienen esquinas distintas (confirmación, captura 12).
 4. **Botón neutro repetido en 6 reglas casi iguales** (`.sheetend`, `.askf`, `.edr`, `.adm`, `.acbt .neutro`, `.form`) con alturas de 40 o 44 px y fondos `--card` o `--bg` según dónde esté: en la confirmación "No" va sobre `--bg` y en la reunión "Imprimir" sobre `--card`.

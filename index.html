@@ -16,7 +16,9 @@
 <link rel="stylesheet" href="css/app.css">
 <script>/* Modo claro u oscuro elegido en Ajustes (solo este dispositivo); antes de pintar, para que no parpadee. */
 try { var t = JSON.parse(localStorage.getItem("cancionero:prefs") || "{}").tema; if (t === "light" || t === "dark") { document.documentElement.dataset.theme = t;
-  document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.content = t === "dark" ? "#1c2031" : "#f2f5fa"; }); } } catch (e) {}</script>
+  var ms = document.querySelectorAll('meta[name="theme-color"]'), c = "";
+  ms.forEach(function (m) { m.setAttribute("data-orig", m.content); if (m.media.indexOf(t) >= 0) c = m.content; });
+  ms.forEach(function (m) { m.content = c; }); } } catch (e) {}</script>
 </head>
 <body data-screen="c">
 <header class="top">

@@ -196,3 +196,45 @@ export function search(songs, q, perOf) {
   });
   return out.sort((a, b) => a.rank - b.rank);
 }
+
+// ---------- Versiones de un grupo ("¿Qué versión?") ----------
+// Dos Word del mismo grupo son la misma versión si tienen las mismas partes, en el mismo orden y con las mismas
+// repeticiones, y los mismos acordes contados desde la tónica (así un Word que es solo transporte no cuenta).
+// No se mira la posición de los acordes sobre la letra.
+const PCN = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+const pcDe = n => { const m = /^([A-G])([#b]?)/.exec(n || ''); return m ? (PCN[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? 11 : 0)) % 12 : null; };
+function acordesRel(s, b) {
+  const t = pcDe(String(s.tono || '')) ?? 0, out = [];
+  b.lines.forEach(l => {
+    const txt = l.t === 'pair' ? l.segs.map(x => x[0]).filter(Boolean).join(' ') : l.t === 'ch' || l.t === 'mix' ? l.v : '';
+    txt.split(/[\s\-–|]+/).forEach(x => {
+      const m = /^([A-G][#b]?)([^/]*)(?:\/([A-G][#b]?))?$/.exec(x.replace(/^[(\[{]+|[)\]},.]+$/g, ''));
+      if (!m) return;
+      out.push(((pcDe(m[1]) - t + 12) % 12) + m[2] + (m[3] ? '/' + ((pcDe(m[3]) - t + 12) % 12) : ''));
+    });
+  });
+  return out.join(' ');
+}
+// Solo las partes con contenido, en orden (el nombre y las repeticiones no cuentan: SPEC §5).
+export function huellaVersion(s) {
+  return s._hv || (s._hv = blocksOf(s).filter(b => b.has).map(b => ({ l: base(b.label), ch: acordesRel(s, b) })));
+}
+/** En qué se diferencia la versión `b` de la sugerida `a` (para la pista de la hoja). */
+function pistaDif(a, b) {
+  if (a.length !== b.length) return b.length > a.length ? `${b.length - a.length} parte${b.length - a.length > 1 ? 's' : ''} más` : `${a.length - b.length} parte${a.length - b.length > 1 ? 's' : ''} menos`;
+  const dif = b.map((x, n) => x.ch !== a[n].ch ? x.l || '(inicio)' : null).filter(Boolean);
+  const u = [...new Set(dif)];
+  return 'Otros acordes en ' + u.slice(0, 2).join(', ') + (u.length > 2 ? ` y ${u.length - 2} más` : '');
+}
+/**
+ * Versiones distintas entre los Word de un grupo (`songs`, el sugerido primero): [{ ids, s, pista }], una por versión,
+ * con la del sugerido primero. [] si todos son la misma versión (solo cambia el tono).
+ */
+export function versionesDe(songs) {
+  const out = [];
+  songs.forEach(s => { const k = JSON.stringify(huellaVersion(s).map(x => x.ch)), v = out.find(o => o.k === k); if (v) v.ids.push(s.id); else out.push({ k, ids: [s.id], s }); });
+  if (out.length < 2) return [];
+  const h0 = huellaVersion(out[0].s);
+  out.forEach((v, i) => { v.pista = i ? pistaDif(h0, huellaVersion(v.s)) : ''; });
+  return out;
+}
