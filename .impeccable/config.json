@@ -33,6 +33,18 @@
         "value": "source sans 3",
         "createdAt": "2026-11-28T15:56:51.352Z",
         "reason": "Claude: fuente de una dirección propuesta en referencia/propuestas (maqueta, no la app)"
+      },
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-11-28T15:59:04.548Z",
+        "reason": "SPEC §10: Fraunces e Inter son la identidad elegida por Lautaro"
+      },
+      {
+        "rule": "overused-font",
+        "value": "fraunces",
+        "createdAt": "2026-11-28T15:59:04.682Z",
+        "reason": "SPEC §10: Fraunces e Inter son la identidad elegida por Lautaro"
       }
     ]
   }
