@@ -109,3 +109,6 @@ Detalle en `referencia/SPEC.md`: §4 (roles), §5 (modelo de datos), §6 (conver
 - Anclar notas sueltas a una palabra (`at`), como en la referencia de "Quién más".
 - Conservar los saltos de línea dentro de un párrafo del Word (`<w:br/>`), como en "Jesucristo basta".
 - Pasar a estable con los datos reales de IBSI (`registrarIBSI()`), con aprobación.
+
+- **Jesús en el centro** (nov. 2026): dos canciones aparte desde Word con el mismo arreglo: `jesus-en-el-centro-2` [C] = Danilo Montero, tono original G, 140 BPM; `-3` [F] = Israel & New Breed, A, 129 BPM.
+- **Digno (Elevation)**: el intérprete figura "Elevation"; cambiarlo a "Elevation Worship" necesita clave de admin.

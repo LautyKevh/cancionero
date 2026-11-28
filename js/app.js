@@ -6,7 +6,7 @@ import { demoSeed } from './demo.js';
 import { KEYS, keyAt, shiftTo, keyOption, showKey, transposer, tonosDelItem, tonoMas, intervalo, enTonos, tituloTransportado, CHORD } from './music.js';
 import { lineasATexto, textoALineas } from './texto.js';
 import { prepare, blocksOf, contenidoDe, SUBA, defArr, isDefArr, mismoOrden, variantesDe, blockText, base, rOf, labOf, summary, historyOf, search, fmt, isoOf } from './songs.js';
-import { GRUPOS } from './grupos.js';
+import { GRUPOS, CONSERVA } from './grupos.js';
 
 // Motor real si hay iglesia (?c= o config) y no se pidió ?demo=1; si no, modo demo local.
 const qs = new URLSearchParams(location.search);
@@ -47,7 +47,7 @@ function armarGrupos() {
     // Regla 1: el tono original del intérprete (si hay un Word en ese tono). Regla 2: el tono más usado en el
     // Registro (empate: el más reciente). Regla 3: el del primer Word (o el que Lautaro dijo que se conserva).
     const orig = ids.map(id => String(songBy(id).tonoOriginal || '').split(/\s*[-→]\s*/)[0]).find(Boolean);
-    const r1 = orig && ids.find(id => songBy(id).tono === orig);
+    const r1 = ids.find(id => CONSERVA.includes(id)) || orig && ids.find(id => songBy(id).tono === orig);
     if (r1) { ids.forEach(id => { REP[id] = { id: r1, regla: 1 }; }); return; }
     const n = {}, ult = {}, porId = {};
     historyOf(ids, REG, SES, songBy).forEach(x => { const t = String(x.t || '').split(/\s*[-→]\s*/)[0]; if (!t) return;
@@ -75,6 +75,10 @@ const versiones = id => { const s = songBy(id); if (!s) return [id]; const t = s
   return [...new Set([...SONGS.filter(x => x.titulo.toLowerCase() === t).map(x => x.id), ...(GR[id] || [])])]; };
 const perOf = id => summary(versiones(id), REG, SES, songBy).per;
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Semitonos para ver la canción en su tono original (si está cargado y el Word está en otro tono).
+const shOrig = s => { const o = !s || s.medley ? '' : String(s.tonoOriginal || '').split(/\s*[-→]\s*/)[0].trim(); return o && o !== s.tono ? shiftTo(s, o) : 0; };
+// Tono con que entra a una reunión: el original (transportado), si no el del Word.
+const tonoInicial = s => shOrig(s) ? keyOption({ ...s, tono: keyAt(s, shOrig(s)) }) : keyOption(s);
 const interp = s => s.interprete && s.interprete !== '-' ? s.interprete : '';
 // Ítems de reunión: canción ({ id }) o medley ({ tipo: 'medley', nombre, canciones: [{ id }] }).
 const itemOk = c => c.tipo === 'medley' ? (c.canciones || []).some(x => songBy(x.id)) : !!songBy(c.id);
@@ -305,7 +309,7 @@ function pickMode(s) {
        <div class="hist-row"><span>Tono última vez</span><b class="kc">${esc(last.t)}</b></div>` : ''}
        ${names.length ? `<div class="hist-row pp"><label><span>Tono por persona</span> <select id="pp"><option value="">Elegir…</option>${names.map(p => `<option>${esc(p)}</option>`).join('')}</select></label><span id="ppo" aria-live="polite"></span></div>` : ''}</div>`;
   app.innerHTML = `${back('Canciones', '#/canciones')}
-  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${[esc(interp(s)), `${tonoMeta(s)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')}</p></div>${stamp(s.tono, !REP[s.id] ? (s.tonoOriginal && s.tono === String(s.tonoOriginal).split(/\s*[-→]\s*/)[0] ? 'Tono original' : 'Tono') : REP[s.id].regla === 1 ? 'Tono original' : REP[s.id].regla === 2 ? 'Tono más usado' : 'Tono original no registrado')}</header>
+  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${[esc(interp(s)), `${tonoMeta(s)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')}</p></div>${stamp(shOrig(s) ? keyAt(s, shOrig(s)) : s.tono, shOrig(s) ? 'Tono original' : !REP[s.id] ? (s.tonoOriginal && s.tono === String(s.tonoOriginal).split(/\s*[-→]\s*/)[0] ? 'Tono original' : 'Tono') : REP[s.id].regla === 1 ? 'Tono original' : REP[s.id].regla === 2 ? 'Tono más usado' : 'Tono original no registrado')}</header>
   <p class="ask">¿Cómo la vas a usar?</p>${modeChooser()}${hist}${fichaDatos(s)}`;
   $$('[data-mode]').forEach(b => b.onclick = () => go(`#/cancion/${s.id}/${b.dataset.mode}`));
   $$('[data-dato]').forEach(b => b.onclick = () => editarDato(s, b.dataset.dato));
@@ -373,7 +377,7 @@ const stamp = (k, label) => `<div class="stamp" title="${esc(label)}"><span clas
 // ---------- Hoja (músico / cantante) ----------
 function openSheet(s, mode, ctx) {
   setTabs(null);
-  view = { song: s, mode: mode === 'c' ? 'c' : 'm', shift: ctx ? ctx.shift : (view.song === s ? view.shift : 0), ctx };
+  view = { song: s, mode: mode === 'c' ? 'c' : 'm', shift: ctx ? ctx.shift : (view.song === s ? view.shift : shOrig(s)), ctx };
   drawSheet();
 }
 
@@ -502,7 +506,7 @@ function drawSheet(anim) {
   const ctl = (mus ? `<button type="button" id="dn" aria-label="Bajar medio tono">−½</button>
       <span class="now" id="now" title="Tono actual" aria-live="polite">${esc(kd)}</span>
       <button type="button" id="up" aria-label="Subir medio tono">+½</button>
-      <button type="button" id="orig" title="Volver al tono original"${shift ? '' : ' disabled'}>Orig.</button>
+      <button type="button" id="orig" title="Volver al tono original"${shift !== shOrig(s) ? '' : ' disabled'}>Orig.</button>
       <button type="button" id="not" title="Cambiar cifrado: C / Do / grados">${['C', 'Do', 'I'][P.not]}</button><span class="sp"></span>` : '<span class="sp"></span>')
     + `<button type="button" id="sm" aria-label="Achicar letra">A−</button><button type="button" id="bg" aria-label="Agrandar letra">A+</button>
        <button type="button" id="sw">${mus ? 'Cantante' : 'Músico'}</button>`;
@@ -523,7 +527,7 @@ function drawSheet(anim) {
   app.innerHTML = `${r ? back(nombreSes(r), '#/reunion/' + r.id) : back('Canciones', '#/canciones')}
   <article class="sheet">
     <header class="songhead"><div><h2 class="title">${esc(s.titulo)}${puedeEd ? `<button type="button" class="edm${ed ? ' on' : ''}" id="edm" aria-pressed="${ed}" aria-label="${ed ? 'Salir del modo edición' : 'Editar letra y acordes'}" title="Editar letra y acordes">✎</button>` : ''}</h2><p class="meta">${meta}</p></div>
-      ${!mus ? '' : !c ? stamp(kd, shift ? 'Ahora' : 'Tono') : enReu ? stamp(kd, 'Reunión')
+      ${!mus ? '' : !c ? stamp(kd, shift !== shOrig(s) ? 'Ahora' : 'Tono') : enReu ? stamp(kd, 'Reunión')
         : `<button type="button" class="stamp volver" id="vreu" aria-label="Tono ${esc(kd)}. Volver al tono de la reunión, ${esc(kReu)}"><span class="stamp-k">${esc(kd)}</span><span class="stamp-l">↺ Volver a ${esc(kReu)}</span></button>`}</header>
     <div class="ctl" role="toolbar" aria-label="Controles">${ctl}</div>
     ${ed ? '<div class="edbar" role="status"><span><b>Modo edición</b>Tocá una parte para cambiar letra y acordes.</span><button type="button" class="primary" id="edok">Listo</button></div>' : ''}
@@ -542,7 +546,7 @@ function drawSheet(anim) {
   if (mus) {
     $('#dn').onclick = keep(() => { view.shift--; drawSheet(-1); });
     $('#up').onclick = keep(() => { view.shift++; drawSheet(1); });
-    $('#orig').onclick = keep(() => { view.shift = 0; drawSheet(1); });
+    $('#orig').onclick = keep(() => { view.shift = shOrig(s); drawSheet(1); });
     if ($('#vreu')) $('#vreu').onclick = keep(() => { view.shift = shReu; drawSheet(1); });
     $('#not').onclick = keep(() => { P.not = (P.not + 1) % 3; savePrefs(); drawSheet(); });
   }
@@ -1078,7 +1082,7 @@ function editSes(r) {
   // Al elegirla: "Como la última vez" (copia el arreglo de la última reunión donde se tocó) o "Versión base".
   sg.onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; const s = songBy(b.dataset.a);
     const agregar = it => { r.canciones.push(it); re(); $('#ad')?.focus(); };
-    const base = { id: s.id, tono: keyOption(s), quien: r.director, desde: 'base', arr: defArr(s) };
+    const base = { id: s.id, tono: tonoInicial(s), quien: r.director, desde: 'base', arr: defArr(s) };
     const ult = ultimaVezItem(r, s.id);
     if (!ult) return agregar(base);
     ad.blur(); sg.innerHTML = '';
@@ -1088,7 +1092,7 @@ function editSes(r) {
   const med = [], mbx = $('#mbx'), mbq = $('#mbq'), mbs = $('#mbs'), mbt = $('#mbt');
   let tonoElegido = false;
   const pintaMed = () => {
-    $('#mbl').innerHTML = med.map((s, k) => `<li>${med.length > 1 ? `<button type="button" class="sh" data-mh="${k}" aria-label="Mover ${esc(s.titulo)} (flechas arriba y abajo)"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 5h12M3 9h12M3 13h12"/></svg></button>` : ''}<span class="num">${k + 1}</span><b>${esc(s.titulo)}</b><span class="key">${esc(keyOption(s))}</span></li>`).join('');
+    $('#mbl').innerHTML = med.map((s, k) => `<li>${med.length > 1 ? `<button type="button" class="sh" data-mh="${k}" aria-label="Mover ${esc(s.titulo)} (flechas arriba y abajo)"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 5h12M3 9h12M3 13h12"/></svg></button>` : ''}<span class="num">${k + 1}</span><b>${esc(s.titulo)}</b><span class="key">${esc(tonoInicial(s))}</span></li>`).join('');
     const L = [...$('#mbl').children];
     // Deslizar a la izquierda (o Suprimir en la manija) la quita; "Deshacer" la vuelve a su lugar.
     const quitar = k => { const [x] = med.splice(k, 1); pintaMed(); avisoDeshacer('Canción quitada', () => { med.splice(k, 0, x); pintaMed(); }); };
