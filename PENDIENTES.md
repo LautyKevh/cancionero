@@ -25,6 +25,12 @@ Estado al 28-11-2026 (rama `desarrollo`, app v54; motor de PRUEBA: implementaci�
 - Editar fecha, nombre y director de una reunión ya creada (ruedita ⚙ al lado de "Editar reunión", hoja desde abajo, con clave), sin pisar otra reunión del mismo día.
 - Admin sobre las reuniones: edita sin clave; en la misma hoja de la ruedita, en chico, "Clave nueva" e "Historial del admin" (motor `adminReunion`). **Sin probar con una sesión real de admin** (Claude no puede ingresar con Google): lo prueba Lautaro desde Ajustes → Acceder.
 
+## Hecho 28-11 (v55, en desarrollo)
+- Confirmaciones con un solo formato: pregunta arriba, "No" y "Sí, …" abajo a la derecha (borrar reunión, datos de la canción).
+- Reunión: debajo del título solo "Dirige X".
+- Encabezado: "Intérprete · Tono original X" (sin tono original cargado, "Tono X", el del Word), también fuera de la reunión.
+- Recuadro del tono en la reunión: "Reunión" o, si se transportó, "↺ Volver a X" (tocable). La barra sigue en una línea a 375 px.
+
 ## Próximo, en orden
 Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesia de prueba; la planilla real de IBSI no se toca sin OK.
 1. **Probar (Lautaro):**
@@ -38,7 +44,7 @@ Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesi
    - Probar en el celular: deslizar para borrar, la ruedita de Editar reunión (fecha/nombre/director) y lo del admin (ingresando en Ajustes).
    - OK final al editor de partes rediseñado, ahora con deslizar para borrar (el ✕ ya no está en la tarjeta; queda "Quitar" en ⋯).
 4. **Datos de la canción:** hecho intérprete, tono original y BPM en la ficha (v53): vacío lo completa cualquiera; con valor, solo el admin. Falta: link, conflicto con la planilla en "Revisar cambios" y pasar los datos a IBSI al pasar a estable.
-5. **Director edita la letra** de cualquier parte del arreglo de su reunión, con PIN. Solo esa reunión; nunca la base.
+5. **Letra en la reunión, igual que los acordes:** cualquiera, sin clave ni nombre, desde el mismo modo edición (✎). Solo esa reunión (la ven todos ese día; nunca la base ni otras reuniones). Historial por parte con fecha y hora y "Restaurar" (versión base / como la última vez). Los cambios permanentes van por "Sugerir corrección" (punto 6).
 6. **"Pendientes de revisión"** (una bandeja por iglesia, admin en Ajustes):
    - "Sugerir corrección" (sin clave), con atajo "Proponer para todas las versiones" desde una reunión;
    - canción nueva (sin clave): pegar cifrado, subir archivo, sin cifrado o "pedir canción"; nombre, intérprete (o "No sé"), link, comentario; aviso de duplicados por nombre + intérprete y por letra; tono opcional en "sin cifrado"; borrador usable en reuniones;

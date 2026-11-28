@@ -40,8 +40,8 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 
 | Rol | Cómo entra | Puede |
 |---|---|---|
-| Miembro (músico/cantante) | Sin cuenta | Ver canciones y reuniones, transponer, usar sin conexión. Cambios del ensayo, solo de esa reunión y sin nombre ni clave: **acordes** de una parte y variante; nunca la estructura ni los tonos. Completar datos de canciones que estén vacíos (intérprete, BPM, tono original, link). Sugerir correcciones y proponer canciones nuevas, que quedan pendientes de revisión |
-| Director | Sin cuenta, con la clave de 4 dígitos de su reunión | Crear reuniones; editar o borrar las suyas, incluida la estructura del arreglo de cada canción y la **letra** de cualquier parte del arreglo de su reunión |
+| Miembro (músico/cantante) | Sin cuenta | Ver canciones y reuniones, transponer, usar sin conexión. Cambios del ensayo, solo de esa reunión y sin nombre ni clave: **acordes** y **letra** de una parte, y variante; nunca la estructura ni los tonos. Completar datos de canciones que estén vacíos (intérprete, BPM, tono original, link). Sugerir correcciones y proponer canciones nuevas, que quedan pendientes de revisión |
+| Director | Sin cuenta, con la clave de 4 dígitos de su reunión | Crear reuniones; editar o borrar las suyas, incluida la estructura del arreglo de cada canción |
 | Admin de iglesia | Google Sign-In (solo para acciones de admin) | Configurar carpetas, revisar la bandeja "Pendientes de revisión" (aprobar o rechazar correcciones y canciones nuevas), importar desde la carpeta, corregir la canción base, dar de alta personas, otros admins y editores, actualizar versión |
 | Superadmin | Lautaro | Publicar versiones; opcional: código de invitación para altas |
 
@@ -133,7 +133,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - `cancion`: de qué canción es la parte (medley).
   - `tono`: tono absoluto en que se toca la parte. Solo cuenta con Modulante encendido. Si falta, se calcula desde el tono escrito, manteniendo el intervalo original con la parte anterior.
   - `mostrar: true` = "Mostrar igual": el puente o la transición se muestran aunque la parte siguiente quede en el mismo tono.
-  - `lineas`: acordes editados de esa parte para esta reunión (mismo formato que la canción); también la **letra**, si la editó el director con clave. Si falta, se usan los de la base.
+  - `lineas`: acordes editados de esa parte para esta reunión (mismo formato que la canción); también la **letra**, si la editó alguien en esa reunión (sin clave, igual que los acordes). Si falta, se usan los de la base.
   - `cambios`: historial de ediciones de acordes, `[{ quien, fecha, lineas }]`, con la versión anterior a cada cambio.
   - "+ Agregar sección" crea una entrada más de `arr`, copia de otra parte, con su propio `tono`.
 - Se pueden borrar. El borrado es lógico, con papelera.
@@ -200,6 +200,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Escribe sostenidos o bemoles según la tonalidad destino (Ab → Db9, no C#9).
   - "Orig." aparece deshabilitado si ya está en el tono original.
   - Al transponer se mantiene la posición de scroll.
+  - **Recuadro del tono (arriba a la derecha):** fuera de una reunión, el tono y "Tono" / "Ahora". En una reunión, si está en el tono del director, el tono y "Reunión"; si se transportó (−½, +½, Orig.), el tono actual y "↺ Volver a E" con aspecto de botón: tocarlo vuelve al tono de la reunión. La barra no cambia.
 - Cifrado:
   - Rota entre americano (C), latino (Do) y grados en romanos.
   - Grados: mayúscula para mayores, minúscula para menores (iii7), alteraciones bII/bIII/#IV/bVI/bVII, bajo en romano (I/VI).
@@ -256,7 +257,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Clave de 4 dígitos.
 - Al entrar a una reunión se pregunta una sola vez Cantante / Músico. El botón "Modo: Músico ⇄" está en la lista. La elección se recuerda por reunión.
 - Las canciones se abren en el tono y el orden de la reunión.
-- **Encabezado de la canción** (en la reunión y en la lista), tres renglones: título / intérprete · Tono original X (· BPM) / Dirige X. Sin director, sin el tercer renglón; sin intérprete, solo "Tono original X"; en un medley, "Medley".
+- **Encabezado de la canción** (en la reunión y en la lista), tres renglones: título / intérprete · Tono original X (· BPM) / Dirige X. Sin director, sin el tercer renglón; sin intérprete, solo "Tono original X"; en un medley, "Medley". Si la canción no tiene tono original cargado, "Tono X" con el tono del Word (no es el del intérprete). Igual fuera de la reunión.
 - Al final de cada canción, botones grandes "← Anterior · título" / "Siguiente → título"; en la última, "Fin de la reunión".
 - **Editar (con clave):**
   - Agregar canción con buscador en vivo (título, letra, director). Al elegirla hay dos opciones:
@@ -272,9 +273,11 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - **Deslizar hacia la izquierda borra** la parte, sin diálogo: "Parte borrada · Deshacer" unos segundos.
   - Agregar parte (las opciones muestran su primera línea; en un medley, agrupadas por canción) y volver al orden original.
   - Las clases de la hoja de tono son `.tsheet`/`.tsheetw` (`.sheet` es la hoja de la canción; no reutilizar).
-- **Letra (con clave):** el director puede editar la letra de cualquier parte del arreglo de su reunión, igual que los acordes. Solo vale para esa reunión; nunca toca la base.
+- **Letra:** se edita igual que los acordes de los músicos (ver "Arreglo compartido"): cualquiera, sin clave ni nombre, desde el mismo modo edición (✎). Solo vale para esa reunión; nunca toca la base ni otras reuniones. Los cambios permanentes de letra o acordes van por "Sugerir corrección" (ver 9).
 - **"Proponer para todas las versiones":** convierte los cambios de esa reunión en una sugerencia de corrección de la base (ver 9). No reescribe nada: la sugerencia queda pendiente de revisión.
 - **Borrar (con clave):** con confirmación dentro de la página.
+- **Confirmaciones (todas las de la app):** la pregunta arriba y abajo, juntos y alineados a la derecha, "No" (neutro) y después "Sí, …" (rojo si borra: "Sí, borrar").
+- Debajo del título de la reunión, solo "Dirige X" (la fecha ya está en el título).
 
 **Tono por parte y Modulante** (editor hecho; falta la parte nueva escrita a mano):
 - En la configuración de cada canción de la reunión (Editar, con clave → Editar partes) hay un interruptor **"Modulante"**, con la ayuda "Permite cambiar de tono entre partes", y el **tono de inicio**.
@@ -314,7 +317,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - partes, orden y repeticiones;
   - agregar y quitar partes;
   - tono por parte, Modulante y "mostrar".
-- **Músicos, sin clave:** editan los **acordes** de cualquier parte del arreglo de esa reunión; se asume que hay consenso entre los músicos. Nunca la estructura ni los tonos.
+- **Cualquiera, sin clave:** edita los **acordes** y la **letra** de cualquier parte del arreglo de esa reunión; se asume que hay consenso entre los músicos. Nunca la estructura ni los tonos.
   - En la vista Músico de la reunión hay un solo ✎, al lado del nombre de la canción; las partes no muestran nada. Tocarlo abre el **modo edición** de esa canción: una barra "Modo edición · Tocá una parte para cambiar sus acordes · Listo", cada parte se ve como una tarjeta tocable y las que ya tienen acordes editados dicen "editada · nombre". Mientras tanto no se eligen variantes. Se sale con "Listo", con el ✎ o al pasar a otra canción. Tocar una parte abre una hoja desde abajo con un renglón de acordes editable encima de cada renglón de letra (fija), en el tono en que se toca y en cifrado americano; se guardan en el tono escrito. Cada acorde se ancla a la letra en su columna. Los renglones que no se tocan quedan igual. Un acorde que no se reconoce no se guarda (avisa en qué renglón).
   - La vista y la impresión muestran los acordes editados de esa parte.
   - **Cambios del ensayo:** son SOLO de esa reunión. Los puede hacer cualquiera con el link de la iglesia, **sin nombre ni clave**; los ven todos los dispositivos en esa reunión y nunca cambian la canción base ni otras reuniones. El motor limita el tamaño por parte y las ediciones por minuto (ver 4).

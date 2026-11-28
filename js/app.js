@@ -294,7 +294,7 @@ function pickMode(s) {
        <div class="hist-row"><span>Tono última vez</span><b class="kc">${esc(last.t)}</b></div>` : ''}
        ${names.length ? `<div class="hist-row pp"><label><span>Tono por persona</span> <select id="pp"><option value="">Elegir…</option>${names.map(p => `<option>${esc(p)}</option>`).join('')}</select></label><span id="ppo" aria-live="polite"></span></div>` : ''}</div>`;
   app.innerHTML = `${back('Canciones', '#/canciones')}
-  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${esc(interp(s))}</p></div>${stamp(s.tono, !REP[s.id] ? (s.tonoOriginal && s.tono === String(s.tonoOriginal).split(/\s*[-→]\s*/)[0] ? 'Tono original' : 'Tono') : REP[s.id].regla === 1 ? 'Tono original' : REP[s.id].regla === 2 ? 'Tono más usado' : 'Tono original no registrado')}</header>
+  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${[esc(interp(s)), `${s.tonoOriginal ? 'Tono original ' + esc(s.tonoOriginal) : 'Tono ' + esc(s.tono)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')}</p></div>${stamp(s.tono, !REP[s.id] ? (s.tonoOriginal && s.tono === String(s.tonoOriginal).split(/\s*[-→]\s*/)[0] ? 'Tono original' : 'Tono') : REP[s.id].regla === 1 ? 'Tono original' : REP[s.id].regla === 2 ? 'Tono más usado' : 'Tono original no registrado')}</header>
   <p class="ask">¿Cómo la vas a usar?</p>${modeChooser()}${hist}${fichaDatos(s)}`;
   $$('[data-mode]').forEach(b => b.onclick = () => go(`#/cancion/${s.id}/${b.dataset.mode}`));
   $$('[data-dato]').forEach(b => b.onclick = () => editarDato(s, b.dataset.dato));
@@ -342,17 +342,21 @@ function editarDato(s, c) {
     if (antes && !esAdmin()) { fallo('Ese dato ya está cargado: solo el admin lo puede cambiar.'); return; }
     // Confirmación antes de guardar (lo ven todos).
     const nom = c === 'bpm' ? 'BPM' : n.toLowerCase();
-    if (!paso) { paso = 1; conf.hidden = false; conf.innerHTML = antes ? `¿Cambiar el ${nom} de <b>${esc(antes)}</b> a <b>${esc(val || '(vacío)')}</b>?` : `¿Guardar <b>${esc(val)}</b> como ${nom}?`; ok.textContent = 'Sí, guardar'; v.disabled = true; return; }
-    w.querySelectorAll('button').forEach(b => b.disabled = true); ok.textContent = 'Guardando…';
+    if (!paso) { paso = 1; v.disabled = true; ok.hidden = q('#dd-x').hidden = true;
+      conf.hidden = false; conf.innerHTML = confirmHTML(antes ? `¿Cambiar el ${nom} de <b>${esc(antes)}</b> a <b>${esc(val || '(vacío)')}</b>?` : `¿Guardar <b>${esc(val)}</b> como ${nom}?`, 'Sí, guardar');
+      q('#n').onclick = cerrar; q('#y').onclick = ok.onclick; q('#y').focus(); return; }
+    w.querySelectorAll('button').forEach(b => b.disabled = true); ok.textContent = 'Guardando…'; if (q('#y')) q('#y').textContent = 'Guardando…';
     try {
       const x = await ds.editarDatos({ cancion: s.id, campos: { [c]: c === 'bpm' ? (val ? +val : null) : val }, idToken: antes ? ADMIN.token : undefined });
       Object.assign(s, { interprete: x.interprete, tonoOriginal: x.tonoOriginal, bpm: x.bpm, datosCambios: x.datosCambios });
       if (c === 'tonoOriginal') armarGrupos();
       cerrar(); pickMode(s); toast(n + ' guardado.');
-    } catch (x) { w.querySelectorAll('button').forEach(b => b.disabled = false); ok.textContent = 'Sí, guardar'; fallo(x.message || 'No se pudo guardar.'); }
+    } catch (x) { w.querySelectorAll('button').forEach(b => b.disabled = false); if (q('#y')) q('#y').textContent = 'Sí, guardar'; fallo(x.message || 'No se pudo guardar.'); }
   };
 }
 
+/** Confirmación única de la app: pregunta arriba; abajo, juntos y a la derecha, "No" (neutro) y el "Sí, …" (rojo si borra). */
+const confirmHTML = (preg, si, peligro) => `<div class="askf confirm${peligro ? ' peligro' : ''}" role="alertdialog" aria-label="Confirmar"><p class="cq">${preg}</p><div class="cbtn"><button type="button" class="neutro" id="n">No</button><button type="button" class="${peligro ? 'danger' : 'primary'}" id="y">${esc(si)}</button></div></div>`;
 const stamp = (k, label) => `<div class="stamp" title="${esc(label)}"><span class="stamp-k">${esc(k)}</span><span class="stamp-l">${esc(label)}</span></div>`;
 
 // ---------- Hoja (músico / cantante) ----------
@@ -500,13 +504,16 @@ function drawSheet(anim) {
       ${Nx ? `<button type="button" id="nx" class="nx"><small>Siguiente →</small><b>${t(Nx)}</b></button>`
            : `<button type="button" id="fin" class="nx"><small>Fin de la reunión</small><b>Volver a la lista</b></button>`}</nav>`;
   }
+  // Recuadro del tono en una reunión: "Reunión" si está en el tono del director; si se transportó, botón "↺ Volver a X".
+  const shReu = c ? shiftTo(s, c.tono) : 0, enReu = !!c && shift === shReu, kReu = c ? showKey(c.tono, P.not) : '';
   // Encabezado: intérprete · tono original (y BPM) en un renglón; "Dirige X" abajo, solo si hay director.
   const meta = [esc(interp(s)), s.medley ? 'Medley' : `${s.tonoOriginal ? 'Tono original ' + esc(s.tonoOriginal) : 'Tono ' + esc(s.tono)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')
     + (ctx && ctx.quien ? `</p><p class="meta"><b>Dirige ${esc(ctx.quien)}</b>` : '');
   app.innerHTML = `${r ? back(nombreSes(r), '#/reunion/' + r.id) : back('Canciones', '#/canciones')}
   <article class="sheet">
     <header class="songhead"><div><h2 class="title">${esc(s.titulo)}${puedeEd ? `<button type="button" class="edm${ed ? ' on' : ''}" id="edm" aria-pressed="${ed}" aria-label="${ed ? 'Salir del modo edición' : 'Editar acordes'}" title="Editar acordes">✎</button>` : ''}</h2><p class="meta">${meta}</p></div>
-      ${mus ? stamp(kd, shift ? 'Ahora' : 'Tono') : ''}</header>
+      ${!mus ? '' : !c ? stamp(kd, shift ? 'Ahora' : 'Tono') : enReu ? stamp(kd, 'Reunión')
+        : `<button type="button" class="stamp volver" id="vreu" aria-label="Tono ${esc(kd)}. Volver al tono de la reunión, ${esc(kReu)}"><span class="stamp-k">${esc(kd)}</span><span class="stamp-l">↺ Volver a ${esc(kReu)}</span></button>`}</header>
     <div class="ctl" role="toolbar" aria-label="Controles">${ctl}</div>
     ${ed ? '<div class="edbar" role="status"><span><b>Modo edición</b>Tocá una parte para cambiar sus acordes.</span><button type="button" class="primary" id="edok">Listo</button></div>' : ''}
     <div class="lines ${mus ? '' : 'singer'}${ed ? ' editando' : ''}">${rows}</div>
@@ -525,6 +532,7 @@ function drawSheet(anim) {
     $('#dn').onclick = keep(() => { view.shift--; drawSheet(-1); });
     $('#up').onclick = keep(() => { view.shift++; drawSheet(1); });
     $('#orig').onclick = keep(() => { view.shift = 0; drawSheet(1); });
+    if ($('#vreu')) $('#vreu').onclick = keep(() => { view.shift = shReu; drawSheet(1); });
     $('#not').onclick = keep(() => { P.not = (P.not + 1) % 3; savePrefs(); drawSheet(); });
   }
   $('#sm').onclick = keep(() => { mus ? P.adj-- : P.sadj--; savePrefs(); drawSheet(); });
@@ -843,7 +851,7 @@ function newSes() {
 
 function openSes(r) {
   setTabs(null);
-  const head = `${back('Reuniones', '#/reuniones')}<h2 class="title">${esc(nombreSes(r))}</h2><p class="meta">${esc(fechaLarga(r.fecha))} · Dirige ${esc(r.director)}</p>`;
+  const head = `${back('Reuniones', '#/reuniones')}<h2 class="title">${esc(nombreSes(r))}</h2><p class="meta">Dirige ${esc(r.director)}</p>`;
   if (!P.modos[r.id]) {
     app.innerHTML = `${head}<p class="ask">¿Cómo vas a estar en esta reunión?</p>${modeChooser()}
       <p class="hint">Se aplica a todas las canciones de la reunión. Lo podés cambiar después.</p>`;
@@ -887,7 +895,7 @@ function openSes(r) {
   $('#ed').onclick = () => ask('Editar', () => go(`#/reunion/${r.id}/editar`));
   $('#del').onclick = () => ask('Borrar', clave => {
     const a = $('#ask');
-    a.innerHTML = `<div class="askf confirm"><span>¿Borrar “${esc(nombreSes(r))}”?</span><button type="button" class="danger" id="y">Sí, borrar</button><button type="button" id="n">No</button></div>`;
+    a.innerHTML = confirmHTML(`¿Borrar “${esc(nombreSes(r))}”?`, 'Sí, borrar', true);
     openAnim(a);
     $('#y').onclick = async () => { try { await ds.deleteReunion(r.id, clave); SES = SES.filter(x => x !== r); go('#/reuniones', 'back'); } catch (x) { a.innerHTML = `<p class="err">${esc(x.message)}</p>`; } };
     $('#n').onclick = () => a.innerHTML = '';

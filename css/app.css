@@ -196,7 +196,15 @@ input[type=search]::placeholder { color: var(--mute); }
 .askf input::placeholder { letter-spacing: normal; }
 .askf .primary { margin: 0; min-height: 40px; }
 .askf button:not(.primary):not(.danger) { font-weight: 600; font-size: 14px; min-height: 40px; padding: 0 12px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--bg); }
-.askf.confirm { border-color: var(--danger); }
+.askf.confirm { display: block; }
+.askf.confirm.peligro { border-color: var(--danger); }
+.askf.confirm .cq { margin: 0 0 10px; }
+.askf.confirm .cbtn { display: flex; justify-content: flex-end; gap: 8px; }
+.askf.confirm .cbtn button { margin: 0; min-height: 40px; }
+#dd-c .askf.confirm { margin: 8px 0 0; }
+button.stamp.volver { font: inherit; cursor: pointer; border-style: solid; box-shadow: 0 2px 0 var(--ch); }
+button.stamp.volver:active { transform: translateY(2px); box-shadow: none; }
+button.stamp.volver .stamp-l { opacity: 1; white-space: nowrap; }
 
 /* ---------- Edición ---------- */
 .list li.ed { padding: 12px 4px; border-bottom: 1px solid var(--line); }
