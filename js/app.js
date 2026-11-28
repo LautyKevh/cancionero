@@ -82,6 +82,8 @@ const tonoRegla = s => !s || s.medley ? (s && s.tono) || '' : String(s.tonoOrigi
 const shOrig = s => { const t = tonoRegla(s); return t && t !== s.tono ? shiftTo(s, t) : 0; };
 // Tono que se ve en la lista, el buscador y al agregar a una reunión: el mismo con que abre.
 const tonoInicial = s => shOrig(s) ? keyOption({ ...s, tono: keyAt(s, shOrig(s)) }) : keyOption(s);
+// Título de parte entre corchetes como en los Word; las repeticiones van afuera: "[Puente 2a] x2".
+const corch = l => { const m = /^(.*?)(\s+[x×]\d+)$/.exec(l); return m ? `[${esc(m[1])}]${esc(m[2])}` : `[${esc(l)}]`; };
 const interp = s => s.interprete && s.interprete !== '-' ? s.interprete : '';
 // Ítems de reunión: canción ({ id }) o medley ({ tipo: 'medley', nombre, canciones: [{ id }] }).
 const itemOk = c => c.tipo === 'medley' ? (c.canciones || []).some(x => songBy(x.id)) : !!songBy(c.id);
@@ -487,10 +489,10 @@ function sheetRows(item, mus, vari, ed) {
     const sec = edP ? `<section class="parte edp" data-k="${k}" data-ac="${k}" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Editar letra y acordes de ${esc(label || 'la parte')}${e.lineas ? ' (editada)' : ''}">` : `<section class="parte" data-k="${k}">`;
     // Una parte de un solo renglón de acordes (Intro, Inter, Final) los muestra al lado del título; con 2 o más, abajo.
     if (label && ls.length === 1 && L.length === 1 && (ls[0].t === 'ch' || (ls[0].t === 'mix' && ls[0].at == null)))
-      return `${sep}${sec}<div class="sec inl"><span>[${esc(label)}]</span>${ind}<span class="${ls[0].t}">${esc(textoCh(ls[0]))}</span></div>${tag}</section>`;
+      return `${sep}${sec}<div class="sec inl"><span>${corch(label)}</span>${ind}<span class="${ls[0].t}">${esc(textoCh(ls[0]))}</span></div>${tag}</section>`;
     // Variantes (Músico, en una reunión): el nombre de la parte es un chip para elegir otra ("es el Coro 2"). No en modo edición.
     const nv = vari && !ed && e.src != null && !e.nueva ? variantesDe(s, e.src).length : 0;
-    const nomP = nv ? `<button type="button" class="varc" data-var="${k}" aria-haspopup="dialog" aria-label="${esc(label || 'Parte')}: elegir otra variante (hay ${nv})">${label ? '[' + esc(label) + ']' : 'Parte'} <span class="vart" aria-hidden="true">▾</span></button>` : label ? `<span>[${esc(label)}]</span>` : '';
+    const nomP = nv ? `<button type="button" class="varc" data-var="${k}" aria-haspopup="dialog" aria-label="${esc(label || 'Parte')}: elegir otra variante (hay ${nv})">${label ? corch(label) : 'Parte'} <span class="vart" aria-hidden="true">▾</span></button>` : label ? `<span>${corch(label)}</span>` : '';
     const head = label || ind || nv ? `<div class="sec${acl ? ' cacl' : ind ? ' inl' : ''}">${acl ? `<span class="tit">${nomP}${ind}</span>` : nomP + ind}${aclH}</div>` : '';
     return `${sep}${L.length ? sec : sec.replace('class="parte', 'class="parte solo')}${head}${tag}${L.join('')}</section>`;
   }).join('');
