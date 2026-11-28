@@ -257,7 +257,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Clave de 4 dígitos.
 - Al entrar a una reunión se pregunta una sola vez Cantante / Músico. El botón "Modo: Músico ⇄" está en la lista. La elección se recuerda por reunión.
 - Las canciones se abren en el tono y el orden de la reunión.
-- **Encabezado de la canción** (en la reunión y en la lista), tres renglones: título / intérprete · Tono original X (· BPM) / Dirige X. Sin director, sin el tercer renglón; sin intérprete, solo "Tono original X"; en un medley, "Medley". Si la canción no tiene tono original cargado, "Tono X" con el tono del Word (no es el del intérprete). Igual fuera de la reunión.
+- **Encabezado de la canción** (en la reunión y en la lista), tres renglones: título / intérprete · Tono original X (· BPM) / Dirige X. Sin director, sin el tercer renglón; sin intérprete, solo "Tono original X"; en un medley, "Medley". La etiqueta dice de dónde sale el tono (mismas reglas que la agrupación): "Tono original X" si está cargado el del intérprete; si no, "Tono habitual X" (el que más se repite en el Registro; empate: el más reciente); si no hay Registro, "Tono registrado X" (el del Word). Nunca "Tono X" solo. Igual fuera de la reunión.
 - Al final de cada canción, botones grandes "← Anterior · título" / "Siguiente → título"; en la última, "Fin de la reunión".
 - **Editar (con clave):**
   - Agregar canción con buscador en vivo (título, letra, director). Al elegirla hay dos opciones:

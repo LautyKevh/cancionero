@@ -28,7 +28,7 @@ Estado al 28-11-2026 (rama `desarrollo`, app v54; motor de PRUEBA: implementaci�
 ## Hecho 28-11 (v55, en desarrollo)
 - Confirmaciones con un solo formato: pregunta arriba, "No" y "Sí, …" abajo a la derecha (borrar reunión, datos de la canción).
 - Reunión: debajo del título solo "Dirige X".
-- Encabezado: "Intérprete · Tono original X" (sin tono original cargado, "Tono X", el del Word), también fuera de la reunión.
+- Encabezado: "Intérprete · Tono original X" (si no, "Tono habitual X" del Registro o "Tono registrado X" del Word), también fuera de la reunión.
 - Recuadro del tono en la reunión: "Reunión" o, si se transportó, "↺ Volver a X" (tocable). La barra sigue en una línea a 375 px.
 
 ## Próximo, en orden

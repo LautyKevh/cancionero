@@ -56,6 +56,16 @@ function armarGrupos() {
     ids.forEach(id => { REP[id] = { id: rep, regla: T ? 2 : 3 }; });
   });
 }
+// Etiqueta del tono en el encabezado (mismas reglas que la agrupación): "Tono original X" (del intérprete),
+// si no "Tono habitual X" (el que más se repite en el Registro; empate: el más reciente), si no "Tono registrado X" (el del Word).
+function tonoMeta(s) {
+  if (s.tonoOriginal) return 'Tono original ' + esc(s.tonoOriginal);
+  const n = {}, ult = {};
+  historyOf(versiones(s.id), REG, SES, songBy).forEach(x => { const t = String(x.t || '').split(/\s*[-→]\s*/)[0]; if (!t) return;
+    n[t] = (n[t] || 0) + 1; if ((x.f || '') >= (ult[t] || '')) ult[t] = x.f || ''; });
+  const T = Object.keys(n).sort((a, b) => n[b] - n[a] || (ult[b] || '').localeCompare(ult[a] || ''))[0];
+  return T ? 'Tono habitual ' + esc(T) : 'Tono registrado ' + esc(s.tono);
+}
 // Búsqueda sobre todos los Word; cada grupo aparece una sola vez, con su Word representativo.
 const buscar = q => { const vistos = new Set(); return search(SONGS, q, perOf).map(x => REP[x.s.id] ? { ...x, s: songBy(REP[x.s.id].id) } : x)
   .filter(x => !vistos.has(x.s.id) && vistos.add(x.s.id)); };
@@ -294,7 +304,7 @@ function pickMode(s) {
        <div class="hist-row"><span>Tono última vez</span><b class="kc">${esc(last.t)}</b></div>` : ''}
        ${names.length ? `<div class="hist-row pp"><label><span>Tono por persona</span> <select id="pp"><option value="">Elegir…</option>${names.map(p => `<option>${esc(p)}</option>`).join('')}</select></label><span id="ppo" aria-live="polite"></span></div>` : ''}</div>`;
   app.innerHTML = `${back('Canciones', '#/canciones')}
-  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${[esc(interp(s)), `${s.tonoOriginal ? 'Tono original ' + esc(s.tonoOriginal) : 'Tono ' + esc(s.tono)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')}</p></div>${stamp(s.tono, !REP[s.id] ? (s.tonoOriginal && s.tono === String(s.tonoOriginal).split(/\s*[-→]\s*/)[0] ? 'Tono original' : 'Tono') : REP[s.id].regla === 1 ? 'Tono original' : REP[s.id].regla === 2 ? 'Tono más usado' : 'Tono original no registrado')}</header>
+  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${[esc(interp(s)), `${tonoMeta(s)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')}</p></div>${stamp(s.tono, !REP[s.id] ? (s.tonoOriginal && s.tono === String(s.tonoOriginal).split(/\s*[-→]\s*/)[0] ? 'Tono original' : 'Tono') : REP[s.id].regla === 1 ? 'Tono original' : REP[s.id].regla === 2 ? 'Tono más usado' : 'Tono original no registrado')}</header>
   <p class="ask">¿Cómo la vas a usar?</p>${modeChooser()}${hist}${fichaDatos(s)}`;
   $$('[data-mode]').forEach(b => b.onclick = () => go(`#/cancion/${s.id}/${b.dataset.mode}`));
   $$('[data-dato]').forEach(b => b.onclick = () => editarDato(s, b.dataset.dato));
@@ -507,7 +517,7 @@ function drawSheet(anim) {
   // Recuadro del tono en una reunión: "Reunión" si está en el tono del director; si se transportó, botón "↺ Volver a X".
   const shReu = c ? shiftTo(s, c.tono) : 0, enReu = !!c && shift === shReu, kReu = c ? showKey(c.tono, P.not) : '';
   // Encabezado: intérprete · tono original (y BPM) en un renglón; "Dirige X" abajo, solo si hay director.
-  const meta = [esc(interp(s)), s.medley ? 'Medley' : `${s.tonoOriginal ? 'Tono original ' + esc(s.tonoOriginal) : 'Tono ' + esc(s.tono)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')
+  const meta = [esc(interp(s)), s.medley ? 'Medley' : `${tonoMeta(s)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')
     + (ctx && ctx.quien ? `</p><p class="meta"><b>Dirige ${esc(ctx.quien)}</b>` : '');
   app.innerHTML = `${r ? back(nombreSes(r), '#/reunion/' + r.id) : back('Canciones', '#/canciones')}
   <article class="sheet">
