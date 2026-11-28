@@ -471,7 +471,10 @@ function sheetRows(item, mus, vari, ed) {
       if (l.t === 'mix') { const v = textoCh(l); return v.trim() ? `<div class="mix${l.at != null ? ' at' : ''}"${l.at != null ? ` data-anchor="${esc(l.at)}"` : ''}>${esc(v)}</div>` : ''; }
       return `<div>${esc(mus ? l.v : l.v.replace(/\s{2,}/g, ' ').trim())}</div>`;
     };
-    const L = ls.map(line).filter(Boolean);
+    // Aclaración del título ("(Primera vez menos acordes)", primer renglón de la parte): va en el renglón del título.
+    const iA = ls.findIndex(l => l.t !== 'blank'), acl = iA >= 0 && ls[iA].t === 'ly' && /^\(.*\)$/.test(String(ls[iA].v).trim()) && labOf(e) ? String(ls[iA].v).trim() : '';
+    const L = ls.filter((l, i) => !acl || i !== iA).map(line).filter(Boolean);
+    const aclH = acl ? `<span class="acl">${esc(acl)}</span>` : '';
     // Indicador en el renglón del título: "Coro  ↑ A (+1½)".
     const ind = p.indicador ? `<span class="modi">${p.indicador.dir} ${esc(showKey(T.key, P.not))} (${enTonos(p.indicador.dif)})</span>` : '';
     // Un título que nombra un tono ("Inter para subir a A") lo transporta igual que los acordes.
@@ -484,11 +487,11 @@ function sheetRows(item, mus, vari, ed) {
     const sec = edP ? `<section class="parte edp" data-k="${k}" data-ac="${k}" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Editar letra y acordes de ${esc(label || 'la parte')}${e.lineas ? ' (editada)' : ''}">` : `<section class="parte" data-k="${k}">`;
     // Una parte de un solo renglón de acordes (Intro, Inter, Final) los muestra al lado del título; con 2 o más, abajo.
     if (label && ls.length === 1 && L.length === 1 && (ls[0].t === 'ch' || (ls[0].t === 'mix' && ls[0].at == null)))
-      return `${sep}${sec}<div class="sec inl"><span>${esc(label)}</span>${ind}<span class="${ls[0].t}">${esc(textoCh(ls[0]))}</span></div>${tag}</section>`;
+      return `${sep}${sec}<div class="sec inl"><span>[${esc(label)}]</span>${ind}<span class="${ls[0].t}">${esc(textoCh(ls[0]))}</span></div>${tag}</section>`;
     // Variantes (Músico, en una reunión): el nombre de la parte es un chip para elegir otra ("es el Coro 2"). No en modo edición.
     const nv = vari && !ed && e.src != null && !e.nueva ? variantesDe(s, e.src).length : 0;
-    const nomP = nv ? `<button type="button" class="varc" data-var="${k}" aria-haspopup="dialog" aria-label="${esc(label || 'Parte')}: elegir otra variante (hay ${nv})">${esc(label || 'Parte')} <span class="vart" aria-hidden="true">▾</span></button>` : `<span>${esc(label)}</span>`;
-    const head = label || ind || nv ? `<div class="sec${ind ? ' inl' : ''}">${nomP}${ind}</div>` : '';
+    const nomP = nv ? `<button type="button" class="varc" data-var="${k}" aria-haspopup="dialog" aria-label="${esc(label || 'Parte')}: elegir otra variante (hay ${nv})">${label ? '[' + esc(label) + ']' : 'Parte'} <span class="vart" aria-hidden="true">▾</span></button>` : label ? `<span>[${esc(label)}]</span>` : '';
+    const head = label || ind || nv ? `<div class="sec${acl ? ' cacl' : ind ? ' inl' : ''}">${acl ? `<span class="tit">${nomP}${ind}</span>` : nomP + ind}${aclH}</div>` : '';
     return `${sep}${sec}${head}${tag}${L.join('')}</section>`;
   }).join('');
   return { rows, kd, info, arr: R.arr };
