@@ -1,14 +1,21 @@
 // Versiones de una misma canción en distintos Word (referencia/agrupacion-por-tono.md).
-// Cada grupo aparece una sola vez en la lista; el primer id es el primer Word por nombre de archivo.
+// Cada grupo aparece una sola vez en la lista; el primer id es el primer Word por nombre de archivo,
+// salvo que Lautaro haya dicho cuál se conserva ("Conservá X"): ese va primero (El Dios que adoramos [F#]).
 // Solo la app los agrupa: en Drive y en la planilla siguen siendo canciones separadas.
 export const GRUPOS = [
+  ["con-tu-sangre","con-tu-sangre-2"],
+  ["el-dios-que-adoramos-2","el-dios-que-adoramos","el-dios-que-adoramos-3"],
+  ["el-nos-ama","el-nos-ama-2"],
+  ["el-victorioso","el-victorioso-2"],
+  ["no-voy-a-caer","no-voy-a-caer-2"],
+  ["por-siempre","por-siempre-2"],
   ["a-ti-me-rindo","a-ti-me-rindo-2"],
   ["agnus-dei","agnus-dei-2","agnus-dei-3"],
   ["al-unico-que-es-digno","al-unico-que-es-digno-2"],
   ["alaba","alaba-2","alaba-3"],
   ["alabare-al-senor-anastasis","alabare-al-senor-anastasis-2"],
   ["anclado-en-la-roca-yahweh","anclado-en-la-roca-yahweh-2"],
-  ["aqui-estoy","aqui-estoy-3"],
+  ["aqui-estoy","aqui-estoy-2","aqui-estoy-3"],
   ["aqui-te-esperare","aqui-te-esperare-2"],
   ["because-he-lives","because-he-lives-2"],
   ["con-mis-manos-levantadas-simple","con-mis-manos-levantadas-simple-2"],

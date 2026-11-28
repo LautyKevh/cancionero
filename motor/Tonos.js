@@ -23,9 +23,9 @@ function intervalo_(a, b) {
   const x = tonoPc_(a), y = tonoPc_(b); if (!x || !y) return 0;
   let d = ((y.pc - x.pc) % 12 + 12) % 12; if (d > 5) d -= 12; return d;
 }
-/** "G-Ab-A-Bb-C" / "F# - A" / "G" → ['G','Ab','A','Bb','C'] (solo si todo son tonos). */
+/** "G-Ab-A-Bb-C" / "F# - A" / "C/D - Eb" (la barra separa tonos: no es un acorde con bajo) / "G" → ['G','Ab','A','Bb','C'] (solo si todo son tonos). */
 function secuenciaTitulo_(s) {
-  const toks = String(s || '').split(/\s*[-–,→]\s*|\s+/).filter(Boolean);
+  const toks = String(s || '').split(/\s*[-–,→\/]\s*|\s+/).filter(Boolean);
   return toks.length && toks.every(t => TONO_RE_.test(t)) ? toks : [];
 }
 /** Quita tonos consecutivos iguales: G,Ab,Ab,A → G,Ab,A. */

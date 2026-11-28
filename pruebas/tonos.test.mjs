@@ -168,6 +168,13 @@ igual(['Inter para subir a A', 'Coro (Sube a A)', 'BAJA AL F#', 'Coro (baja a Am
   igual(coros.map(b => variantesDe(h, b.id).length), coros.map(() => 0), 'Hay poder: los coros en otro tono no son variantes');
 }
 
+// ---------- Título con barra: "C/D - Eb" son tres tonos (no un acorde con bajo) ----------
+{
+  const c2 = vm.createContext({}); vm.runInContext(fs.readFileSync(new URL('../motor/Tonos.js', dir), 'utf8') + ';this.s = secuenciaTitulo_;', c2);
+  igual([...c2.s('C/D - Eb')], ['C', 'D', 'Eb'], 'Te alabaré [C/D - Eb]: la barra separa tonos');
+  igual([...c2.s('E-F')], ['E', 'F'], 'For the Lord is Good [E-F]');
+}
+
 // ---------- Comparación con el motor en todo el cancionero (opcional) ----------
 if (process.argv[2]) {
   let todo = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')); todo = todo.data || todo;

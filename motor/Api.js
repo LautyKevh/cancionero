@@ -17,6 +17,7 @@
 //   a=registrarUso   { id, clave }                       (agrega filas a Registro, una sola vez; también se hace solo al día siguiente de la reunión)
 //   a=editarAcordes  { id, item, parte, lineas|null, quien } (sin clave; músicos; null = volver a la base)
 //   a=elegirVariante { id, item, parte, src, label }          (sin clave ni nombre; músicos; otra variante de la parte)
+//   a=editarDatos    { cancion, campos: { interprete?, tonoOriginal?, bpm? }, quien } (sin clave; Datos/datos-canciones.json)
 //   a=importar       { idToken }                         (admin)
 //   a=corregir       { idToken, cancion, correccion|null } (admin; Datos/correcciones.json)
 //
@@ -38,8 +39,8 @@ function doGet(e) {
     const ig = iglesia_(p.iglesia);
     switch (p.a) {
       case 'info': return { nombre: ig.nombre, version: ig.version || '1', prueba: !!ig.prueba, actualizado: ig.importado || null };
-      case 'canciones': return cancionero_(ig);
-      case 'cancion': { const s = cancionero_(ig).find(x => x.id === p.id); if (!s) throw apiError_('No existe esa canción.', 'no-existe'); return s; }
+      case 'canciones': return cancioneroConDatos_(ig);
+      case 'cancion': { const s = cancioneroConDatos_(ig).find(x => x.id === p.id); if (!s) throw apiError_('No existe esa canción.', 'no-existe'); return s; }
       case 'historial': anotarPasadas_(ig); return registro_(ig);
       case 'personas': return personas_(ig);
       case 'reuniones': anotarPasadas_(ig); return reuniones_(ig);
@@ -96,6 +97,8 @@ function doPost(e) {
         const r = buscar();
         return elegirVariante_(ig, r, String(b.item || ''), String(b.parte || ''), b.src, b.label);
       });
+      // Músicos, sin clave: intérprete, tono original y BPM de una canción (con historial).
+      case 'editarDatos': return conLock_(() => editarDatos_(ig, String(b.cancion || ''), b.campos, b.quien));
       // Admin: corrección de la canción base → Datos/correcciones.json (SPEC §5).
       case 'corregir': verificarAdmin_(ig, b.idToken); return conLock_(() => corregirCancion_(ig, String(b.cancion || ''), b.correccion));
       case 'borrarReunion': return conLock_(() => { const r = buscar(); autorizar_(ig, r, b, 'borró la reunión'); r.borrada = true; guardarReunion_(ig, r); return true; });

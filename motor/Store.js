@@ -353,3 +353,49 @@ function itemsPlanos_(ig, r) {
   });
   return out;
 }
+
+// ---------- Datos de cada canción editados por los músicos (Datos/datos-canciones.json) ----------
+// { [id]: { interprete?, tonoOriginal?, bpm?, cambios: [{ campo, antes, despues, quien, fecha }] } }
+// Se aplican encima del cancionero importado (sin reimportar). Sin clave: queda quién y cuándo (SPEC §5).
+const CAMPOS_DATOS_ = ['interprete', 'tonoOriginal', 'bpm'];
+function datosCanciones_(ig) {
+  const k = ck_(ig, 'datos-canciones');
+  let d = cacheGet_(k); if (d) return d;
+  d = leerJson_(datos_(ig), 'datos-canciones.json', {}); cachePut_(k, d); return d;
+}
+function conDatos_(s, d) {
+  const x = d && d[s.id]; if (!x) return s;
+  const o = Object.assign({}, s);
+  CAMPOS_DATOS_.forEach(c => { if (x[c] !== undefined) o[c] = x[c]; });
+  o.datosCambios = x.cambios || [];
+  return o;
+}
+function cancioneroConDatos_(ig) { const d = datosCanciones_(ig); return cancionero_(ig).map(s => conDatos_(s, d)); }
+
+function editarDatos_(ig, id, campos, quien) {
+  quien = String(quien || '').trim().slice(0, 40);
+  if (!quien) throw apiError_('Escribí tu nombre para guardar el cambio.', 'nombre');
+  const cache = CacheService.getScriptCache(), min = Math.floor(Date.now() / 60000);
+  const k1 = 'datos:' + ig.rootId + ':' + min, n1 = +(cache.get(k1) || 0);
+  if (n1 >= LIM_ACORDES_.porMinuto) throw apiError_('Demasiados cambios seguidos. Esperá un minuto.', 'limite');
+  const base = cancionero_(ig).find(s => s.id === id);
+  if (!base) throw apiError_('No existe esa canción.', 'no-existe');
+  const d = leerJson_(datos_(ig), 'datos-canciones.json', {});
+  const x = d[id] || { cambios: [] }, actual = conDatos_(base, d), fecha = new Date().toISOString();
+  let n = 0;
+  CAMPOS_DATOS_.forEach(c => {
+    if (!campos || !(c in campos)) return;
+    let v = campos[c];
+    if (c === 'bpm') { v = v === '' || v == null ? null : Math.round(+v); if (v != null && !(v >= 20 && v <= 400)) throw apiError_('BPM inválido (20 a 400).', 'formato'); }
+    else v = String(v == null ? '' : v).trim().slice(0, 80);
+    const antes = actual[c] == null ? (c === 'bpm' ? null : '') : actual[c];
+    if (v === antes) return;
+    x[c] = v; x.cambios = [{ campo: c, antes, despues: v, quien, fecha }].concat(x.cambios || []).slice(0, LIM_ACORDES_.cambios);
+    n++;
+  });
+  if (!n) return conDatos_(base, d);
+  d[id] = x; escribirJson_(datos_(ig), 'datos-canciones.json', d);
+  cacheDel_(ck_(ig, 'datos-canciones'));
+  cache.put(k1, String(n1 + 1), 120);
+  return conDatos_(base, d);
+}

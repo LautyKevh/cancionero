@@ -53,6 +53,8 @@ export class LocalDataSource {
       if (!this.songs) throw new Error('No se pudieron cargar las canciones.');
     }
     write('songsCache', this.songs);
+    const d = read('datosCanciones', {});
+    this.songs = this.songs.map(s => d[s.id] ? { ...s, ...d[s.id].v, datosCambios: d[s.id].cambios } : s);
     await this._seed();
     return this.songs;
   }
@@ -154,6 +156,26 @@ export class LocalDataSource {
     if (lineas == null) delete p.lineas; else p.lineas = structuredClone(lineas);
     p.editado = { quien, fecha };
     this._save(list); return structuredClone(p);
+  }
+
+  /** Músicos, sin clave: intérprete, tono original y BPM (igual que el motor: historial con quién y cuándo). */
+  async editarDatos({ cancion, campos, quien }) {
+    quien = String(quien || '').trim();
+    if (!quien) throw new ClaveError('Escribí tu nombre para guardar el cambio.', 'nombre');
+    const s = (this.songs || []).find(x => x.id === cancion); if (!s) throw new Error('No existe esa canción.');
+    const d = read('datosCanciones', {}), x = d[cancion] || { v: {}, cambios: [] }, fecha = new Date().toISOString();
+    for (const c of ['interprete', 'tonoOriginal', 'bpm']) {
+      if (!campos || !(c in campos)) continue;
+      let v = campos[c];
+      if (c === 'bpm') { v = v === '' || v == null ? null : Math.round(+v); if (v != null && !(v >= 20 && v <= 400)) throw new Error('BPM inválido (20 a 400).'); }
+      else v = String(v ?? '').trim().slice(0, 80);
+      const antes = s[c] ?? (c === 'bpm' ? null : '');
+      if (v === antes) continue;
+      x.v[c] = v; x.cambios = [{ campo: c, antes, despues: v, quien, fecha }].concat(x.cambios).slice(0, 30);
+      s[c] = v;
+    }
+    s.datosCambios = x.cambios; d[cancion] = x; write('datosCanciones', d);
+    return structuredClone(s);
   }
 
   async deleteReunion(id, clave) {

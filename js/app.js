@@ -43,7 +43,11 @@ function armarGrupos() {
   GR = {}; REP = {};
   GRUPOS.forEach(g => {
     const ids = g.filter(songBy); if (ids.length < 2) return; ids.forEach(id => { GR[id] = ids; });
-    // Regla 2: el tono más usado en el Registro (empate: el más reciente). Regla 3: el del primer Word.
+    // Regla 1: el tono original del intérprete (si hay un Word en ese tono). Regla 2: el tono más usado en el
+    // Registro (empate: el más reciente). Regla 3: el del primer Word (o el que Lautaro dijo que se conserva).
+    const orig = ids.map(id => String(songBy(id).tonoOriginal || '').split(/\s*[-→]\s*/)[0]).find(Boolean);
+    const r1 = orig && ids.find(id => songBy(id).tono === orig);
+    if (r1) { ids.forEach(id => { REP[id] = { id: r1, regla: 1 }; }); return; }
     const n = {}, ult = {}, porId = {};
     historyOf(ids, REG, SES, songBy).forEach(x => { const t = String(x.t || '').split(/\s*[-→]\s*/)[0]; if (!t) return;
       n[t] = (n[t] || 0) + 1; porId[x.id] = (porId[x.id] || 0) + 1; if ((x.f || '') >= (ult[t] || '')) ult[t] = x.f || ''; });
@@ -278,13 +282,62 @@ function pickMode(s) {
        <div class="hist-row"><span>Tono última vez</span><b class="kc">${esc(last.t)}</b></div>` : ''}
        ${names.length ? `<div class="hist-row pp"><label><span>Tono por persona</span> <select id="pp"><option value="">Elegir…</option>${names.map(p => `<option>${esc(p)}</option>`).join('')}</select></label><span id="ppo" aria-live="polite"></span></div>` : ''}</div>`;
   app.innerHTML = `${back('Canciones', '#/canciones')}
-  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${esc(interp(s))}</p></div>${stamp(s.tono, !REP[s.id] ? 'Tono original' : REP[s.id].regla === 2 ? 'Tono más usado' : 'Tono original no registrado')}</header>
-  <p class="ask">¿Cómo la vas a usar?</p>${modeChooser()}${hist}`;
+  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${esc(interp(s))}</p></div>${stamp(s.tono, !REP[s.id] ? (s.tonoOriginal && s.tono === String(s.tonoOriginal).split(/\s*[-→]\s*/)[0] ? 'Tono original' : 'Tono') : REP[s.id].regla === 1 ? 'Tono original' : REP[s.id].regla === 2 ? 'Tono más usado' : 'Tono original no registrado')}</header>
+  <p class="ask">¿Cómo la vas a usar?</p>${modeChooser()}${hist}${fichaDatos(s)}`;
   $$('[data-mode]').forEach(b => b.onclick = () => go(`#/cancion/${s.id}/${b.dataset.mode}`));
+  $$('[data-dato]').forEach(b => b.onclick = () => editarDato(s, b.dataset.dato));
   const pp = $('#pp');
   if (pp) pp.onchange = () => {
     const x = per[pp.value];
     $('#ppo').innerHTML = x ? `<b class="kc">${esc(x.t)}</b> <span class="sub">${x.f ? '· ' + esc(fechaLarga(x.f)) : '· sin fecha'}${x.n > 1 ? ' · ' + x.n + ' veces' : ''}</span>` : '';
+  };
+}
+
+// ---------- Datos de la canción (intérprete, tono original, BPM): los edita cualquiera, con nombre e historial ----------
+const CAMPOS = { interprete: 'Intérprete', tonoOriginal: 'Tono original', bpm: 'BPM' };
+const valorDato = (s, c) => c === 'interprete' ? interp(s) : s[c] == null ? '' : String(s[c]);
+function fichaDatos(s) {
+  const h = s.datosCambios || [];
+  return `<section class="datos" aria-label="Datos de la canción"><h3>Datos de la canción</h3><dl>${Object.entries(CAMPOS).map(([c, n]) =>
+    `<div class="dato"><dt>${n}</dt><dd>${valorDato(s, c) ? esc(valorDato(s, c)) : '<i>sin cargar</i>'}</dd><button type="button" class="edd" data-dato="${c}" aria-haspopup="dialog" aria-label="Editar ${n.toLowerCase()}" title="Editar">✎</button></div>`).join('')}</dl>
+    ${h.length ? `<details class="ach"><summary>Historial de cambios (${h.length})</summary><ul>${h.map(x => `<li>${esc(fechaHora(x.fecha))} · ${esc(x.quien)}: ${esc(CAMPOS[x.campo] || x.campo)} «${esc(x.antes ?? '') || '—'}» → «${esc(x.despues ?? '') || '—'}»</li>`).join('')}</ul></details>` : ''}</section>`;
+}
+function editarDato(s, c) {
+  const n = CAMPOS[c], antes = valorDato(s, c);
+  const w = document.createElement('div'); w.className = 'tsheetw';
+  w.innerHTML = `<div class="veil"></div><div class="tsheet" role="dialog" aria-modal="true" aria-labelledby="dd-t"><div class="bar"></div>
+    <h3 id="dd-t">${n} de ${esc(s.titulo)}</h3>
+    <p>Lo ven todos. Queda en el historial con tu nombre, la fecha y la hora.${c === 'tonoOriginal' ? ' Es el tono del intérprete; si modula, separalo con guiones (E-F).' : ''}</p>
+    <label class="acn">${n}<input id="dd-v" value="${esc(antes)}" ${c === 'bpm' ? 'inputmode="numeric" maxlength="3"' : 'maxlength="80"'} autocomplete="off"></label>
+    <label class="acn">Tu nombre<input id="dd-q" value="${esc(P.nombre || '')}" autocomplete="name" maxlength="40" placeholder="Queda guardado en este teléfono"></label>
+    <p class="err" id="dd-err" hidden></p><p id="dd-c" hidden></p>
+    <button type="button" class="ok primary" id="dd-ok">Guardar</button>
+    <button type="button" class="ok" id="dd-x">Cancelar</button></div>`;
+  app.append(w);
+  const q = x => w.querySelector(x), err = q('#dd-err'), v = q('#dd-v'), ok = q('#dd-ok'), conf = q('#dd-c');
+  const fallo = m => { err.textContent = m; err.hidden = false; };
+  const cerrar = () => { w.remove(); document.removeEventListener('keydown', tecla); const b = $(`[data-dato="${c}"]`); if (b) b.focus(); };
+  const tecla = ev => { if (ev.key === 'Escape') cerrar(); };
+  document.addEventListener('keydown', tecla);
+  q('.veil').onclick = cerrar; q('#dd-x').onclick = cerrar; v.focus();
+  let paso = 0;
+  ok.onclick = async () => {
+    err.hidden = true;
+    const val = v.value.trim(), quien = q('#dd-q').value.trim();
+    if (c === 'bpm' && val && !(+val >= 20 && +val <= 400)) return fallo('El BPM va de 20 a 400.');
+    if (c === 'tonoOriginal' && val && !/^[A-G][#b]?m?(\s*[-–]\s*[A-G][#b]?m?)*$/.test(val)) return fallo('Escribí el tono en cifrado americano (por ejemplo Eb, F#m o E-F).');
+    if (val === antes) { cerrar(); toast('No cambiaste nada.'); return; }
+    if (!quien) { fallo('Escribí tu nombre: queda en el historial.'); return; }
+    // Confirmación antes de guardar (lo ven todos).
+    if (!paso) { paso = 1; conf.hidden = false; conf.innerHTML = `¿Guardar ${c === "bpm" ? "el BPM" : "el " + n.toLowerCase()} <b>${esc(val || '(vacío)')}</b>${antes ? ` en lugar de <b>${esc(antes)}</b>` : ''}?`; ok.textContent = 'Sí, guardar'; v.disabled = true; return; }
+    P.nombre = quien; savePrefs();
+    w.querySelectorAll('button').forEach(b => b.disabled = true); ok.textContent = 'Guardando…';
+    try {
+      const x = await ds.editarDatos({ cancion: s.id, campos: { [c]: c === 'bpm' ? (val ? +val : null) : val }, quien });
+      Object.assign(s, { interprete: x.interprete, tonoOriginal: x.tonoOriginal, bpm: x.bpm, datosCambios: x.datosCambios });
+      if (c === 'tonoOriginal') armarGrupos();
+      cerrar(); pickMode(s); toast(n + ' guardado.');
+    } catch (x) { w.querySelectorAll('button').forEach(b => b.disabled = false); ok.textContent = 'Sí, guardar'; fallo(x.message || 'No se pudo guardar.'); }
   };
 }
 
@@ -436,7 +489,7 @@ function drawSheet(anim) {
            : `<button type="button" id="fin" class="nx"><small>Fin de la reunión</small><b>Volver a la lista</b></button>`}</nav>`;
   }
   // Encabezado: intérprete · tono original (y BPM) en un renglón; "Dirige X" abajo, solo si hay director.
-  const meta = [esc(interp(s)), s.medley ? 'Medley' : `Tono original ${esc(s.tono)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')
+  const meta = [esc(interp(s)), s.medley ? 'Medley' : `${s.tonoOriginal ? 'Tono original ' + esc(s.tonoOriginal) : 'Tono ' + esc(s.tono)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')
     + (ctx && ctx.quien ? `</p><p class="meta"><b>Dirige ${esc(ctx.quien)}</b>` : '');
   app.innerHTML = `${r ? back(nombreSes(r), '#/reunion/' + r.id) : back('Canciones', '#/canciones')}
   <article class="sheet">
