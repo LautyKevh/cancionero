@@ -61,10 +61,7 @@ function armarGrupos() {
 // si no "Tono habitual X" (el que más se repite en el Registro; empate: el más reciente), si no "Tono registrado X" (el del Word).
 function tonoMeta(s) {
   if (s.tonoOriginal) return 'Tono original ' + esc(s.tonoOriginal);
-  const n = {}, ult = {};
-  historyOf(versiones(s.id), REG, SES, songBy).forEach(x => { const t = String(x.t || '').split(/\s*[-→]\s*/)[0]; if (!t) return;
-    n[t] = (n[t] || 0) + 1; if ((x.f || '') >= (ult[t] || '')) ult[t] = x.f || ''; });
-  const T = Object.keys(n).sort((a, b) => n[b] - n[a] || (ult[b] || '').localeCompare(ult[a] || ''))[0];
+  const T = tonoHabitual(s);
   return T ? 'Tono habitual ' + esc(T) : 'Tono registrado ' + esc(s.tono);
 }
 // Búsqueda sobre todos los Word; cada grupo aparece una sola vez, con su Word representativo.
@@ -75,9 +72,15 @@ const versiones = id => { const s = songBy(id); if (!s) return [id]; const t = s
   return [...new Set([...SONGS.filter(x => x.titulo.toLowerCase() === t).map(x => x.id), ...(GR[id] || [])])]; };
 const perOf = id => summary(versiones(id), REG, SES, songBy).per;
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-// Semitonos para ver la canción en su tono original (si está cargado y el Word está en otro tono).
-const shOrig = s => { const o = !s || s.medley ? '' : String(s.tonoOriginal || '').split(/\s*[-→]\s*/)[0].trim(); return o && o !== s.tono ? shiftTo(s, o) : 0; };
-// Tono con que entra a una reunión: el original (transportado), si no el del Word.
+// Tono con que se muestra y abre una canción (misma regla que el encabezado): original del intérprete;
+// si no, el habitual (el que más se repite en el Registro; empate: el más reciente); si no, el del Word.
+const tonoHabitual = s => { const n = {}, ult = {};
+  historyOf(versiones(s.id), REG, SES, songBy).forEach(x => { const t = String(x.t || '').split(/\s*[-→]\s*/)[0]; if (!t) return;
+    n[t] = (n[t] || 0) + 1; if ((x.f || '') >= (ult[t] || '')) ult[t] = x.f || ''; });
+  return Object.keys(n).sort((a, b) => n[b] - n[a] || (ult[b] || '').localeCompare(ult[a] || ''))[0] || ''; };
+const tonoRegla = s => !s || s.medley ? (s && s.tono) || '' : String(s.tonoOriginal || '').split(/\s*[-→]\s*/)[0].trim() || tonoHabitual(s) || s.tono;
+const shOrig = s => { const t = tonoRegla(s); return t && t !== s.tono ? shiftTo(s, t) : 0; };
+// Tono que se ve en la lista, el buscador y al agregar a una reunión: el mismo con que abre.
 const tonoInicial = s => shOrig(s) ? keyOption({ ...s, tono: keyAt(s, shOrig(s)) }) : keyOption(s);
 const interp = s => s.interprete && s.interprete !== '-' ? s.interprete : '';
 // Ítems de reunión: canción ({ id }) o medley ({ tipo: 'medley', nombre, canciones: [{ id }] }).
@@ -234,7 +237,7 @@ addEventListener('online', paintStatus); addEventListener('offline', paintStatus
 // ---------- Componentes ----------
 const songItem = ({ s, snip, who }, attr) => `<li><button type="button" ${attr}="${esc(s.id)}" class="row">
   <span class="row-main"><b>${esc(s.titulo)}</b><small>${who ? esc(who) : snip ? '“' + esc(snip) + '”' : esc(interp(s))}</small></span>
-  <span class="key">${esc(s.tono)}</span></button></li>`;
+  <span class="key">${esc(tonoInicial(s))}</span></button></li>`;
 
 const back = (label, hash) => `<a class="back" href="${hash}" data-back>← ${esc(label)}</a>`;
 
@@ -309,7 +312,7 @@ function pickMode(s) {
        <div class="hist-row"><span>Tono última vez</span><b class="kc">${esc(last.t)}</b></div>` : ''}
        ${names.length ? `<div class="hist-row pp"><label><span>Tono por persona</span> <select id="pp"><option value="">Elegir…</option>${names.map(p => `<option>${esc(p)}</option>`).join('')}</select></label><span id="ppo" aria-live="polite"></span></div>` : ''}</div>`;
   app.innerHTML = `${back('Canciones', '#/canciones')}
-  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${[esc(interp(s)), `${tonoMeta(s)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')}</p></div>${stamp(shOrig(s) ? keyAt(s, shOrig(s)) : s.tono, shOrig(s) ? 'Tono original' : !REP[s.id] ? (s.tonoOriginal && s.tono === String(s.tonoOriginal).split(/\s*[-→]\s*/)[0] ? 'Tono original' : 'Tono') : REP[s.id].regla === 1 ? 'Tono original' : REP[s.id].regla === 2 ? 'Tono más usado' : 'Tono original no registrado')}</header>
+  <header class="songhead"><div><h2 class="title">${esc(s.titulo)}</h2><p class="meta">${[esc(interp(s)), `${tonoMeta(s)}${s.bpm ? ' · ' + esc(s.bpm) + ' BPM' : ''}`].filter(Boolean).join(' · ')}</p></div>${stamp(shOrig(s) ? keyAt(s, shOrig(s)) : s.tono, shOrig(s) ? (s.tonoOriginal ? 'Tono original' : 'Tono habitual') : !REP[s.id] ? (s.tonoOriginal && s.tono === String(s.tonoOriginal).split(/\s*[-→]\s*/)[0] ? 'Tono original' : 'Tono') : REP[s.id].regla === 1 ? 'Tono original' : REP[s.id].regla === 2 ? 'Tono más usado' : 'Tono original no registrado')}</header>
   <p class="ask">¿Cómo la vas a usar?</p>${modeChooser()}${hist}${fichaDatos(s)}`;
   $$('[data-mode]').forEach(b => b.onclick = () => go(`#/cancion/${s.id}/${b.dataset.mode}`));
   $$('[data-dato]').forEach(b => b.onclick = () => editarDato(s, b.dataset.dato));
@@ -1101,7 +1104,7 @@ function editSes(r) {
     arrastrar($('#mbl'), L.map(li => [li]), L.map(li => li.querySelector('[data-mh]')), (a, b, tecla) => {
       const [x] = med.splice(a, 1); med.splice(b, 0, x); pintaMed(); if (tecla) { const f = $(`[data-mh="${b}"]`); if (f) f.focus(); }
     });
-    if (!tonoElegido) { const t = med[0] ? keyOption(med[0]) : ''; mbt.innerHTML = KEYS.map(k => `<option${k === t ? ' selected' : ''}>${k}</option>`).join(''); }
+    if (!tonoElegido) { const t = med[0] ? tonoInicial(med[0]) : ''; mbt.innerHTML = KEYS.map(k => `<option${k === t ? ' selected' : ''}>${k}</option>`).join(''); }
     $('#mbok').disabled = med.length < 2;
   };
   $('#mb').onclick = () => { const abre = mbx.hidden; mbx.hidden = !abre; $('#mb').setAttribute('aria-expanded', String(abre)); if (abre) { pintaMed(); mbq.focus(); } };
@@ -1249,7 +1252,7 @@ function parts(r, i, abrirTono) {
   const MANIJA = '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 5h12M3 9h12M3 13h12"/></svg>';
   app.innerHTML = `${back('Editar reunión', '#/reunion/' + r.id + '/editar')}<h2 class="title">${esc(tituloItem(c))}</h2><p class="meta">${medley ? 'Medley · ' : ''}Orden de las partes</p>
   <div class="modbox"><label class="sw"><input type="checkbox" id="mo"${modul ? ' checked' : ''}${medley ? ' disabled' : ''}> Modulante</label><p class="hint">${medley ? 'Un medley siempre permite cambiar de tono entre partes' : 'Permite cambiar de tono entre partes'}</p>
-    <div class="edr"><label>Tono de inicio<select id="ti">${opts(c.tono || keyOption(primera), '')}</select></label></div></div>
+    <div class="edr"><label>Tono de inicio<select id="ti">${opts(c.tono || tonoInicial(primera), '')}</select></label></div></div>
   <ol class="pl">${c.arr.map((e, j) => `<li class="pc${PT[j].transicion ? ' tr' : ''}">${cancionDe(j)}
     <button type="button" class="h" data-h="${j}" aria-label="Mover ${esc(nom(e))} (flechas arriba y abajo)">${MANIJA}</button>
     <div class="t"><b>${esc(nom(e))}</b><button type="button" class="rp${rOf(e) > 1 ? ' mas' : ''}" data-r="${j}" aria-haspopup="true" aria-expanded="false" aria-label="Repeticiones: ${rOf(e)}">x${rOf(e)}</button></div>
