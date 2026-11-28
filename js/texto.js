@@ -26,12 +26,21 @@ export function lineasATexto(L, chord, line) {
     else if (l.t === 'ly') out.push(l.v);
     else if (l.t === 'ch' || l.t === 'mix') out.push(line(l.v, l.t === 'mix'));
     else if (l.t === 'pair') {
-      let fila = '', col = 0;
+      // Si un acorde no entra sobre su sílaba (acordes juntos), la letra se estira como en el Word: con "_" dentro
+      // de una palabra ("de_rro_ta") o con espacios entre palabras. Al convertir, los "_" se borran.
+      let fila = '', letra = '';
       l.segs.forEach(([c, t]) => {
-        if (c) { const x = chord(c); fila = fila.padEnd(Math.max(col, fila.length ? fila.length + 1 : 0)) + x; }
-        col += t.length;
+        if (c) {
+          const min = fila.length ? fila.length + 1 : 0;
+          if (min > letra.length) {
+            const enPalabra = /\S$/.test(letra) && /^\S/.test(t);
+            letra = letra.padEnd(min, enPalabra ? '_' : ' ');
+          }
+          fila = fila.padEnd(letra.length) + chord(c);
+        }
+        letra += t;
       });
-      out.push(fila, l.segs.map(x => x[1]).join(''));
+      out.push(fila, letra);
     }
   });
   while (out.length && !out[out.length - 1].trim()) out.pop();
@@ -75,7 +84,10 @@ export function textoALineas(texto, chord, line, conPuente) {
         const segs = [];
         if (!pos.length || pos[0][0] > 0) segs.push(['', pos.length ? lyr.slice(0, pos[0][0]) : lyr]);
         pos.forEach(([a, c], q) => segs.push([ac(c), lyr.slice(a, q + 1 < pos.length ? pos[q + 1][0] : lyr.length)]));
-        L.push({ t: 'pair', segs: segs.map(([c, w]) => [c, w.replace(/_+/g, '').replace(/ {2,}/g, ' ')]) });
+        // Sin "_" de estiramiento ni espacios repetidos, tampoco entre un segmento y el siguiente.
+        const out = segs.map(([c, w]) => [c, w.replace(/_+/g, '').replace(/ {2,}/g, ' ')]);
+        out.forEach((sg, q) => { if (q && /\s$/.test(out[q - 1][1]) && /^\s/.test(sg[1])) sg[1] = sg[1].replace(/^\s+/, ''); });
+        L.push({ t: 'pair', segs: out });
         i++; continue;
       }
       if (!conNota) { L.push({ t: 'ch', v: line(s, false) }); continue; }
