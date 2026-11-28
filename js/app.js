@@ -4,6 +4,7 @@ import { ApiDataSource } from './apidatasource.js';
 import { CONFIG } from './config.js';
 import { demoSeed } from './demo.js';
 import { KEYS, keyAt, shiftTo, keyOption, showKey, transposer, tonosDelItem, tonoMas, intervalo, enTonos, tituloTransportado, CHORD } from './music.js';
+import { lineasATexto, textoALineas } from './texto.js';
 import { prepare, blocksOf, contenidoDe, SUBA, defArr, isDefArr, mismoOrden, variantesDe, blockText, base, rOf, labOf, summary, historyOf, search, fmt, isoOf } from './songs.js';
 import { GRUPOS } from './grupos.js';
 
@@ -421,7 +422,7 @@ function sheetRows(item, mus, vari, ed) {
     // En Músico, una parte repetida en el mismo tono va solo con su título; en otro tono, completa.
     // Acordes editados por los músicos para esta reunión (e.lineas, en el tono escrito); si no, los del Word.
     const base_ = e.lineas || (b && b.lines);
-    const clave = p.cancion + '#' + (b ? b.id : e.src) + (e.lineas ? '~' + (e.pid || k) : '') + '@' + tonoMas(p.tono, 0);
+    const clave = p.cancion + '#' + (b ? b.id : e.src) + (e.lineas ? '~' + JSON.stringify(e.lineas) : '') + '@' + tonoMas(p.tono, 0);
     let ls = base_ && !(mus && seen.has(clave)) ? base_ : [];
     if (base_) seen.add(clave);
     info[k] = { escr, sh: shT, tono: p.tono, lines: base_ || [] };
@@ -473,7 +474,7 @@ function sheetRows(item, mus, vari, ed) {
     // Fuera de ese modo la hoja no muestra nada nuevo.
     const edP = ed && base_ && base_.some(l => l.t !== 'blank');
     const tag = edP && e.lineas ? `<span class="edtag">editada${e.editado && e.editado.quien ? ' · ' + esc(e.editado.quien) : ''}</span>` : '';
-    const sec = edP ? `<section class="parte edp" data-ac="${k}" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Editar acordes de ${esc(label || 'la parte')}${e.lineas ? ' (editada)' : ''}">` : '<section class="parte">';
+    const sec = edP ? `<section class="parte edp" data-k="${k}" data-ac="${k}" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Editar letra y acordes de ${esc(label || 'la parte')}${e.lineas ? ' (editada)' : ''}">` : `<section class="parte" data-k="${k}">`;
     // Una parte de un solo renglón de acordes (Intro, Inter, Final) los muestra al lado del título; con 2 o más, abajo.
     if (label && ls.length === 1 && L.length === 1 && (ls[0].t === 'ch' || (ls[0].t === 'mix' && ls[0].at == null)))
       return `${sep}${sec}<div class="sec inl"><span>${esc(label)}</span>${ind}<span class="${ls[0].t}">${esc(textoCh(ls[0]))}</span></div>${tag}</section>`;
@@ -521,11 +522,11 @@ function drawSheet(anim) {
     + (ctx && ctx.quien ? `</p><p class="meta"><b>Dirige ${esc(ctx.quien)}</b>` : '');
   app.innerHTML = `${r ? back(nombreSes(r), '#/reunion/' + r.id) : back('Canciones', '#/canciones')}
   <article class="sheet">
-    <header class="songhead"><div><h2 class="title">${esc(s.titulo)}${puedeEd ? `<button type="button" class="edm${ed ? ' on' : ''}" id="edm" aria-pressed="${ed}" aria-label="${ed ? 'Salir del modo edición' : 'Editar acordes'}" title="Editar acordes">✎</button>` : ''}</h2><p class="meta">${meta}</p></div>
+    <header class="songhead"><div><h2 class="title">${esc(s.titulo)}${puedeEd ? `<button type="button" class="edm${ed ? ' on' : ''}" id="edm" aria-pressed="${ed}" aria-label="${ed ? 'Salir del modo edición' : 'Editar letra y acordes'}" title="Editar letra y acordes">✎</button>` : ''}</h2><p class="meta">${meta}</p></div>
       ${!mus ? '' : !c ? stamp(kd, shift ? 'Ahora' : 'Tono') : enReu ? stamp(kd, 'Reunión')
         : `<button type="button" class="stamp volver" id="vreu" aria-label="Tono ${esc(kd)}. Volver al tono de la reunión, ${esc(kReu)}"><span class="stamp-k">${esc(kd)}</span><span class="stamp-l">↺ Volver a ${esc(kReu)}</span></button>`}</header>
     <div class="ctl" role="toolbar" aria-label="Controles">${ctl}</div>
-    ${ed ? '<div class="edbar" role="status"><span><b>Modo edición</b>Tocá una parte para cambiar sus acordes.</span><button type="button" class="primary" id="edok">Listo</button></div>' : ''}
+    ${ed ? '<div class="edbar" role="status"><span><b>Modo edición</b>Tocá una parte para cambiar letra y acordes.</span><button type="button" class="primary" id="edok">Listo</button></div>' : ''}
     <div class="lines ${mus ? '' : 'singer'}${ed ? ' editando' : ''}">${rows}</div>
     <div class="sheetend"><button type="button" id="pr">Imprimir o guardar PDF</button></div>
   </article>${nav}`;
@@ -616,7 +617,6 @@ function hojaVariante(r, i, k) {
  * se toca, renglón por renglón, encima de la letra (que no se toca), y se guardan en el tono escrito.
  * También: historial de la parte y "Restaurar acordes" (versión base o como la última vez).
  */
-const ACORDE_OK = t => CHORD.test(t.replace(/[{}]/g, '')) || /^[-–|/()[\]{}]+$/.test(t) || /^\(?[x×]\d+\)?$/i.test(t);
 const fechaHora = iso => { const d = new Date(iso); if (isNaN(d)) return '';
   const h = isoOf(d) === isoOf(new Date()) ? 'hoy' : fmt(isoOf(d)).slice(0, 5);
   return `${h} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
@@ -671,96 +671,82 @@ function hojaAcordes(r, i, k, inf, arrUsado) {
   const e0 = (c.arr || []).length ? c.arr[k] : arrUsado[k]; if (!e0) return;
   const TD = transposer({ tono: inf.escr || 'C' }, inf.sh || 0, 0);                    // escrito → tocado (cifrado americano)
   const TB = transposer({ tono: tonoMas(inf.escr || 'C', inf.sh || 0) }, -(inf.sh || 0), 0);  // tocado → escrito
-  const ac = (X, t) => /\s/.test(t) ? xpose(X, t) : X.chord(t);
-  // Un renglón por línea: acordes (editable) y letra (fija). Las indicaciones "(Sube a X)" no se editan.
-  const R0 = inf.lines.map(l => {
-    if (l.t === 'pair') {
-      let fila = '', col = 0;
-      l.segs.forEach(([ch, t]) => { if (ch) { const x = ac(TD, ch); fila = fila.padEnd(Math.max(col, fila.length ? fila.length + 1 : 0)) + x; } col += t.length; });
-      return { l, fila, letra: l.segs.map(x => x[1]).join('') };
-    }
-    if (l.t === 'ly') return SUBA.test(l.v.trim()) ? { l, fija: true, letra: l.v } : { l, fila: '', letra: l.v };
-    if (l.t === 'ch' || l.t === 'mix') return { l, fila: TD.line(l.v, l.t === 'mix') };
-    return { l, fija: true, letra: '' };
-  });
-  const ancho = Math.max(20, ...R0.map(x => Math.max((x.fila || '').length, (x.letra || '').length))) + 8;
+  const ac = X => t => /\s/.test(t) ? xpose(X, t) : X.chord(t);
+  const ln = X => (v, mix) => X.line(v, mix);
+  const texto0 = lineasATexto(inf.lines, ac(TD), ln(TD));
+  const conPuente = inf.lines.some(l => l.puente);
+  // La misma parte en todo el arreglo (Coro que vuelve): el cambio va a todas sus apariciones.
+  const arrA = (c.arr || []).length ? c.arr : arrUsado;
+  const mismas = arrA.map((x, j) => j).filter(j => j === k || (!e0.nueva && !arrA[j].nueva && arrA[j].src === e0.src && (arrA[j].cancion || null) === (e0.cancion || null)));
   const nombre = labOf(e0) || 'la parte', ult = ultimaVezParte(r, c, e0);
   const igualA = L => JSON.stringify(L || null) === JSON.stringify(e0.lineas || null);
-  const hist = [].concat(e0.editado ? [{ ahora: true, quien: e0.editado.quien, fecha: e0.editado.fecha, lineas: e0.lineas || null }] : [], e0.cambios || []);
-  const quienH = h => h.lineas ? (h.quien ? esc(h.quien) : 'Acordes editados') : 'Versión base';
+  // Versiones anteriores: solo las que quedaron al guardar un cambio (la actual está en el cuadro).
+  const prev = (e0.cambios || []).filter(h => !igualA(h.lineas));
+  const nomV = h => h.lineas ? 'Editada' : 'Versión base';
+  const filas = Math.min(18, Math.max(6, texto0.split('\n').length + 1));
   const w = document.createElement('div'); w.className = 'tsheetw';
   w.innerHTML = `<div class="veil"></div><div class="tsheet acsheet" role="dialog" aria-modal="true" aria-labelledby="ah-t"><div class="bar"></div>
-    <h3 id="ah-t">Acordes de ${esc(nombre)}</h3>
-    <p>En ${esc(inf.tono || '')}, solo para esta reunión: lo ven todos. La letra no se cambia.${P.not ? ' Escribí los acordes en cifrado americano (C, D, E…).' : ''}</p>
-    <div class="acx"><div class="acg" style="--w:${ancho}ch">${R0.map((x, j) => x.fija
-      ? (x.letra ? `<div class="acl mute">${esc(x.letra)}</div>` : '<div class="acgap"></div>')
-      : `<input class="acf" data-j="${j}" value="${esc(x.fila)}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Acordes del renglón ${j + 1}${x.letra ? ': ' + esc(x.letra.slice(0, 40)) : ''}">${x.letra != null ? `<div class="acl">${esc(x.letra)}</div>` : ''}`).join('')}</div></div>
+    <h3 id="ah-t">${esc(nombre)}</h3>
+    <p>En ${esc(inf.tono || '')}, como en el Word: acordes arriba de la letra. Solo para esta reunión; lo ven todos.${mismas.length > 1 ? ` Cambia las ${mismas.length} veces que aparece.` : ''}${P.not ? ' Acordes en cifrado americano (C, D, E…).' : ''}</p>
+    <textarea class="actx" id="ac-t" rows="${filas}" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Letra y acordes de ${esc(nombre)}">${esc(texto0)}</textarea>
+    <div id="ac-pv" hidden><h4>Vista previa</h4><div class="acpv"></div><ul class="acav" id="ac-av"></ul></div>
     <p class="err" id="ac-err" hidden></p>
-    <button type="button" class="ok primary" id="ac-ok">Guardar acordes</button>
-    ${(e0.lineas && !e0.nueva) || (ult && !igualA(ult.lineas)) ? `<h4>Restaurar acordes</h4><div class="acr">
+    <div class="acbt"><button type="button" class="neutro" id="ac-x">Cancelar</button><button type="button" class="primary" id="ac-ok">Vista previa</button></div>
+    ${(e0.lineas && !e0.nueva) || (ult && !igualA(ult.lineas)) ? `<h4>Restaurar</h4><div class="acr">
       ${e0.lineas && !e0.nueva ? '<button type="button" data-rs="base">Versión base</button>' : ''}
       ${ult && !igualA(ult.lineas) ? `<button type="button" data-rs="ult">Como la última vez (${esc(fmt(ult.fecha).slice(0, 5))})</button>` : ''}</div>` : ''}
-    ${hist.length ? `<details class="ach"><summary>Historial de esta parte</summary><ul>${hist.map((h, n) => `<li><span>${h.ahora ? '<b>Ahora</b> · ' : ''}${quienH(h)}${h.fecha ? ' · ' + esc(fechaHora(h.fecha)) : ''}</span>${!h.ahora && !igualA(h.lineas) ? `<button type="button" data-hi="${n}">Restaurar</button>` : ''}</li>`).join('')}</ul></details>` : ''}
-    <button type="button" class="ok" id="ac-x">Cancelar</button></div>`;
+    ${prev.length ? `<details class="ach"><summary>Versiones anteriores (${prev.length})</summary><ul>${prev.map((h, n) => `<li><span>${nomV(h)}${h.fecha ? ' · ' + esc(fechaHora(h.fecha)) : ''}</span><button type="button" data-hi="${n}">Restaurar</button></li>`).join('')}</ul></details>` : ''}
+    </div>`;
   app.append(w);
-  const err = w.querySelector('#ac-err');
+  const q = x => w.querySelector(x), err = q('#ac-err'), tx = q('#ac-t'), ok = q('#ac-ok'), pv = q('#ac-pv');
   const fallo = m => { err.textContent = m; err.hidden = false; err.scrollIntoView({ block: 'nearest' }); };
   const cerrar = () => { w.remove(); document.removeEventListener('keydown', tecla); const b = $(`[data-ac="${k}"]`); if (b) b.focus({ preventScroll: true, focusVisible: false }); };
   const tecla = ev => { if (ev.key === 'Escape') cerrar(); };
   document.addEventListener('keydown', tecla);
-  w.querySelector('.veil').onclick = cerrar; w.querySelector('#ac-x').onclick = cerrar;
+  q('.veil').onclick = cerrar; q('#ac-x').onclick = cerrar;
 
-  // Renglón editado → línea en el tono escrito. Los que no se tocaron quedan exactamente como estaban.
-  const leer = () => {
-    const out = [];
-    for (const [j, x] of R0.entries()) {
-      const inp = w.querySelector(`.acf[data-j="${j}"]`);
-      if (!inp || inp.value.replace(/\s+$/, '') === x.fila.replace(/\s+$/, '')) { out.push(x.l); continue; }
-      const toks = [...inp.value.matchAll(/\S+/g)], malo = toks.find(m => !ACORDE_OK(m[0]));
-      if (malo) throw new Error(`No reconozco “${malo[0]}” como acorde (renglón ${j + 1}).`);
-      const marcas = {}; ['puente', 'modula', 'repite', 'at'].forEach(m => { if (x.l[m] != null) marcas[m] = x.l[m]; });
-      if (x.letra == null) {                                                  // renglón solo de acordes
-        out.push(toks.length ? { ...marcas, t: x.l.t, v: TB.line(inp.value.replace(/\s+$/, ''), x.l.t === 'mix') } : { t: 'blank' });
-        continue;
-      }
-      if (!toks.length) { out.push({ t: 'ly', v: x.letra }); continue; }
-      // Cada acorde se ancla a la letra en su columna (los que pasan el final quedan al final).
-      const L = x.letra, pos = toks.map(m => Math.min(m.index, L.length)), segs = [];
-      if (pos[0] > 0) segs.push(['', L.slice(0, pos[0])]);
-      toks.forEach((m, n) => segs.push([ac(TB, m[0]), L.slice(pos[n], n + 1 < toks.length ? pos[n + 1] : L.length)]));
-      out.push({ ...(x.l.t === 'pair' ? marcas : {}), t: 'pair', segs });
-    }
-    return out;
-  };
   const guardar = async (lineas, btn) => {
     const sinArr = !(c.arr || []).length;
     // Ítem en el orden original: el arreglo base con pids (igual que el motor) para poder guardar una parte.
     if (sinArr) c.arr = arrUsado.map((x, j) => ({ ...x, pid: c.pid + 'p' + j }));
-    const e = c.arr[k];
-    w.querySelectorAll('button').forEach(b => b.disabled = true); if (btn) btn.textContent = 'Guardando…';
+    w.querySelectorAll('button,textarea').forEach(b => b.disabled = true); if (btn) btn.textContent = 'Guardando…';
     try {
-      const p = await ds.editarAcordes({ id: r.id, i, k, item: c.pid, parte: e.pid, lineas, base: c.arr });
-      if (p.lineas) e.lineas = p.lineas; else delete e.lineas;
-      e.cambios = p.cambios; e.editado = p.editado;
+      for (const j of mismas) {
+        const e = c.arr[j];
+        const p = await ds.editarAcordes({ id: r.id, i, k: j, item: c.pid, parte: e.pid, lineas, base: c.arr });
+        if (p.lineas) e.lineas = p.lineas; else delete e.lineas;
+        e.cambios = p.cambios; e.editado = p.editado;
+      }
       cerrar(); const y = scrollY; drawSheet(); scrollTo(0, y);
-      toast(lineas ? 'Acordes guardados.' : 'Volvió a la versión base.');
+      toast(lineas ? 'Cambios guardados.' : 'Volvió a la versión base.');
     } catch (x) {
-      if (sinArr) c.arr = [];
-      w.querySelectorAll('button').forEach(b => b.disabled = false); if (btn) btn.textContent = btn.dataset.t || btn.textContent;
+      if (sinArr && !mismas.some(j => c.arr[j].editado)) c.arr = [];
+      w.querySelectorAll('button,textarea').forEach(b => b.disabled = false); if (btn) btn.textContent = btn.dataset.t || btn.textContent;
       fallo(x.message || 'No se pudo guardar.');
     }
   };
-  const ok = w.querySelector('#ac-ok'); ok.dataset.t = ok.textContent;
+  // Primer toque: vista previa (como se verá en la hoja) y avisos. Segundo: guardar. Si se vuelve a escribir, otra vez vista previa.
+  let listo = null;
+  tx.oninput = () => { if (listo) { listo = null; pv.hidden = true; ok.textContent = 'Vista previa'; } err.hidden = true; };
   ok.onclick = () => {
-    let L; try { L = leer(); } catch (x) { fallo(x.message); return; }
-    if (L.every((l, j) => l === R0[j].l)) { cerrar(); toast('No cambiaste ningún acorde.'); return; }
-    guardar(L, ok);
+    if (listo) return guardar(listo, ok);
+    if (tx.value.replace(/\s+$/gm, '').trim() === texto0.replace(/\s+$/gm, '').trim()) { cerrar(); toast('No cambiaste nada.'); return; }
+    const { lineas, avisos } = textoALineas(tx.value, ac(TB), ln(TB), conPuente);
+    if (!lineas.length) { fallo('La parte quedó vacía.'); return; }
+    // Vista previa: la canción entera con el cambio, y se muestra solo esta parte.
+    const it = { ...c, arr: arrA.map((x, j) => mismas.includes(j) ? { ...x, lineas } : x) };
+    const box = document.createElement('div'); box.innerHTML = sheetRows(it, true).rows;
+    const sec = box.querySelector(`section[data-k="${k}"]`);
+    q('.acpv').innerHTML = `<div class="lines wrap">${sec ? sec.outerHTML : ''}</div>`;
+    q('#ac-av').innerHTML = avisos.map(a => `<li>${esc(a)}</li>`).join('');
+    pv.hidden = false; fixChords(q('.acpv .lines')); listo = lineas; ok.dataset.t = ok.textContent = 'Guardar';
+    pv.scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' });
   };
   w.querySelectorAll('[data-rs]').forEach(b => { b.dataset.t = b.textContent; b.onclick = () => guardar(b.dataset.rs === 'ult' ? ult.lineas : null, b); });
-  w.querySelectorAll('[data-hi]').forEach(b => { b.dataset.t = b.textContent; b.onclick = () => guardar(hist[+b.dataset.hi].lineas, b); });
-  (w.querySelector('.acf') || ok).focus({ preventScroll: true });
-  if (!reduced()) { w.querySelector('.tsheet').animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.7,.2,1)' });
-                    w.querySelector('.veil').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 }); }
+  w.querySelectorAll('[data-hi]').forEach(b => { b.dataset.t = b.textContent; b.onclick = () => guardar(prev[+b.dataset.hi].lineas, b); });
+  tx.focus({ preventScroll: true });
+  if (!reduced()) { q('.tsheet').animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.2,.7,.2,1)' });
+                    q('.veil').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 }); }
 }
 
 function anchorMixes() {
