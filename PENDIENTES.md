@@ -41,8 +41,7 @@ Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesi
 - `temprano-yo-te-buscare-2`: en el Word los acordes no caen sobre la sílaba (por ejemplo, "Oh! tu diestra me ha sostenido" con G/E y C/A al principio, y "Porque tu diestra" con C y Am corridos). En la versión 1 están bien.
 - `anclado-en-la-roca-yahweh-2`: revisar de qué archivo sale el -2 (posible duplicado). Hoy figuran "Anclado en la roca (YAHWEH) [B]" y "[C]".
 - "Inter (E B/G#m B)(…)": el bajo "G#m" no es un acorde válido, así que esa línea no se toma como título con acordes. Probable error de tipeo en el archivo.
-- Sin títulos de parte (o con uno solo): En el monte Calvario, Ven ante Su trono [Eb], Atráeme a ti y Nos unimos al cielo. Lautaro los corrige en el Word.
-- Qué sería de mí [F#], Tu amor por mí [D] y Eres fiel [E]: el Word dice otro tono que el nombre ([G], [B] y [D]); los dos primeros son copias corregidas del [G] y del [B]. Decide Lautaro (ver referencia/tareas-drive.md, 1.1).
+- Sin títulos de parte: En el monte Calvario y Ven ante Su trono [Eb] (ninguno); Atráeme a ti (falta el de los primeros 7 renglones). Nos unimos al cielo tiene solo [Coro]: bien si la canción es solo eso. Lautaro los corrige en el Word.
 - "Interlude 2" + "(Chorus)" en "Because He Lives" y "Coro 2" + "(final)" en "Jesucristo basta": el paréntesis queda como aclaración del título de arriba, no como parte nueva. Confirmar que es lo que se quiere.
 - "Al estar aquí": el segundo "Verso 1" trae "(Baja a F#)" y además el último renglón con otros acordes; se muestra tal cual. Decidido: Lautaro lo corrige en el Word más adelante; la app no tiene una regla especial.
 - Confirmar en el diálogo real de impresión (compu y celular) que no salen encabezado ni pie del navegador.
@@ -87,8 +86,7 @@ Detalle en `referencia/SPEC.md`: §4 (roles), §5 (modelo de datos), §6 (conver
 - **Ya hecho (Fase 2):** ítems medley guardados y validados en el motor; el registro y el historial los expanden canción por canción (hoy con un solo tono por canción, no la secuencia).
 
 ## Fase 2 (motor)
-- Reimportar en PRUEBA (conversor 11): Te alabaré queda C → D → Eb y se van los caracteres invisibles de Qué sería de mí [G] y Tu amor por mí [B].
-- Decidir (Lautaro): los ( ) al final de una parte que están justo antes de un cambio de tono y funcionan como puente (Al estar aquí, Awesome God, Hay poder x2, Quiero llenar, Suenen dulces himnos). Hoy se ven siempre, tal cual, transportados con su parte.
+- Reimportar en PRUEBA (conversor 11; la última importación es del 28-11 00:50, anterior al motor @38 y al borrado de Qué sería de mi [G], Tu amor por mi [B] y Eres fiel [D]). Después, verificar: Te alabaré C → D → Eb, sin caracteres invisibles, Completo en ti con "G-Am" y los 3 Word fuera del cancionero.
 - Anclar notas sueltas a una palabra (`at`), como en la referencia de "Quién más".
 - Conservar los saltos de línea dentro de un párrafo del Word (`<w:br/>`), como en "Jesucristo basta".
 - Pasar a estable con los datos reales de IBSI (`registrarIBSI()`), con aprobación.

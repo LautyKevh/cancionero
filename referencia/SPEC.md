@@ -86,6 +86,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Cambiar el arreglo de una reunión nunca modifica la canción base.
 - **Título de parte "… en X"** ("Coro en Eb"): esa parte está en el tono X.
 - **Caracteres invisibles** (espacio de ancho cero, BOM) en el Word: el motor los saca antes de convertir.
+- **El tono lo manda la primera línea del Word**, no el nombre del archivo: si no coinciden ("Qué sería de mi [F#]" con [G] adentro) no es error y no se marca.
 - **Tono del título con barra:** en `[C/D - Eb]` la barra separa tonos (estrofa en C, coro en D, sube a Eb): no es un acorde con bajo.
 - **Word locales:** Lautaro tiene los Word en su PC y sube a Drive solo los que elige; las cantidades no tienen por qué coincidir. No se compara el local contra Drive salvo que lo pida.
 - **Nombres de archivo en Drive:** no se renombran (sirven para identificarlos fuera de la app). El paréntesis del nombre queda donde y como está; si Lautaro lo borra, se borra también en la app.
@@ -167,7 +168,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
     - las indicaciones `(Sube a X)` y `(Baja a X)`.
   - El admin puede corregirlo.
 - **Modulante:** la canción es Modulante si sus partes no están todas en el mismo tono. El conversor la marca sola y el admin puede cambiarlo.
-- **Paréntesis `( )` en los Word = "opcional / a veces se hace / en la segunda vuelta".** Se muestran SIEMPRE, tal cual, y se transportan con su parte si son acordes. Nunca se ocultan ni dependen del tono de la parte siguiente. Ejemplos: `Eb (Eb/G)` al final de un renglón; `[Coro 1] (Primera vez menos acordes)` en un título; `(Eb)` al final de un coro de "Hay poder". El conversor todavía marca `puente` en la última línea de una parte que termina con `( )`, pero la app no lo usa para ocultar nada. Las únicas excepciones son las indicaciones de tono `(Sube a X)` / `(Baja a X)` y `(SUBE)` / `(BAJA)` antes de un título, que se reemplazan por el indicador de cambio de tono.
+- **Paréntesis `( )` en los Word = "opcional / a veces se hace / en la segunda vuelta".** Se muestran SIEMPRE, tal cual, y se transportan con su parte si son acordes. Nunca se ocultan ni dependen del tono de la parte siguiente. Esto incluye los ( ) que están justo antes de un cambio de tono y funcionan como puente (Hay poder, Al estar aquí, Awesome God, Quiero llenar, Suenen dulces himnos): se ven siempre, como cualquier ( ). Ejemplos: `Eb (Eb/G)` al final de un renglón; `[Coro 1] (Primera vez menos acordes)` en un título; `(Eb)` al final de un coro de "Hay poder". El conversor todavía marca `puente` en la última línea de una parte que termina con `( )`, pero la app no lo usa para ocultar nada. Las únicas excepciones son las indicaciones de tono `(Sube a X)` / `(Baja a X)` y `(SUBE)` / `(BAJA)` antes de un título, que se reemplazan por el indicador de cambio de tono.
 - **Acordes `[ ]` y `{ }` al final de una parte** (convención de la iglesia). Ambos son acordes y se transportan. Van en la misma línea de acordes que la letra, así que la línea de letra queda pegada a sus acordes.
   - `[ ]` = acordes puente para **modular**. Son, junto con `{ }`, los únicos que se ocultan o se muestran según el tono de la parte siguiente.
   - `{ }` = cierre para **repetir en el mismo tono**.

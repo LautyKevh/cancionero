@@ -31,16 +31,9 @@
 
 ## 1. Corregir Word
 
-### 1.1 Archivos nuevos con el nombre en un tono y el Word en otro — 3
+### 1.1 Tono del Word y nombre del archivo
 
-Al reimportar aparecieron estos tres. La primera línea del Word dice otro tono que el nombre del archivo, y el contenido es el de otro Word que ya existe:
-- [ ] [Qué sería de mi [F#].docx](https://drive.google.com/file/d/1oTAKm9svTvdlgzjor97KyU2NIyOHCkYw/view): el Word dice **[G]** y es igual a [Qué sería de mi [G].docx](https://drive.google.com/file/d/1aNRApnLqW9JKAoRrWkqN-wrT-Or_6uAb/view) pero con tus correcciones. Tus arreglos de "Qué sería de mí [G]" (los caracteres invisibles) quedaron en este archivo, no en el [G].
-- [ ] [Tu amor por mi [D].docx](https://drive.google.com/file/d/1JFgGTaxZrzzNCo9xQTQACqo9pF0nQIFX/view): el Word dice **[B]** y es igual a [Tu amor por mi [B].docx](https://drive.google.com/file/d/1gq1Xv2g2euBPQCgiumOQI-Iv9QkcfMQl/view) pero con tus correcciones (incluido el "[Estrofa]" en su renglón). Tus arreglos de "Tu amor por mí [B]" quedaron en este archivo, no en el [B].
-- [ ] [Eres fiel [E].docx](https://drive.google.com/file/d/14H4-8lGTvxsRVnf9A1QoIroI58VVkuC8/view): el Word dice **[D]** (el archivo dice [E]).
-
-Decidí vos si son versiones en otro tono (y entonces hay que transportar el Word) o si se subieron con otro nombre por error. No toqué nada.
-
-**Los caracteres invisibles** del [G] y del [B] ya no molestan: desde hoy el motor los saca solo al convertir (entra con la próxima reimportación).
+El tono lo manda la primera línea del Word, no el nombre del archivo. Qué sería de mi [F#] (el Word dice [G]), Tu amor por mi [D] (dice [B]) y Eres fiel [E] (dice [D]) quedan así: no son error. Los Word viejos [G], [B] y [D] los borraste del Drive.
 
 ### 1.2 Tono: el nombre del archivo tiene la secuencia de tonos — 14 (bien)
 
@@ -50,28 +43,18 @@ En estos el nombre lista los tonos y la primera línea del Word el de inicio: es
 
 ### 1.3 Canciones sin títulos de parte (o con uno solo) — 4
 
-- [ ] [En el monte Calvario [C].docx](https://drive.google.com/file/d/1-uCoxd5rSCgsSYbkAzZuTY5FbkKi3E2T/view): no tiene ningún título.
-- [ ] [Ven ante Su trono [Eb].docx](https://drive.google.com/file/d/17nJXK4AWIISGzLaFuI0V9Y7hZ2h2Gy-4/view): no tiene ningún título.
-- [ ] [Atráeme a ti [A].docx](https://drive.google.com/file/d/1KvCNMbdydrn79VT_aIXRHtq28DgqIK57/view): un solo título, «Coro».
-- [ ] [Nos unimos al cielo [G].docx](https://drive.google.com/file/d/1BoNBaUst498b5hKqErbPQSYrJogTAgcr/view): un solo título, «Coro».
+- [ ] [En el monte Calvario [C].docx](https://drive.google.com/file/d/1-uCoxd5rSCgsSYbkAzZuTY5FbkKi3E2T/view): no tiene ningún título (22 renglones seguidos). Le faltan los de cada parte: estrofas y coro (el coro es "Oh, yo siempre amaré esa cruz…", que se repite 3 veces).
+- [ ] [Ven ante Su trono [Eb].docx](https://drive.google.com/file/d/17nJXK4AWIISGzLaFuI0V9Y7hZ2h2Gy-4/view): no tiene ningún título (28 renglones seguidos). Le faltan los de todas las partes.
+- [ ] [Atráeme a ti [A].docx](https://drive.google.com/file/d/1KvCNMbdydrn79VT_aIXRHtq28DgqIK57/view): tiene solo [Coro]; le falta el título de la parte de arriba (los primeros 7 renglones, probablemente [Estrofa]).
+- [ ] [Nos unimos al cielo [G].docx](https://drive.google.com/file/d/1BoNBaUst498b5hKqErbPQSYrJogTAgcr/view): tiene solo [Coro] (4 renglones de letra). Si la canción es solo ese coro, está bien así.
 
-### 1.4 Renglones de acordes que se leen como letra — 14 renglones en 4 Word
+### 1.4 Renglones de acordes que se leen como letra — ninguno pendiente
 
-Tus correcciones de El Dios que adoramos [F] y [F#], Este es mi deseo (Andrea), No soy yo, sino Cristo en mí y Exáltale entraron bien.
+Tus correcciones entraron bien. Los únicos que quedaban eran de los Word que borraste (Qué sería de mi [G], Tu amor por mi [B] y Eres fiel [D]) y "Levanto un aleluya [D] (New)", Estrofa 1: `(Solo D)`, que queda así, decidido.
 
-- [ ] [Eres fiel [D].docx](https://drive.google.com/file/d/1XKUDNQalXFMN7lIFpU2cS4dM7W_HMRxP/view)
-  - Coro r9: `D A C *A F G D F G A C B G G F*` — tiene "*". Debería quedar: `D A C A F G D F G A C B G G F`. *(Dijiste que ya estaba bien: la app lo sigue leyendo como letra por los "*". Si te sirve así, no hace falta tocarlo.)*
-- [ ] [Levanto un aleluya [D] (New).docx](https://drive.google.com/file/d/1SmSuF14pS0Z4Z40tIdjXQJTvYmTw7SsD/view)
-  - Estrofa 1 r1: `(Solo D)` — "(Solo D)" es una aclaración, no se transporta. Debería quedar: pasalo al título: `[Estrofa 1] (Solo D)` — o dejalo así si no importa. *(Queda así, decidido.)*
-- [ ] [Qué sería de mi [G].docx](https://drive.google.com/file/d/1aNRApnLqW9JKAoRrWkqN-wrT-Or_6uAb/view)
-  - 4 renglones (Estrofa r5, Coro r1, Coro r3, Final r5): carácter invisible (espacio de ancho cero) al principio. Ejemplo: `⟨invisible⟩ G D/F#` → `G D/F#`. Lo mismo en los demás.
-- [ ] [Tu amor por mi [B].docx](https://drive.google.com/file/d/1gq1Xv2g2euBPQCgiumOQI-Iv9QkcfMQl/view)
-  - 7 renglones (Estrofa r1, Estrofa r3, Coro r1, Coro r3, Coro r5, Coro r7, Final r1): carácter invisible (espacio de ancho cero) al principio. Ejemplo: `⟨invisible⟩ B F#/B F#/Eb F#/G# F#/Eb` → `B F#/B F#/Eb F#/G# F#/Eb`. Lo mismo en los demás.
-  - Coro r9: `(F#/Eb – F#) [Estrofa]` — el título "[Estrofa]" quedó al final del renglón de acordes. Debería quedar: `(F#/Eb – F#)` y en el renglón de abajo `[Estrofa]`.
+### 1.5 Otros renglones raros — ninguno
 
-### 1.5 Otros renglones raros — 1
-
-- [ ] [Completo en ti [C].docx](https://drive.google.com/file/d/1CfVFoQ4ii2ZlMqQwswxgIvPWDQIZONFa/view), Puente r2: `(G|Am` — el paréntesis y la barra quedan pegados; probablemente `(G | Am Em)`.
+Completo en ti [C], Puente: lo dejaste como `G-Am`. Va así.
 
 ### 1.6 Renglones sueltos con solo "]" — ninguno
 
@@ -633,14 +616,14 @@ Cada Word se compara contra el que se conserva del grupo (el que dijiste; si no,
 
 | Grupo | Cantidad |
 |---|---|
-| 1.1 Archivos con el nombre en un tono y el Word en otro | 3 Word |
+| 1.1 Tono del Word y nombre del archivo | manda el Word: nada que hacer |
 | 1.2 Tono con secuencia en el nombre | 14, bien (Te alabaré corregido en el motor) |
 | 1.3 Sin títulos de parte o con uno solo | 4 Word |
-| 1.4 Renglones de acordes leídos como letra | 14 renglones en 4 Word (2 los dejás así) |
-| 1.5 Otros renglones raros | 1 |
+| 1.4 Renglones de acordes leídos como letra | ninguno pendiente |
+| 1.5 Otros renglones raros | ninguno |
 | 1.6 Renglones sueltos con "]" | ninguno |
 | 2a. Word que se pueden borrar | 46 (ninguno usado en reuniones ni en el Registro) |
 | 2b. Word repetidos que NO se borran (tienen diferencias) | 34 Word, 139 diferencias para revisar |
 | 3. Grupos dudosos | ninguno: 6 grupos nuevos + Aquí estoy [D] sumado a su grupo |
 
-**Orden recomendado:** 1.1, 1.3 y 1.4 → reimportar → 2b (decidís qué diferencias son adrede; las que sean error se corrigen en el Word y el par pasa a 2a) → 2a (borrar, al final; avisame antes para sacar esos ids de `js/grupos.js`).
+**Orden recomendado:** 1.3 → reimportar → 2b (decidís qué diferencias son adrede; las que sean error se corrigen en el Word y el par pasa a 2a) → 2a (borrar, al final; avisame antes para sacar esos ids de `js/grupos.js`).
