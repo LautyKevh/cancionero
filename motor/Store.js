@@ -22,7 +22,7 @@ function cachePut_(key, val) {
   c.putAll(m, CACHE_TTL); c.put(key, 'chunks:' + n, CACHE_TTL);
 }
 function cacheDel_(key) { CacheService.getScriptCache().remove(key); }
-const ck_ = (ig, what) => 'v1:' + ig.rootId + ':' + what;
+const ck_ = (ig, what) => 'v3:' + ig.rootId + ':' + what;
 
 // ---------- Datos/ ----------
 function datos_(ig) {
@@ -131,7 +131,16 @@ function filaAReunion_(r, i) {
 function reunionesTodas_(ig) {
   const sh = hojaReuniones_(planilla_(ig), false);
   if (!sh || sh.getLastRow() < 2) return [];
-  return sh.getRange(2, 1, sh.getLastRow() - 1, REU_HEAD.length).getValues().map(filaAReunion_).filter(r => r.id);
+  const R = sh.getRange(2, 1, sh.getLastRow() - 1, REU_HEAD.length).getValues().map(filaAReunion_).filter(r => r.id);
+  // Word repetidos que se van a borrar del Drive: en las reuniones se usan el que se conserva, con el mismo tono
+  // y arreglo (Datos/reemplazos-word.json: { idViejo: idNuevo }). Al guardar la reunión queda escrito el nuevo.
+  const rem = leerJson_(datos_(ig), 'reemplazos-word.json', {});
+  if (Object.keys(rem).length) R.forEach(r => (r.canciones || []).forEach(it => {
+    if (rem[it.id]) it.id = rem[it.id];
+    (it.canciones || []).forEach(x => { if (rem[x.id]) x.id = rem[x.id]; });
+    (it.arr || []).forEach(p => { if (rem[p.cancion]) p.cancion = rem[p.cancion]; });
+  }));
+  return R;
 }
 const publica_ = r => ({ id: r.id, nombre: r.nombre, fecha: r.fecha, director: r.director, canciones: r.canciones, registrada: r.registrada });
 
@@ -295,12 +304,10 @@ function partesPorPid_(r) {
 
 /** Edición de acordes de una parte por un músico (sin clave). lineas null = volver a la base. */
 function editarAcordes_(ig, r, itemPid, partePid, lineas, quien) {
-  quien = String(quien || '').trim().slice(0, 40);
-  if (!quien) throw apiError_('Escribí tu nombre para guardar los acordes.', 'nombre');
+  // Cambios del ensayo: solo de esta reunión, sin nombre ni clave (SPEC §7). Queda la fecha en el historial.
   const cache = CacheService.getScriptCache(), min = Math.floor(Date.now() / 60000);
-  const k1 = 'acordes:' + ig.rootId + ':' + min, k2 = k1 + ':' + norm_(quien);
-  const n1 = +(cache.get(k1) || 0), n2 = +(cache.get(k2) || 0);
-  if (n1 >= LIM_ACORDES_.porMinuto || n2 >= LIM_ACORDES_.porPersonaMinuto) throw apiError_('Demasiadas ediciones seguidas. Esperá un minuto.', 'limite');
+  const k1 = 'acordes:' + ig.rootId + ':' + min, n1 = +(cache.get(k1) || 0);
+  if (n1 >= LIM_ACORDES_.porMinuto) throw apiError_('Demasiadas ediciones seguidas. Esperá un minuto.', 'limite');
   const it = (r.canciones || []).find(x => x.pid === itemPid);
   // Ítem en el orden original (arr vacío): se materializa el arreglo base, con pids, para poder editar una parte.
   if (it && !(it.arr || []).length && it.tipo !== 'medley') {
@@ -316,9 +323,9 @@ function editarAcordes_(ig, r, itemPid, partePid, lineas, quien) {
   p.cambios = [{ quien: p.editado ? p.editado.quien : '', fecha: p.editado ? p.editado.fecha : '', lineas: p.lineas == null ? null : p.lineas }]
     .concat(p.cambios || []).slice(0, LIM_ACORDES_.cambios);
   if (nuevas == null) delete p.lineas; else p.lineas = nuevas;
-  p.editado = { quien, fecha };
+  p.editado = { fecha };
   guardarReunion_(ig, r);
-  cache.put(k1, String(n1 + 1), 120); cache.put(k2, String(n2 + 1), 120);
+  cache.put(k1, String(n1 + 1), 120);
   return p;
 }
 
@@ -356,7 +363,7 @@ function itemsPlanos_(ig, r) {
 
 // ---------- Datos de cada canción editados por los músicos (Datos/datos-canciones.json) ----------
 // { [id]: { interprete?, tonoOriginal?, bpm?, cambios: [{ campo, antes, despues, quien, fecha }] } }
-// Se aplican encima del cancionero importado (sin reimportar). Sin clave: queda quién y cuándo (SPEC §5).
+// Se aplican encima del cancionero importado (sin reimportar). Vacío: lo completa cualquiera; con valor: solo el admin (SPEC §5).
 const CAMPOS_DATOS_ = ['interprete', 'tonoOriginal', 'bpm'];
 function datosCanciones_(ig) {
   const k = ck_(ig, 'datos-canciones');
@@ -372,9 +379,7 @@ function conDatos_(s, d) {
 }
 function cancioneroConDatos_(ig) { const d = datosCanciones_(ig); return cancionero_(ig).map(s => conDatos_(s, d)); }
 
-function editarDatos_(ig, id, campos, quien) {
-  quien = String(quien || '').trim().slice(0, 40);
-  if (!quien) throw apiError_('Escribí tu nombre para guardar el cambio.', 'nombre');
+function editarDatos_(ig, id, campos, admin) {
   const cache = CacheService.getScriptCache(), min = Math.floor(Date.now() / 60000);
   const k1 = 'datos:' + ig.rootId + ':' + min, n1 = +(cache.get(k1) || 0);
   if (n1 >= LIM_ACORDES_.porMinuto) throw apiError_('Demasiados cambios seguidos. Esperá un minuto.', 'limite');
@@ -388,9 +393,11 @@ function editarDatos_(ig, id, campos, quien) {
     let v = campos[c];
     if (c === 'bpm') { v = v === '' || v == null ? null : Math.round(+v); if (v != null && !(v >= 20 && v <= 400)) throw apiError_('BPM inválido (20 a 400).', 'formato'); }
     else v = String(v == null ? '' : v).trim().slice(0, 80);
-    const antes = actual[c] == null ? (c === 'bpm' ? null : '') : actual[c];
+    const antes = actual[c] == null || actual[c] === '-' ? (c === 'bpm' ? null : '') : actual[c];
     if (v === antes) return;
-    x[c] = v; x.cambios = [{ campo: c, antes, despues: v, quien, fecha }].concat(x.cambios || []).slice(0, LIM_ACORDES_.cambios);
+    // Un dato vacío lo completa cualquiera; uno que ya tiene valor, solo el admin (SPEC §5).
+    if (antes !== '' && antes != null && !admin) throw apiError_('Ese dato ya está cargado: solo el admin lo puede cambiar.', 'admin');
+    x[c] = v; x.cambios = [{ campo: c, antes, despues: v, fecha, admin: admin || null }].concat(x.cambios || []).slice(0, LIM_ACORDES_.cambios);
     n++;
   });
   if (!n) return conDatos_(base, d);

@@ -145,8 +145,6 @@ export class LocalDataSource {
    * arreglo base con pids, para un ítem guardado sin arreglo (igual que el motor).
    */
   async editarAcordes({ id, i, k, lineas, quien, base }) {
-    quien = String(quien || '').trim();
-    if (!quien) throw new ClaveError('Escribí tu nombre para guardar los acordes.', 'nombre');
     const list = this._all(), r = list.find(x => x.id === id && !x.borrada), it = r && r.canciones[i];
     if (it && !(it.arr || []).length && base) it.arr = structuredClone(base);
     const p = it && (it.arr || [])[k];
@@ -154,14 +152,12 @@ export class LocalDataSource {
     const fecha = new Date().toISOString();
     p.cambios = [{ quien: p.editado ? p.editado.quien : '', fecha: p.editado ? p.editado.fecha : '', lineas: p.lineas ?? null }].concat(p.cambios || []).slice(0, 30);
     if (lineas == null) delete p.lineas; else p.lineas = structuredClone(lineas);
-    p.editado = { quien, fecha };
+    p.editado = { fecha };
     this._save(list); return structuredClone(p);
   }
 
   /** Músicos, sin clave: intérprete, tono original y BPM (igual que el motor: historial con quién y cuándo). */
-  async editarDatos({ cancion, campos, quien }) {
-    quien = String(quien || '').trim();
-    if (!quien) throw new ClaveError('Escribí tu nombre para guardar el cambio.', 'nombre');
+  async editarDatos({ cancion, campos, idToken }) {
     const s = (this.songs || []).find(x => x.id === cancion); if (!s) throw new Error('No existe esa canción.');
     const d = read('datosCanciones', {}), x = d[cancion] || { v: {}, cambios: [] }, fecha = new Date().toISOString();
     for (const c of ['interprete', 'tonoOriginal', 'bpm']) {
@@ -169,9 +165,10 @@ export class LocalDataSource {
       let v = campos[c];
       if (c === 'bpm') { v = v === '' || v == null ? null : Math.round(+v); if (v != null && !(v >= 20 && v <= 400)) throw new Error('BPM inválido (20 a 400).'); }
       else v = String(v ?? '').trim().slice(0, 80);
-      const antes = s[c] ?? (c === 'bpm' ? null : '');
+      const antes = s[c] == null || s[c] === '-' ? (c === 'bpm' ? null : '') : s[c];
       if (v === antes) continue;
-      x.v[c] = v; x.cambios = [{ campo: c, antes, despues: v, quien, fecha }].concat(x.cambios).slice(0, 30);
+      if (antes !== '' && antes != null && !idToken) throw new Error('Ese dato ya está cargado: solo el admin lo puede cambiar.');
+      x.v[c] = v; x.cambios = [{ campo: c, antes, despues: v, fecha, admin: idToken ? 'admin' : null }].concat(x.cambios).slice(0, 30);
       s[c] = v;
     }
     s.datosCambios = x.cambios; d[cancion] = x; write('datosCanciones', d);

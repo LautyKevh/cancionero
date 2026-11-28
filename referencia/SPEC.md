@@ -40,12 +40,12 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 
 | Rol | Cómo entra | Puede |
 |---|---|---|
-| Miembro (músico/cantante) | Sin cuenta | Ver canciones y reuniones, transponer, usar sin conexión. Editar los **acordes** del arreglo de una reunión (queda su nombre); nunca la estructura ni los tonos. Completar datos de canciones (intérprete, BPM, tono original, link vacío). Sugerir correcciones y proponer canciones nuevas, que quedan pendientes de revisión |
+| Miembro (músico/cantante) | Sin cuenta | Ver canciones y reuniones, transponer, usar sin conexión. Cambios del ensayo, solo de esa reunión y sin nombre ni clave: **acordes** de una parte y variante; nunca la estructura ni los tonos. Completar datos de canciones que estén vacíos (intérprete, BPM, tono original, link). Sugerir correcciones y proponer canciones nuevas, que quedan pendientes de revisión |
 | Director | Sin cuenta, con la clave de 4 dígitos de su reunión | Crear reuniones; editar o borrar las suyas, incluida la estructura del arreglo de cada canción y la **letra** de cualquier parte del arreglo de su reunión |
 | Admin de iglesia | Google Sign-In (solo para acciones de admin) | Configurar carpetas, revisar la bandeja "Pendientes de revisión" (aprobar o rechazar correcciones y canciones nuevas), importar desde la carpeta, corregir la canción base, dar de alta personas, otros admins y editores, actualizar versión |
 | Superadmin | Lautaro | Publicar versiones; opcional: código de invitación para altas |
 
-- Hay un solo link por iglesia (`…/app/?c=<id>`). No existe un "link de admin": el ingreso con Google aparece solo en Ajustes.
+- Hay un solo link por iglesia (`…/app/?c=<id>`). No existe un "link de admin": el ingreso con Google aparece solo en Ajustes, como un botón propio "Iniciar sesión" con el estilo de la app (sin el recuadro de Google con el nombre de la cuenta); recién al tocarlo se abre el ingreso de Google.
 - **Alta autoservicio:** "Crear el cancionero de mi iglesia" → Google Sign-In → queda como admin → comparte su carpeta con el email del motor → el motor crea la estructura e importa. Se puede exigir un código de invitación (activable).
 - **Clave de director:** exactamente 4 dígitos numéricos. En la planilla se guarda solo el hash con sal (nunca la clave). Se verifica en el servidor y nunca se envía al cliente. Después de 5 intentos fallidos, bloqueo de 10 minutos por reunión.
 - **Admin:** el ID token de Google se verifica en Apps Script, y el email tiene que estar en la lista de admins de esa iglesia.
@@ -71,10 +71,15 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - Columnas: ID, Título, Intérprete, Tono original, BPM, Estado (oficial / borrador / sin cifrado), Archivo fuente, Confianza, **Link**.
   - **Link:** columna nueva, normalmente el video de YouTube. La completa la gente desde la app (ver 7, "Datos de la canción") o el admin. La app nunca busca links por su cuenta.
 - **Celda B1 ("Ver tonos de:"):** desplegable con validación de datos desde `Personas!A2:A`, así se actualiza solo con los nombres que agrega la app. El motor lo crea en toda planilla de iglesia (prueba y nuevas).
-- **Datos editables desde la app** (intérprete, BPM, tono original; link pendiente): en la ficha de la canción, ✎ por dato, sin clave. Pide nombre (queda guardado en el teléfono) y confirmación antes de guardar. Cada cambio queda en el historial con quién, fecha y hora, y el valor anterior. Se guardan en `Datos/datos-canciones.json` (`{ id: { interprete?, tonoOriginal?, bpm?, cambios: [{ campo, antes, despues, quien, fecha }] } }`, acción `editarDatos` del motor) y se aplican encima del cancionero importado, sin reimportar. Es por Word (id): cada versión tiene sus datos.
+- **Datos de la canción** (intérprete, BPM, tono original; link pendiente), globales: en la ficha de la canción, ✎ por dato.
+  - Si el dato está **vacío**, cualquiera lo completa, sin nombre ni clave, con confirmación ("¿Guardar X como intérprete?").
+  - Si **ya tiene valor**, solo lo cambia el admin con la sesión iniciada (el motor verifica el idToken). Los demás lo ven sin ✎.
+  - Historial con fecha, hora, valor anterior y nuevo, y "admin" si lo cambió el admin.
+  - Se guardan en `Datos/datos-canciones.json` (`{ id: { interprete?, tonoOriginal?, bpm?, cambios: [{ campo, antes, despues, fecha, admin }] } }`, acción `editarDatos` del motor) y se aplican encima del cancionero importado, sin reimportar. Es por Word (id): cada versión tiene sus datos.
   - **Tono original** = el tono del intérprete ("E", o "E-F" si modula). No es el tono del Word: el Word es la versión de la iglesia.
   - Gana lo editado en la app. Si después el archivo trae otro valor, aparece como conflicto en "Revisar cambios en la carpeta" y el admin elige.
   - El BPM cargado desde la app cuenta como confirmado (tiene nombre, historial y "deshacer"), sin importar la columna Confianza.
+- **Reemplazo de Word en reuniones:** antes de borrar del Drive un Word repetido, `Datos/reemplazos-word.json` (`{ idViejo: idNuevo }`) hace que las reuniones usen el que se conserva, con el mismo tono y arreglo (también en las partes de un medley). Al guardar la reunión queda escrito el nuevo.
 - Puede haber varias versiones de una misma canción, con distinto ID e intérprete.
 - **Agrupación por tono (solo en la app):** los Word que son la misma canción en otro tono (lista fija en `js/grupos.js`, criterio en `referencia/agrupacion-por-tono.md`) aparecen una sola vez en la lista y en los buscadores; la búsqueda mira todos los Word del grupo. Tono que se muestra: 1) el Word que está en el tono original del intérprete (si hay uno); 2) el más usado en el Registro (empate: el más reciente); 3) el del primer Word de la lista, con "Tono original no registrado". Cuando Lautaro dice cuál se conserva ("Conservá X"), ese Word va primero en el grupo. Criterio para "se puede borrar" un Word repetido: no cuentan el tono, la posición de los acordes ni el nombre de una parte; sí cuentan otro acorde, otra parte, otra letra, otro puente u otra nota. El historial suma todos los Word del grupo. Cada Word conserva su id: reuniones y Registro no cambian.
 - **Canción base:** es el Word de la iglesia (la versión de la casa, no la original del intérprete).
@@ -310,9 +315,8 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - **Músicos, sin clave:** editan los **acordes** de cualquier parte del arreglo de esa reunión; se asume que hay consenso entre los músicos. Nunca la estructura ni los tonos.
   - En la vista Músico de la reunión hay un solo ✎, al lado del nombre de la canción; las partes no muestran nada. Tocarlo abre el **modo edición** de esa canción: una barra "Modo edición · Tocá una parte para cambiar sus acordes · Listo", cada parte se ve como una tarjeta tocable y las que ya tienen acordes editados dicen "editada · nombre". Mientras tanto no se eligen variantes. Se sale con "Listo", con el ✎ o al pasar a otra canción. Tocar una parte abre una hoja desde abajo con un renglón de acordes editable encima de cada renglón de letra (fija), en el tono en que se toca y en cifrado americano; se guardan en el tono escrito. Cada acorde se ancla a la letra en su columna. Los renglones que no se tocan quedan igual. Un acorde que no se reconoce no se guarda (avisa en qué renglón).
   - La vista y la impresión muestran los acordes editados de esa parte.
-  - Queda abierto a cualquiera con el link de la iglesia. El motor exige nombre y limita el tamaño por parte y las ediciones por minuto (ver 4).
-  - La primera vez se pide el nombre, que queda guardado en el dispositivo.
-  - Cada edición guarda nombre y fecha/hora. El historial de cambios se ve por parte.
+  - **Cambios del ensayo:** son SOLO de esa reunión. Los puede hacer cualquiera con el link de la iglesia, **sin nombre ni clave**; los ven todos los dispositivos en esa reunión y nunca cambian la canción base ni otras reuniones. El motor limita el tamaño por parte y las ediciones por minuto (ver 4).
+  - Cada edición guarda la fecha y la hora. El historial de cambios se ve por parte.
   - Por parte: **"Restaurar acordes"**, a la base o a "Como la última vez".
   - Si dos editan la misma parte, gana el último guardado. El anterior queda en el historial y se puede restaurar. El motor serializa las escrituras (LockService).
 - **Ajustes personales del músico** (notas propias, ocultar partes en su vista, tamaño): solo en su dispositivo; no se comparten.
@@ -345,7 +349,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 ## 8. Sin conexión y actualización
 
 - La PWA (service worker) cachea la app y el `cancionero.json`. Al abrir con internet, pide los cambios y actualiza.
-- Línea de estado: "Actualizado hoy 10:32" / "Sin conexión · datos del 22-11", más un botón "Actualizar". "Actualizar" solo vuelve a pedir los datos al motor; los cambios de la carpeta entran con la importación (Ajustes, admin).
+- Línea de estado: "Actualizado hoy 10:32" / "Sin conexión · datos del 22-11", más un botón "Actualizar". Aparece **solo en Ajustes**. "Actualizar" solo vuelve a pedir los datos al motor; los cambios de la carpeta entran con la importación (Ajustes, admin).
 - Ajustes se abre desde el engranaje del encabezado (y el link del pie, que no aparece dentro de Ajustes).
 - **Pantalla (Ajustes):** Automático (el del sistema) / Claro / Oscuro. Es personal, como A+ / A−: se guarda solo en el dispositivo (`cancionero:prefs` → `tema`) y se aplica antes de pintar (script en `index.html`), también al color de la barra del celular.
 - **Navegación por niveles** (atrás del celular, flecha del navegador y "←" de la app hacen lo mismo):

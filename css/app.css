@@ -410,7 +410,11 @@ svg .bk { fill: currentColor; stroke: none; }
 .adm .sesion { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .adm .sesion .hint { margin: 0; }
 .adm .sesion button { font-weight: 600; font-size: 14px; min-height: 40px; padding: 0 14px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--card); color: var(--ink); }
-.gbtn { min-height: 44px; }
+.glog { position: relative; display: inline-block; margin: 12px 0; }
+.glog #glog { margin: 0; min-width: 200px; }
+.glog .gbtn { position: absolute; inset: 0; opacity: .01; overflow: hidden; display: flex; align-items: center; }
+.glog:focus-within #glog, .glog:hover #glog { filter: brightness(1.08); }
+.glog:focus-within #glog { outline: 2px solid var(--acc); outline-offset: 2px; }
 .adm .hint { margin: -6px 0 0; }
 .seg { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
 .seg button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 9px; background: none; color: var(--mute); font-weight: 600; font-size: 14px; }
@@ -462,3 +466,6 @@ body.imprimiendo #print { display: block; width: 210mm; max-width: none; margin:
 .datos .ach summary { min-height: 40px; display: flex; align-items: center; cursor: pointer; color: var(--mute); font-weight: 600; font-size: 13px; }
 .datos .ach ul { margin: 0; padding-left: 18px; }
 #dd-c { font-size: 15px; }
+
+/* La barra "Actualizado… / Actualizar" va solo en Ajustes (SPEC §8) */
+body:not([data-screen="ajustes"]) .status { display: none; }

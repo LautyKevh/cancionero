@@ -293,23 +293,23 @@ function pickMode(s) {
   };
 }
 
-// ---------- Datos de la canción (intérprete, tono original, BPM): los edita cualquiera, con nombre e historial ----------
+// ---------- Datos de la canción (intérprete, tono original, BPM), globales: si está vacío lo completa cualquiera
+// (sin nombre ni clave); si ya tiene valor, solo el admin con la sesión iniciada. Historial con fecha y hora. ----------
 const CAMPOS = { interprete: 'Intérprete', tonoOriginal: 'Tono original', bpm: 'BPM' };
 const valorDato = (s, c) => c === 'interprete' ? interp(s) : s[c] == null ? '' : String(s[c]);
 function fichaDatos(s) {
   const h = s.datosCambios || [];
   return `<section class="datos" aria-label="Datos de la canción"><h3>Datos de la canción</h3><dl>${Object.entries(CAMPOS).map(([c, n]) =>
-    `<div class="dato"><dt>${n}</dt><dd>${valorDato(s, c) ? esc(valorDato(s, c)) : '<i>sin cargar</i>'}</dd><button type="button" class="edd" data-dato="${c}" aria-haspopup="dialog" aria-label="Editar ${n.toLowerCase()}" title="Editar">✎</button></div>`).join('')}</dl>
-    ${h.length ? `<details class="ach"><summary>Historial de cambios (${h.length})</summary><ul>${h.map(x => `<li>${esc(fechaHora(x.fecha))} · ${esc(x.quien)}: ${esc(CAMPOS[x.campo] || x.campo)} «${esc(x.antes ?? '') || '—'}» → «${esc(x.despues ?? '') || '—'}»</li>`).join('')}</ul></details>` : ''}</section>`;
+    `<div class="dato"><dt>${n}</dt><dd>${valorDato(s, c) ? esc(valorDato(s, c)) : '<i>sin cargar</i>'}</dd>${!valorDato(s, c) || esAdmin() ? `<button type="button" class="edd" data-dato="${c}" aria-haspopup="dialog" aria-label="${valorDato(s, c) ? 'Cambiar' : 'Completar'} ${n.toLowerCase()}" title="${valorDato(s, c) ? 'Cambiar (admin)' : 'Completar'}">✎</button>` : ''}</div>`).join('')}</dl>
+    ${h.length ? `<details class="ach"><summary>Historial de cambios (${h.length})</summary><ul>${h.map(x => `<li>${esc(fechaHora(x.fecha))}${x.admin ? ' · admin' : x.quien ? ' · ' + esc(x.quien) : ''}:${esc(CAMPOS[x.campo] || x.campo)} «${esc(x.antes ?? '') || '—'}» → «${esc(x.despues ?? '') || '—'}»</li>`).join('')}</ul></details>` : ''}</section>`;
 }
 function editarDato(s, c) {
   const n = CAMPOS[c], antes = valorDato(s, c);
   const w = document.createElement('div'); w.className = 'tsheetw';
   w.innerHTML = `<div class="veil"></div><div class="tsheet" role="dialog" aria-modal="true" aria-labelledby="dd-t"><div class="bar"></div>
     <h3 id="dd-t">${n} de ${esc(s.titulo)}</h3>
-    <p>Lo ven todos. Queda en el historial con tu nombre, la fecha y la hora.${c === 'tonoOriginal' ? ' Es el tono del intérprete; si modula, separalo con guiones (E-F).' : ''}</p>
+    <p>${antes ? 'Lo cambiás como admin.' : 'Lo completás para todos.'} Queda en el historial con la fecha y la hora.${c === 'tonoOriginal' ? ' Es el tono del intérprete; si modula, separalo con guiones (E-F).' : ''}</p>
     <label class="acn">${n}<input id="dd-v" value="${esc(antes)}" ${c === 'bpm' ? 'inputmode="numeric" maxlength="3"' : 'maxlength="80"'} autocomplete="off"></label>
-    <label class="acn">Tu nombre<input id="dd-q" value="${esc(P.nombre || '')}" autocomplete="name" maxlength="40" placeholder="Queda guardado en este teléfono"></label>
     <p class="err" id="dd-err" hidden></p><p id="dd-c" hidden></p>
     <button type="button" class="ok primary" id="dd-ok">Guardar</button>
     <button type="button" class="ok" id="dd-x">Cancelar</button></div>`;
@@ -323,17 +323,17 @@ function editarDato(s, c) {
   let paso = 0;
   ok.onclick = async () => {
     err.hidden = true;
-    const val = v.value.trim(), quien = q('#dd-q').value.trim();
+    const val = v.value.trim();
     if (c === 'bpm' && val && !(+val >= 20 && +val <= 400)) return fallo('El BPM va de 20 a 400.');
     if (c === 'tonoOriginal' && val && !/^[A-G][#b]?m?(\s*[-–]\s*[A-G][#b]?m?)*$/.test(val)) return fallo('Escribí el tono en cifrado americano (por ejemplo Eb, F#m o E-F).');
     if (val === antes) { cerrar(); toast('No cambiaste nada.'); return; }
-    if (!quien) { fallo('Escribí tu nombre: queda en el historial.'); return; }
+    if (antes && !esAdmin()) { fallo('Ese dato ya está cargado: solo el admin lo puede cambiar.'); return; }
     // Confirmación antes de guardar (lo ven todos).
-    if (!paso) { paso = 1; conf.hidden = false; conf.innerHTML = `¿Guardar ${c === "bpm" ? "el BPM" : "el " + n.toLowerCase()} <b>${esc(val || '(vacío)')}</b>${antes ? ` en lugar de <b>${esc(antes)}</b>` : ''}?`; ok.textContent = 'Sí, guardar'; v.disabled = true; return; }
-    P.nombre = quien; savePrefs();
+    const nom = c === 'bpm' ? 'BPM' : n.toLowerCase();
+    if (!paso) { paso = 1; conf.hidden = false; conf.innerHTML = antes ? `¿Cambiar el ${nom} de <b>${esc(antes)}</b> a <b>${esc(val || '(vacío)')}</b>?` : `¿Guardar <b>${esc(val)}</b> como ${nom}?`; ok.textContent = 'Sí, guardar'; v.disabled = true; return; }
     w.querySelectorAll('button').forEach(b => b.disabled = true); ok.textContent = 'Guardando…';
     try {
-      const x = await ds.editarDatos({ cancion: s.id, campos: { [c]: c === 'bpm' ? (val ? +val : null) : val }, quien });
+      const x = await ds.editarDatos({ cancion: s.id, campos: { [c]: c === 'bpm' ? (val ? +val : null) : val }, idToken: antes ? ADMIN.token : undefined });
       Object.assign(s, { interprete: x.interprete, tonoOriginal: x.tonoOriginal, bpm: x.bpm, datosCambios: x.datosCambios });
       if (c === 'tonoOriginal') armarGrupos();
       cerrar(); pickMode(s); toast(n + ' guardado.');
@@ -446,7 +446,7 @@ function sheetRows(item, mus, vari, ed) {
     // Modo edición (✎ junto al nombre de la canción): cada parte con acordes se toca para editarlos.
     // Fuera de ese modo la hoja no muestra nada nuevo.
     const edP = ed && base_ && base_.some(l => l.t !== 'blank');
-    const tag = edP && e.lineas ? `<span class="edtag">editada${e.editado ? ' · ' + esc(e.editado.quien) : ''}</span>` : '';
+    const tag = edP && e.lineas ? `<span class="edtag">editada${e.editado && e.editado.quien ? ' · ' + esc(e.editado.quien) : ''}</span>` : '';
     const sec = edP ? `<section class="parte edp" data-ac="${k}" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Editar acordes de ${esc(label || 'la parte')}${e.lineas ? ' (editada)' : ''}">` : '<section class="parte">';
     // Una parte de un solo renglón de acordes (Intro, Inter, Final) los muestra al lado del título; con 2 o más, abajo.
     if (label && ls.length === 1 && L.length === 1 && (ls[0].t === 'ch' || (ls[0].t === 'mix' && ls[0].at == null)))
@@ -657,7 +657,7 @@ function hojaAcordes(r, i, k, inf, arrUsado) {
   const nombre = labOf(e0) || 'la parte', ult = ultimaVezParte(r, c, e0);
   const igualA = L => JSON.stringify(L || null) === JSON.stringify(e0.lineas || null);
   const hist = [].concat(e0.editado ? [{ ahora: true, quien: e0.editado.quien, fecha: e0.editado.fecha, lineas: e0.lineas || null }] : [], e0.cambios || []);
-  const quienH = h => h.lineas ? esc(h.quien || 'Sin nombre') : h.quien ? `Versión base (la restauró ${esc(h.quien)})` : 'Versión base';
+  const quienH = h => h.lineas ? (h.quien ? esc(h.quien) : 'Acordes editados') : 'Versión base';
   const w = document.createElement('div'); w.className = 'tsheetw';
   w.innerHTML = `<div class="veil"></div><div class="tsheet acsheet" role="dialog" aria-modal="true" aria-labelledby="ah-t"><div class="bar"></div>
     <h3 id="ah-t">Acordes de ${esc(nombre)}</h3>
@@ -666,7 +666,6 @@ function hojaAcordes(r, i, k, inf, arrUsado) {
       ? (x.letra ? `<div class="acl mute">${esc(x.letra)}</div>` : '<div class="acgap"></div>')
       : `<input class="acf" data-j="${j}" value="${esc(x.fila)}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Acordes del renglón ${j + 1}${x.letra ? ': ' + esc(x.letra.slice(0, 40)) : ''}">${x.letra != null ? `<div class="acl">${esc(x.letra)}</div>` : ''}`).join('')}</div></div>
     <p class="err" id="ac-err" hidden></p>
-    <label class="acn">Tu nombre<input id="ac-q" value="${esc(P.nombre || '')}" autocomplete="name" maxlength="40" placeholder="Queda guardado en este teléfono"></label>
     <button type="button" class="ok primary" id="ac-ok">Guardar acordes</button>
     ${(e0.lineas && !e0.nueva) || (ult && !igualA(ult.lineas)) ? `<h4>Restaurar acordes</h4><div class="acr">
       ${e0.lineas && !e0.nueva ? '<button type="button" data-rs="base">Versión base</button>' : ''}
@@ -674,7 +673,7 @@ function hojaAcordes(r, i, k, inf, arrUsado) {
     ${hist.length ? `<details class="ach"><summary>Historial de esta parte</summary><ul>${hist.map((h, n) => `<li><span>${h.ahora ? '<b>Ahora</b> · ' : ''}${quienH(h)}${h.fecha ? ' · ' + esc(fechaHora(h.fecha)) : ''}</span>${!h.ahora && !igualA(h.lineas) ? `<button type="button" data-hi="${n}">Restaurar</button>` : ''}</li>`).join('')}</ul></details>` : ''}
     <button type="button" class="ok" id="ac-x">Cancelar</button></div>`;
   app.append(w);
-  const err = w.querySelector('#ac-err'), q = w.querySelector('#ac-q');
+  const err = w.querySelector('#ac-err');
   const fallo = m => { err.textContent = m; err.hidden = false; err.scrollIntoView({ block: 'nearest' }); };
   const cerrar = () => { w.remove(); document.removeEventListener('keydown', tecla); const b = $(`[data-ac="${k}"]`); if (b) b.focus({ preventScroll: true, focusVisible: false }); };
   const tecla = ev => { if (ev.key === 'Escape') cerrar(); };
@@ -704,16 +703,13 @@ function hojaAcordes(r, i, k, inf, arrUsado) {
     return out;
   };
   const guardar = async (lineas, btn) => {
-    const quien = q.value.trim();
-    if (!quien) { fallo('Escribí tu nombre: queda junto a los acordes.'); q.focus(); return; }
-    P.nombre = quien; savePrefs();
     const sinArr = !(c.arr || []).length;
     // Ítem en el orden original: el arreglo base con pids (igual que el motor) para poder guardar una parte.
     if (sinArr) c.arr = arrUsado.map((x, j) => ({ ...x, pid: c.pid + 'p' + j }));
     const e = c.arr[k];
     w.querySelectorAll('button').forEach(b => b.disabled = true); if (btn) btn.textContent = 'Guardando…';
     try {
-      const p = await ds.editarAcordes({ id: r.id, i, k, item: c.pid, parte: e.pid, lineas, quien, base: c.arr });
+      const p = await ds.editarAcordes({ id: r.id, i, k, item: c.pid, parte: e.pid, lineas, base: c.arr });
       if (p.lineas) e.lineas = p.lineas; else delete e.lineas;
       e.cambios = p.cambios; e.editado = p.editado;
       cerrar(); const y = scrollY; drawSheet(); scrollTo(0, y);
@@ -1419,12 +1415,13 @@ function settings() {
   if (!st.online) { box.innerHTML = '<p class="hint">Hace falta conexión.</p>'; return; }
   if (ADMIN && ADMIN.exp * 1000 < Date.now() + 60000) setAdmin(null);
   if (!ADMIN) {
-    // Solo el botón "Iniciar sesión" (sin el cartel emergente de Google): se ingresa cuando uno lo toca.
-    box.innerHTML = '<p class="hint">Solo para quien administra el cancionero de la iglesia.</p><div id="gbtn" class="gbtn"></div><p class="err" id="er" role="alert"></p>';
+    // Botón propio "Iniciar sesión" (estilo de la app, sin el nombre de la cuenta): el botón de Google va encima,
+    // invisible, así el toque lo recibe Google (es la única forma de abrir su ingreso sin el cartel emergente).
+    box.innerHTML = '<p class="hint">Solo para quien administra el cancionero de la iglesia.</p><div class="glog"><button type="button" class="primary" id="glog" tabindex="-1" aria-hidden="true">Iniciar sesión</button><div id="gbtn" class="gbtn"></div></div><p class="err" id="er" role="alert"></p>';
     loadGsi().then(() => {
       google.accounts.id.initialize({ client_id: CONFIG.googleClientId, callback: r => { setAdmin(r.credential); settings(); } });
-      google.accounts.id.renderButton($('#gbtn'), { theme: P.tema === 'dark' || (!P.tema && matchMedia('(prefers-color-scheme: dark)').matches) ? 'filled_black' : 'outline',
-        size: 'large', text: 'signin', shape: 'pill', locale: 'es' });
+      const g = $('#gbtn');
+      google.accounts.id.renderButton(g, { type: 'standard', size: 'large', text: 'signin', locale: 'es', width: Math.max(200, Math.min(400, Math.round($('#glog').getBoundingClientRect().width))) });
     }).catch(e => { $('#er').textContent = e.message; });
     return;
   }

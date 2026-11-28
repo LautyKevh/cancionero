@@ -1,5 +1,5 @@
 // Service worker: app en caché (offline) y datos con "red primero, caché si no hay conexión".
-const VERSION = 'v52-2026-11-28';
+const VERSION = 'v53-2026-11-28';
 const SHELL = `shell-${VERSION}`, DATA = 'data-v1', FONTS = 'fonts-v1';
 const FILES = ['./', 'index.html', 'css/app.css', 'js/app.js', 'js/music.js', 'js/songs.js', 'js/grupos.js', 'js/datasource.js', 'js/demo.js', 'js/apidatasource.js', 'js/config.js',
   'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'data/songs.json'];

@@ -15,9 +15,9 @@
 //   a=adminReunion   { id, idToken, clave?, director? } → { reunion, historial }  (admin: nueva clave / otro director; sin cambios, solo lee el historial)
 //   a=borrarReunion  { id, clave }                       (borrado lógico)
 //   a=registrarUso   { id, clave }                       (agrega filas a Registro, una sola vez; también se hace solo al día siguiente de la reunión)
-//   a=editarAcordes  { id, item, parte, lineas|null, quien } (sin clave; músicos; null = volver a la base)
+//   a=editarAcordes  { id, item, parte, lineas|null }  (sin nombre ni clave; solo esa reunión; null = volver a la base)
 //   a=elegirVariante { id, item, parte, src, label }          (sin clave ni nombre; músicos; otra variante de la parte)
-//   a=editarDatos    { cancion, campos: { interprete?, tonoOriginal?, bpm? }, quien } (sin clave; Datos/datos-canciones.json)
+//   a=editarDatos    { cancion, campos: { interprete?, tonoOriginal?, bpm? }, idToken? } (vacío: cualquiera; con valor: admin. Datos/datos-canciones.json)
 //   a=importar       { idToken }                         (admin)
 //   a=corregir       { idToken, cancion, correccion|null } (admin; Datos/correcciones.json)
 //
@@ -91,14 +91,14 @@ function doPost(e) {
       // Músicos, sin clave: acordes de una parte del arreglo (SPEC §7 "Arreglo compartido").
       case 'editarAcordes': return conLock_(() => {
         const r = buscar();
-        return editarAcordes_(ig, r, String(b.item || ''), String(b.parte || ''), b.lineas == null ? null : b.lineas, b.quien);
+        return editarAcordes_(ig, r, String(b.item || ''), String(b.parte || ''), b.lineas == null ? null : b.lineas);
       });
       case 'elegirVariante': return conLock_(() => {
         const r = buscar();
         return elegirVariante_(ig, r, String(b.item || ''), String(b.parte || ''), b.src, b.label);
       });
-      // Músicos, sin clave: intérprete, tono original y BPM de una canción (con historial).
-      case 'editarDatos': return conLock_(() => editarDatos_(ig, String(b.cancion || ''), b.campos, b.quien));
+      // Datos globales de la canción: completar un dato vacío, cualquiera; cambiar uno con valor, solo el admin.
+      case 'editarDatos': { const email = b.idToken ? verificarAdmin_(ig, b.idToken) : null; return conLock_(() => editarDatos_(ig, String(b.cancion || ''), b.campos, email)); }
       // Admin: corrección de la canción base → Datos/correcciones.json (SPEC §5).
       case 'corregir': verificarAdmin_(ig, b.idToken); return conLock_(() => corregirCancion_(ig, String(b.cancion || ''), b.correccion));
       case 'borrarReunion': return conLock_(() => { const r = buscar(); autorizar_(ig, r, b, 'borró la reunión'); r.borrada = true; guardarReunion_(ig, r); return true; });

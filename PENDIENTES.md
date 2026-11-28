@@ -25,7 +25,7 @@ Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesi
 3. **Esperan respuesta u OK de Lautaro:**
    - Probar en el celular: deslizar para borrar, la ruedita de Editar reunión (fecha/nombre/director) y lo del admin (ingresando en Ajustes).
    - OK final al editor de partes rediseñado, ahora con deslizar para borrar (el ✕ ya no está en la tarjeta; queda "Quitar" en ⋯).
-4. **Completar datos de canciones:** hecho intérprete, tono original y BPM en la ficha (v52, `Datos/datos-canciones.json`, con regla 1 de la agrupación). Falta: link, "deshacer" desde el historial, conflicto con la planilla en "Revisar cambios", y pasar los datos a IBSI al pasar a estable. Carga automática de intérpretes: no por ahora.
+4. **Datos de la canción:** hecho intérprete, tono original y BPM en la ficha (v53): vacío lo completa cualquiera; con valor, solo el admin. Falta: link, conflicto con la planilla en "Revisar cambios" y pasar los datos a IBSI al pasar a estable.
 5. **Director edita la letra** de cualquier parte del arreglo de su reunión, con PIN. Solo esa reunión; nunca la base.
 6. **"Pendientes de revisión"** (una bandeja por iglesia, admin en Ajustes):
    - "Sugerir corrección" (sin clave), con atajo "Proponer para todas las versiones" desde una reunión;
@@ -88,6 +88,8 @@ Detalle en `referencia/SPEC.md`: §4 (roles), §5 (modelo de datos), §6 (conver
 - **Ya hecho (Fase 2):** ítems medley guardados y validados en el motor; el registro y el historial los expanden canción por canción (hoy con un solo tono por canción, no la secuencia).
 
 ## Fase 2 (motor)
+- Después de la próxima reimportación (por "Te alabaré"): lista de los ( ) que hacían de puente o se ocultaban; revisar No voy a caer [C] y que los 60 Word corregidos entraron bien; regenerar `referencia/tareas-drive.md` completo (sección 1 incluida).
+- Borrar del Drive (lo hace Lautaro) A ti me rindo [F], Al único que es digno [D] y Hermoso nombre [D]: las reuniones ya usan el que se conserva (`Datos/reemplazos-word.json`). Después, sacar esos ids de `js/grupos.js`.
 - Anclar notas sueltas a una palabra (`at`), como en la referencia de "Quién más".
 - Conservar los saltos de línea dentro de un párrafo del Word (`<w:br/>`), como en "Jesucristo basta".
 - Pasar a estable con los datos reales de IBSI (`registrarIBSI()`), con aprobación.
