@@ -86,7 +86,7 @@ Detalle en `referencia/SPEC.md`: §4 (roles), §5 (modelo de datos), §6 (conver
 - **Ya hecho (Fase 2):** ítems medley guardados y validados en el motor; el registro y el historial los expanden canción por canción (hoy con un solo tono por canción, no la secuencia).
 
 ## Fase 2 (motor)
-- Reimportar en PRUEBA (conversor 11; la última importación es del 28-11 00:50, anterior al motor @38 y al borrado de Qué sería de mi [G], Tu amor por mi [B] y Eres fiel [D]). Después, verificar: Te alabaré C → D → Eb, sin caracteres invisibles, Completo en ti con "G-Am" y los 3 Word fuera del cancionero.
+- Registro: 4 filas quedaron con los ids de Word borrados (Qué sería de mi [G], Tu amor por mi [B], Eres fiel [D]); la ficha de los Word que quedan dice "Sin registros todavía". Decidir si esas filas se vinculan al Word que quedó.
 - Anclar notas sueltas a una palabra (`at`), como en la referencia de "Quién más".
 - Conservar los saltos de línea dentro de un párrafo del Word (`<w:br/>`), como en "Jesucristo basta".
 - Pasar a estable con los datos reales de IBSI (`registrarIBSI()`), con aprobación.
