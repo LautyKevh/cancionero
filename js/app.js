@@ -492,7 +492,7 @@ function sheetRows(item, mus, vari, ed) {
     const nv = vari && !ed && e.src != null && !e.nueva ? variantesDe(s, e.src).length : 0;
     const nomP = nv ? `<button type="button" class="varc" data-var="${k}" aria-haspopup="dialog" aria-label="${esc(label || 'Parte')}: elegir otra variante (hay ${nv})">${label ? '[' + esc(label) + ']' : 'Parte'} <span class="vart" aria-hidden="true">▾</span></button>` : label ? `<span>[${esc(label)}]</span>` : '';
     const head = label || ind || nv ? `<div class="sec${acl ? ' cacl' : ind ? ' inl' : ''}">${acl ? `<span class="tit">${nomP}${ind}</span>` : nomP + ind}${aclH}</div>` : '';
-    return `${sep}${sec}${head}${tag}${L.join('')}</section>`;
+    return `${sep}${L.length ? sec : sec.replace('class="parte', 'class="parte solo')}${head}${tag}${L.join('')}</section>`;
   }).join('');
   return { rows, kd, info, arr: R.arr };
 }
@@ -919,18 +919,18 @@ function hojaImpresa(item, mus) {
 // Alto de la hoja: A4 o carta (se usa el menor de los dos para que entre en ambos). El margen de 9 mm lo pone
 // el padding de .phoja, que ya está incluido en scrollHeight.
 const HOJA_MM = 279.4;
-/** Achica la letra de cada canción (hasta 8 pt) para que entre en una hoja; si aun así no entra, sigue en la siguiente. */
+/** Achica la letra de cada canción (hasta 7,5 pt) para que entre en una hoja; si aun así no entra, sigue en la siguiente. */
 function ajustarHojas(box) {
   const mm = 96 / 25.4, alto = HOJA_MM * mm;
   box.querySelectorAll('.phoja').forEach(h => {
     const L = h.querySelector('.lines'), base = L.classList.contains('singer') ? 12 : 11;
-    for (let pt = base; pt >= 8; pt -= .5) {
+    for (let pt = base; pt >= 7.5; pt -= .5) {
       L.style.fontSize = pt + 'pt';
       L.querySelectorAll('.sg').forEach(x => { x.style.marginLeft = ''; }); fixChords(L);
       if (h.scrollHeight <= alto) break;
     }
     // Un renglón de aire entre el título y la primera parte, solo si con él sigue entrando en una hoja (misma letra).
-    const extra = parseFloat(getComputedStyle(L).fontSize) * 1.35;
+    const extra = parseFloat(getComputedStyle(L).fontSize) * 1.15;
     if (h.scrollHeight + extra <= alto) h.querySelector('h2').style.marginBottom = `calc(4mm + ${extra}px)`;
   });
 }

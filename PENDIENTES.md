@@ -112,3 +112,4 @@ Detalle en `referencia/SPEC.md`: §4 (roles), §5 (modelo de datos), §6 (conver
 
 - **Jesús en el centro** (nov. 2026): dos canciones aparte desde Word con el mismo arreglo: `jesus-en-el-centro-2` [C] = Danilo Montero, tono original G, 140 BPM; `-3` [F] = Israel & New Breed, A, 129 BPM.
 - **Digno (Elevation)**: el intérprete figura "Elevation"; cambiarlo a "Elevation Worship" necesita clave de admin.
+- **Conversor: "[PUENTE 2a] [x2]"** en un mismo renglón del Word queda como dos partes ("PUENTE 2a" vacía y "x2" con el contenido); se ve "[ x2]" como título (Clamo a Cristo). Corregir en motor/Convertir.js y reimportar.
