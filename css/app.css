@@ -158,8 +158,8 @@ input[type=search]::placeholder { color: var(--mute); }
 .lines .sec .modi { font-size: 1em; }
 .lines .sec.cacl { display: flex; flex-wrap: wrap; gap: 0 .6em; align-items: baseline; white-space: normal; }
 .lines .sec.cacl .tit { display: inline-flex; gap: 1em; align-items: baseline; white-space: nowrap; }
-.lines .sec .acl { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 400; font-size: .9em; color: var(--ink); white-space: pre-wrap; min-width: 0; }
-.lines.singer .sec .acl { font-family: Inter, system-ui, sans-serif; }
+.lines .sec .acl { font-family: "JetBrains Mono", ui-monospace, monospace; font-weight: 400; font-size: .74em; color: var(--ink); white-space: pre-wrap; min-width: 0; }
+.lines.singer .sec .acl { font-family: Inter, system-ui, sans-serif; font-size: .85em; }
 #print .sec .acl { color: #000; font-weight: 400; }
 .lines .gap { min-height: .4em; }
 .lines .medsep { font-family: Fraunces, Georgia, serif; font-weight: 700; font-size: 1.05em; color: var(--ink, inherit); border-top: 1px solid var(--line, #ddd); padding-top: .5em; margin: 1.4em 0 .5em; white-space: normal; }
