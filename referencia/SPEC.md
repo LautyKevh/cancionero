@@ -199,6 +199,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - Transposición:
   - Escribe sostenidos o bemoles según la tonalidad destino (Ab → Db9, no C#9).
   - "Orig." aparece deshabilitado si ya está en el tono original.
+  - Impresión: un renglón de aire entre el título de la canción y la primera parte, solo si así sigue entrando en una hoja con la misma letra. Imprimiendo una reunión (entera o una canción desde ella), cada hoja lleva arriba, chico y en el margen, el nombre de la reunión (con " - dd-mm-aaaa" si el nombre no trae la fecha); no cambia la letra ni la cantidad de hojas. Desde la lista, no va.
   - Títulos de parte entre corchetes, como en los Word ("[Coro 1]", "[Verso 2] ↑ A (+1½)"). Una aclaración entre paréntesis en el primer renglón de la parte va en el renglón del título ("[Coro 1] (Primera vez menos acordes)"), con su formato de letra; si no entra, pasa abajo. En Músico, Cantante e impresión.
   - Al transponer se mantiene la posición de scroll.
   - **Recuadro del tono (arriba a la derecha):** fuera de una reunión, el tono y "Tono" / "Ahora". En una reunión, si está en el tono del director, el tono y "Reunión"; si se transportó (−½, +½, Orig.), el tono actual y "↺ Volver a E" con aspecto de botón: tocarlo vuelve al tono de la reunión. La barra no cambia.

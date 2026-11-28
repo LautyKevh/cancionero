@@ -563,7 +563,7 @@ function drawSheet(anim) {
     if (r) { P.modos[r.id] = view.mode; savePrefs(); drawSheet(); }
     else replaceHash(`#/cancion/${s.id}/${view.mode}`), transition(() => drawSheet());
   };
-  $('#pr').onclick = () => imprimir(hojaImpresa(item, mus), s.titulo);
+  $('#pr').onclick = () => imprimir(hojaImpresa(item, mus), s.titulo, r ? encabezadoSes(r) : '');
   if (vari) $$('[data-var]').forEach(b => b.onclick = () => hojaVariante(r, i, +b.dataset.var));
   if (puedeEd) {
     const modo = on => { view.editAc = on ? claveEd : null; const y = scrollY; drawSheet(); scrollTo(0, y); if (!on) $('#edm')?.focus({ preventScroll: true }); };
@@ -879,8 +879,8 @@ function openSes(r) {
   $$('[data-o]').forEach(b => b.onclick = () => go(`#/reunion/${r.id}/${b.dataset.o}`));
   $('#pr').onclick = () => {
     const mus = P.modos[r.id] === 'm';
-    const hojas = r.canciones.filter(itemOk).map((c, k) => hojaImpresa(c, mus, k ? '' : nombreSes(r))).join('');
-    imprimir(hojas, nombreSes(r));
+    const hojas = r.canciones.filter(itemOk).map(c => hojaImpresa(c, mus)).join('');
+    imprimir(hojas, nombreSes(r), encabezadoSes(r));
   };
   $('#sm2').onclick = () => { P.modos[r.id] = P.modos[r.id] === 'm' ? 'c' : 'm'; savePrefs(); openSes(r); };
   const ask = (what, run) => {
@@ -910,9 +910,11 @@ function openSes(r) {
 // ---------- Imprimir / PDF ----------
 // Arma una copia limpia (sin botones) en #print y abre el diálogo del sistema; en el celular ofrece "Guardar como PDF".
 // Hoja como los documentos de la iglesia: "Nombre [Tono]" centrado, en una línea; sin otros datos.
-function hojaImpresa(item, mus, arriba) {
+// Encabezado de cada hoja al imprimir una reunión: su nombre; si no trae la fecha, " - dd-mm-aaaa".
+const encabezadoSes = r => { const n = nombreSes(r); return /\d{1,2}[-/]\d{1,2}[-/]\d{2,4}/.test(n) ? n : `${n} - ${fmt(r.fecha)}`; };
+function hojaImpresa(item, mus) {
   const { rows, kd } = sheetRows(item, mus);
-  return `<article class="phoja">${arriba ? `<p class="pses">${esc(arriba)}</p>` : ''}<h2>${esc(tituloItem(item))} [${esc(kd)}]</h2><div class="lines ${mus ? '' : 'singer'}">${rows}</div></article>`;
+  return `<article class="phoja"><h2>${esc(tituloItem(item))} [${esc(kd)}]</h2><div class="lines ${mus ? '' : 'singer'}">${rows}</div></article>`;
 }
 // Alto de la hoja: A4 o carta (se usa el menor de los dos para que entre en ambos). El margen de 9 mm lo pone
 // el padding de .phoja, que ya está incluido en scrollHeight.
@@ -927,12 +929,16 @@ function ajustarHojas(box) {
       L.querySelectorAll('.sg').forEach(x => { x.style.marginLeft = ''; }); fixChords(L);
       if (h.scrollHeight <= alto) break;
     }
+    // Un renglón de aire entre el título y la primera parte, solo si con él sigue entrando en una hoja (misma letra).
+    const extra = parseFloat(getComputedStyle(L).fontSize) * 1.35;
+    if (h.scrollHeight + extra <= alto) h.querySelector('h2').style.marginBottom = `calc(4mm + ${extra}px)`;
   });
 }
-function imprimir(html, titulo) {
+function imprimir(html, titulo, arriba) {
   let box = document.getElementById('print');
   if (!box) { box = document.createElement('div'); box.id = 'print'; document.body.appendChild(box); }
-  box.innerHTML = html;
+  // Nombre de la reunión: fijo en el margen superior, se repite en cada hoja impresa y no ocupa lugar de la canción.
+  box.innerHTML = (arriba ? `<p class="pses">${esc(arriba)}</p>` : '') + html;
   const t0 = document.title; document.title = titulo || t0;          // nombre sugerido del PDF
   document.body.classList.add('imprimiendo');
   ajustarHojas(box);
