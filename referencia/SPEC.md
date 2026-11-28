@@ -2,6 +2,37 @@
 
 Todo lo definido con Lautaro durante el prototipo. La referencia visual y funcional es `referencia/prototipo.html`: abrilo en el navegador antes de empezar.
 
+## 0. Registro de decisiones (leer primero en cada sesión)
+
+Una línea por decisión. Lo que está acá ya se decidió: no volver a preguntarlo. Detalle en la sección indicada.
+
+- 2026-11-28 · Idioma: responder siempre en español (también en `CLAUDE.md`).
+- 2026-11-28 · Forma de trabajo: nada a `main`, ni a la planilla o el Drive de IBSI, ni a reuniones o datos de prueba, sin que Lautaro lo pida. Siempre publicar en `desarrollo` con push. Frenar al terminar cada pedido. (§0.1)
+- 2026-11-27 · Word: el tono lo manda la primera línea, no el nombre del archivo. (§5)
+- 2026-11-27 · Los nombres de archivo en Drive no se tocan (paréntesis incluido). (§5)
+- 2026-11-27 · Los Word locales no se comparan con Drive salvo que Lautaro lo pida. (§5)
+- 2026-11-27 · Acordes tal como en el Word; con transporte, # o b según el tono de destino. (§7)
+- 2026-11-27 · Paréntesis ( ) = opcional / a veces / segunda vuelta: se ven siempre y se transportan, también los que hacen de puente. Solo se ocultan [ ], { } y las transiciones tipo "Inter para subir a A" (con "Mostrar igual"). (§6, §7)
+- 2026-11-27 · "(Sube a X)", "(Baja a X)" y "(SUBE)"/"(BAJA)" no se muestran como texto: los reemplaza el indicador ↑/↓. (§6, §7)
+- 2026-11-28 · Títulos de parte entre corchetes ("[Coro 1]"); las repeticiones afuera ("[Coro] x2"); la aclaración entre paréntesis en el mismo renglón ("[Coro 1] (Primera vez menos acordes)"), un poco más chica que el título. (§7)
+- 2026-11-28 · Agrupación: mismo título + misma letra = una sola canción en la lista; se ignora la posición de los acordes al comparar. Word que son solo transporte: se registra uno, el del tono original. Word con acordes o arreglo distintos: al elegirla pregunta "¿Qué versión?" (la sugerida primero). Otro intérprete o paréntesis de versión = canción separada. "Conservá X" manda por encima de la regla del tono. (§5)
+- 2026-11-28 · Tono que se muestra (lista, buscador, agregar a reunión, al abrir y encabezado): 1) original del intérprete → "Tono original X"; 2) el más usado en el Registro → "Tono habitual X"; 3) el del Word → "Tono registrado X". Nunca el del nombre del Word. (§5, §7)
+- 2026-11-28 · Encabezado de canción: "Intérprete · Tono … X · BPM" chico y debajo "Dirige Nombre". En la reunión, debajo del título solo "Dirige Nombre", sin repetir la fecha. (§7)
+- 2026-11-28 · Recuadro del tono en una reunión: "X · Reunión" si coincide con el del director; si se transporta, "Y · ↺ Volver a X", tocable, vuelve al tono de la reunión. "Orig." queda en la barra; no se agregan botones a la barra. (§7)
+- 2026-11-28 · Ediciones del ensayo (letra y acordes por parte, variantes, tono): solo de esa reunión, sin nombre ni clave, las ven todos ese día, nunca cambian la canción base. Edición por parte entera como en un Word, con vista previa y "Restaurar"; si la parte se repite, el cambio va a todas sus apariciones. Los cambios permanentes van por "Sugerir corrección". (§4, §7)
+- 2026-11-27 · Datos de la canción (intérprete, tono original, BPM): vacíos, los completa cualquiera con confirmación y sin nombre; con valor, solo el admin. Historial con fecha, hora, valor anterior y nuevo. (§5)
+- 2026-11-28 · Confirmaciones: el texto arriba; abajo a la derecha "No" primero y "Sí, …" después; rojo solo para borrar. (§7)
+- 2026-11-27 · La barra "Actualizado… / Actualizar" aparece solo en Ajustes. El login de admin es un botón propio "Iniciar sesión". (§4, §8)
+- 2026-11-27 · La app abre siempre en Canciones; solo al recargar dentro de la app se queda donde estaba. (§8)
+- 2026-11-28 · Impresión: si el Word entra en una hoja, la app también (compacta como el Word; mínimo 7,5 pt). Un renglón de aire después del título si entra. El nombre de la reunión en cada hoja, chico y en el margen ("Bautismo - fecha" si el nombre no trae fecha), sin cambiar la cantidad de hojas; desde la lista no va. (§7)
+
+### 0.1 Forma de trabajo
+- Idioma: siempre en español (mensajes, resúmenes, preguntas y cierres).
+- Nada a `main`, ni a la planilla o el Drive de IBSI, ni a reuniones o datos de prueba, sin pedido explícito de Lautaro.
+- Cada pedido terminado se publica en `desarrollo` con commit y push (y se sube `VERSION` en `sw.js` si cambia la app); el motor de prueba se despliega con `clasp` si cambia el motor.
+- Al terminar cada pedido, frenar y esperar.
+- Toda decisión nueva se anota en §0 (con fecha) y en su sección; nada queda solo en el chat.
+
 ## 1. Qué es
 
 Un cancionero para ministerios de alabanza. Permite:
@@ -80,7 +111,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Gana lo editado en la app. Si después el archivo trae otro valor, aparece como conflicto en "Revisar cambios en la carpeta" y el admin elige.
   - El BPM cargado desde la app cuenta como confirmado (tiene nombre, historial y "deshacer"), sin importar la columna Confianza.
 - Puede haber varias versiones de una misma canción, con distinto ID e intérprete.
-- **Agrupación por tono (solo en la app):** los Word que son la misma canción en otro tono (lista fija en `js/grupos.js`, criterio en `referencia/agrupacion-por-tono.md`) aparecen una sola vez en la lista y en los buscadores; la búsqueda mira todos los Word del grupo. Tono que se muestra: 1) el Word que está en el tono original del intérprete (si hay uno); 2) el más usado en el Registro (empate: el más reciente); 3) el del primer Word de la lista, con "Tono original no registrado". Cuando Lautaro dice cuál se conserva ("Conservá X"), ese Word va primero en el grupo. Criterio para "se puede borrar" un Word repetido: no cuentan el tono, la posición de los acordes ni el nombre de una parte; sí cuentan otro acorde, otra parte, otra letra, otro puente u otra nota. El historial suma todos los Word del grupo. Cada Word conserva su id: reuniones y Registro no cambian. **Una sola versión registrada por canción, la del tono original** (salvo que Lautaro diga otra cosa): los Word en otros tonos quedan en el Drive y en el grupo, pero la app muestra uno. Si el Word que vale no está en el tono original (`CONSERVA` en `js/grupos.js`, p. ej. Solo Cristo [A] con tono original B), la app lo transporta. Al abrir una canción arranca en el tono de la regla (original → habitual → registrado), y ese mismo tono es el que se ve en la lista, en el buscador y al agregarla a una reunión (nunca el del nombre del Word); "Orig." vuelve a ese tono. Arreglos de otro intérprete o con paréntesis de versión son canciones aparte.
+- **Agrupación por tono (solo en la app):** los Word que son la misma canción en otro tono (lista fija en `js/grupos.js`, criterio en `referencia/agrupacion-por-tono.md`) aparecen una sola vez en la lista y en los buscadores; la búsqueda mira todos los Word del grupo. Tono que se muestra: 1) el Word que está en el tono original del intérprete (si hay uno); 2) el más usado en el Registro (empate: el más reciente); 3) el del primer Word de la lista, con "Tono original no registrado". Cuando Lautaro dice cuál se conserva ("Conservá X"), ese Word va primero en el grupo. Criterio para "se puede borrar" un Word repetido: no cuentan el tono, la posición de los acordes ni el nombre de una parte; sí cuentan otro acorde, otra parte, otra letra, otro puente u otra nota. El historial suma todos los Word del grupo. Cada Word conserva su id: reuniones y Registro no cambian. **Mismo título + misma letra = una sola canción**, aunque cambien acordes o repeticiones (se ignora la posición de los acordes). Si dentro de una canción hay Word con acordes o arreglo distintos (más que transporte), al abrirla o agregarla a una reunión aparece la hoja **"¿Qué versión?"**: una opción por versión con una pista de la diferencia, la sugerida por la regla del tono primero y marcada; dentro de la reunión queda la elegida. Si solo cambia el tono, no pregunta. **Otro intérprete o paréntesis de versión** ("(New)", "(Simple)") = canción separada. "Conservá X" manda por encima de la regla del tono (`CONSERVA` en `js/grupos.js`). **Una sola versión registrada por canción, la del tono original** (salvo que Lautaro diga otra cosa): los Word en otros tonos quedan en el Drive y en el grupo, pero la app muestra uno. Si el Word que vale no está en el tono original (`CONSERVA` en `js/grupos.js`, p. ej. Solo Cristo [A] con tono original B), la app lo transporta. Al abrir una canción arranca en el tono de la regla (original → habitual → registrado), y ese mismo tono es el que se ve en la lista, en el buscador y al agregarla a una reunión (nunca el del nombre del Word); "Orig." vuelve a ese tono. Arreglos de otro intérprete o con paréntesis de versión son canciones aparte.
 - **Canción base:** es el Word de la iglesia (la versión de la casa, no la original del intérprete).
   - Todo bloque del Word es válido aunque no exista en la original. Por ejemplo, el [Final] en F# de "Al estar aquí" lo agregó la iglesia y es parte de la base.
   - Cambiar el arreglo de una reunión nunca modifica la canción base.
@@ -197,13 +228,13 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 **Vista Músico:**
 - Controles en una sola fila, compactos, debajo del título; no fijos, se van al hacer scroll: `−½ · Tono · +½ · Orig. · C/Do/I · A− · A+ · Cantante`.
 - Transposición:
-  - Escribe sostenidos o bemoles según la tonalidad destino (Ab → Db9, no C#9).
+  - Los acordes se muestran tal como están en el Word; al transportar, escribe sostenidos o bemoles según la tonalidad destino (Ab → Db9, no C#9).
   - "Orig." aparece deshabilitado si ya está en el tono original.
   - Impresión compacta, como los Word (interlineado sencillo, acordes pegados a la letra, un renglón entre partes; una parte que va solo con su título ocupa ese renglón). Regla: si el Word entra en una hoja, la impresión también. Letra mínima 7,5 pt.
   - Impresión: un renglón de aire entre el título de la canción y la primera parte, solo si así sigue entrando en una hoja con la misma letra. Imprimiendo una reunión (entera o una canción desde ella), cada hoja lleva arriba, chico y en el margen, el nombre de la reunión (con " - dd-mm-aaaa" si el nombre no trae la fecha); no cambia la letra ni la cantidad de hojas. Desde la lista, no va.
   - Títulos de parte entre corchetes, como en los Word ("[Coro 1]", "[Verso 2] ↑ A (+1½)"). Una aclaración entre paréntesis en el primer renglón de la parte va en el renglón del título ("[Coro 1] (Primera vez menos acordes)"), con su formato de letra; si no entra, pasa abajo. En Músico, Cantante e impresión.
   - Al transponer se mantiene la posición de scroll.
-  - **Recuadro del tono (arriba a la derecha):** fuera de una reunión, el tono y "Tono" / "Ahora". En una reunión, si está en el tono del director, el tono y "Reunión"; si se transportó (−½, +½, Orig.), el tono actual y "↺ Volver a E" con aspecto de botón: tocarlo vuelve al tono de la reunión. La barra no cambia.
+  - **Recuadro del tono (arriba a la derecha):** fuera de una reunión, el tono y "Tono" / "Ahora". En una reunión, si está en el tono del director, el tono y "Reunión"; si se transportó (−½, +½, Orig.), el tono actual y "↺ Volver a E" con aspecto de botón: tocarlo vuelve al tono de la reunión. La barra no cambia: "Orig." se queda ahí y no se agregan botones.
 - Cifrado:
   - Rota entre americano (C), latino (Do) y grados en romanos.
   - Grados: mayúscula para mayores, minúscula para menores (iii7), alteraciones bII/bIII/#IV/bVI/bVII, bajo en romano (I/VI).
@@ -222,7 +253,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 **Vista de la canción (Músico y Cantante):**
 - Cada parte va en su bloque, con un espacio claro antes del título siguiente.
 - Una parte de un solo renglón de acordes (Intro, Inter, Interludio, Final) muestra siempre los acordes al lado del título, sin pasarlos abajo (si no entra, se achica la letra como en el resto de la hoja). Con 2 renglones o más, van abajo del título.
-- "(Sube a X)" / "(Baja a X)" no se muestran como texto: se reemplazan por el indicador "↑ X" / "↓ X", transportado, en el mismo renglón que el título de la parte ("Coro  ↑ F").
+- "(Sube a X)" / "(Baja a X)" y "(SUBE)" / "(BAJA)" no se muestran como texto: se reemplazan por el indicador "↑ X" / "↓ X", transportado, en el mismo renglón que el título de la parte ("Coro  ↑ F").
 - Si no hay intérprete, no se muestra nada (nunca "Intérprete sin confirmar").
 
 **Imprimir / PDF:**
@@ -260,7 +291,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - Clave de 4 dígitos.
 - Al entrar a una reunión se pregunta una sola vez Cantante / Músico. El botón "Modo: Músico ⇄" está en la lista. La elección se recuerda por reunión.
 - Las canciones se abren en el tono y el orden de la reunión.
-- **Encabezado de la canción** (en la reunión y en la lista), tres renglones: título / intérprete · Tono original X (· BPM) / Dirige X. Sin director, sin el tercer renglón; sin intérprete, solo "Tono original X"; en un medley, "Medley". La etiqueta dice de dónde sale el tono (mismas reglas que la agrupación): "Tono original X" si está cargado el del intérprete; si no, "Tono habitual X" (el que más se repite en el Registro; empate: el más reciente); si no hay Registro, "Tono registrado X" (el del Word). Nunca "Tono X" solo. Igual fuera de la reunión.
+- **Encabezado de la canción** (en la reunión y en la lista), tres renglones: título / intérprete · Tono … X (· BPM), en letra chica / Dirige X. Sin director, sin el tercer renglón; sin intérprete, solo "Tono original X"; en un medley, "Medley". La etiqueta dice de dónde sale el tono (mismas reglas que la agrupación): "Tono original X" si está cargado el del intérprete; si no, "Tono habitual X" (el que más se repite en el Registro; empate: el más reciente); si no hay Registro, "Tono registrado X" (el del Word). Nunca "Tono X" solo. Igual fuera de la reunión.
 - Al final de cada canción, botones grandes "← Anterior · título" / "Siguiente → título"; en la última, "Fin de la reunión".
 - **Editar (con clave):**
   - Agregar canción con buscador en vivo (título, letra, director). Al elegirla hay dos opciones:
