@@ -22,7 +22,7 @@ function cachePut_(key, val) {
   c.putAll(m, CACHE_TTL); c.put(key, 'chunks:' + n, CACHE_TTL);
 }
 function cacheDel_(key) { CacheService.getScriptCache().remove(key); }
-const ck_ = (ig, what) => 'v3:' + ig.rootId + ':' + what;
+const ck_ = (ig, what) => 'v4:' + ig.rootId + ':' + what;
 
 // ---------- Datos/ ----------
 function datos_(ig) {
@@ -132,14 +132,6 @@ function reunionesTodas_(ig) {
   const sh = hojaReuniones_(planilla_(ig), false);
   if (!sh || sh.getLastRow() < 2) return [];
   const R = sh.getRange(2, 1, sh.getLastRow() - 1, REU_HEAD.length).getValues().map(filaAReunion_).filter(r => r.id);
-  // Word repetidos que se van a borrar del Drive: en las reuniones se usan el que se conserva, con el mismo tono
-  // y arreglo (Datos/reemplazos-word.json: { idViejo: idNuevo }). Al guardar la reunión queda escrito el nuevo.
-  const rem = leerJson_(datos_(ig), 'reemplazos-word.json', {});
-  if (Object.keys(rem).length) R.forEach(r => (r.canciones || []).forEach(it => {
-    if (rem[it.id]) it.id = rem[it.id];
-    (it.canciones || []).forEach(x => { if (rem[x.id]) x.id = rem[x.id]; });
-    (it.arr || []).forEach(p => { if (rem[p.cancion]) p.cancion = rem[p.cancion]; });
-  }));
   return R;
 }
 const publica_ = r => ({ id: r.id, nombre: r.nombre, fecha: r.fecha, director: r.director, canciones: r.canciones, registrada: r.registrada });

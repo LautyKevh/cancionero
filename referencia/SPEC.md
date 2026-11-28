@@ -79,12 +79,13 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - **Tono original** = el tono del intérprete ("E", o "E-F" si modula). No es el tono del Word: el Word es la versión de la iglesia.
   - Gana lo editado en la app. Si después el archivo trae otro valor, aparece como conflicto en "Revisar cambios en la carpeta" y el admin elige.
   - El BPM cargado desde la app cuenta como confirmado (tiene nombre, historial y "deshacer"), sin importar la columna Confianza.
-- **Reemplazo de Word en reuniones:** antes de borrar del Drive un Word repetido, `Datos/reemplazos-word.json` (`{ idViejo: idNuevo }`) hace que las reuniones usen el que se conserva, con el mismo tono y arreglo (también en las partes de un medley). Al guardar la reunión queda escrito el nuevo.
 - Puede haber varias versiones de una misma canción, con distinto ID e intérprete.
 - **Agrupación por tono (solo en la app):** los Word que son la misma canción en otro tono (lista fija en `js/grupos.js`, criterio en `referencia/agrupacion-por-tono.md`) aparecen una sola vez en la lista y en los buscadores; la búsqueda mira todos los Word del grupo. Tono que se muestra: 1) el Word que está en el tono original del intérprete (si hay uno); 2) el más usado en el Registro (empate: el más reciente); 3) el del primer Word de la lista, con "Tono original no registrado". Cuando Lautaro dice cuál se conserva ("Conservá X"), ese Word va primero en el grupo. Criterio para "se puede borrar" un Word repetido: no cuentan el tono, la posición de los acordes ni el nombre de una parte; sí cuentan otro acorde, otra parte, otra letra, otro puente u otra nota. El historial suma todos los Word del grupo. Cada Word conserva su id: reuniones y Registro no cambian.
 - **Canción base:** es el Word de la iglesia (la versión de la casa, no la original del intérprete).
   - Todo bloque del Word es válido aunque no exista en la original. Por ejemplo, el [Final] en F# de "Al estar aquí" lo agregó la iglesia y es parte de la base.
   - Cambiar el arreglo de una reunión nunca modifica la canción base.
+- **Título de parte "… en X"** ("Coro en Eb"): esa parte está en el tono X.
+- **Caracteres invisibles** (espacio de ancho cero, BOM) en el Word: el motor los saca antes de convertir.
 - **Tono del título con barra:** en `[C/D - Eb]` la barra separa tonos (estrofa en C, coro en D, sube a Eb): no es un acorde con bajo.
 - **Word locales:** Lautaro tiene los Word en su PC y sube a Drive solo los que elige; las cantidades no tienen por qué coincidir. No se compara el local contra Drive salvo que lo pida.
 - **Nombres de archivo en Drive:** no se renombran (sirven para identificarlos fuera de la app). El paréntesis del nombre queda donde y como está; si Lautaro lo borra, se borra también en la app.

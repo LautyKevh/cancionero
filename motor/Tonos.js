@@ -89,6 +89,7 @@ function puntaje_(acordes, tono) {
 }
 
 const PISTA_RE_ = /\((?:sube|baja|pasa|modula)\s+a\s+([A-G][#b]?m?)\)/i;
+const EN_TONO_RE_ = /\ben\s+([A-G][#b]?m?)\s*$/;      // título "Coro en Eb": la parte está en ese tono
 const TRANS_RE_ = /\b(?:inter(?:ludio)?|puente|transici[oó]n|modulaci[oó]n|pasaje)\b.*?\b(?:subir|bajar|ir|pasar|volver)\s+a\s+([A-G][#b]?m?)\b/i;
 
 /**
@@ -125,6 +126,8 @@ function analizarTonos_(song, tonoCrudo) {
     let tono = prev;
     if (tr) {
       b.transicion = true; b.destino = tr[1]; tono = tr[1];
+    } else if (EN_TONO_RE_.test(b.label || '')) {
+      tono = EN_TONO_RE_.exec(b.label)[1];
     } else if (pista) {
       tono = pista[1];
     } else if (mod) {

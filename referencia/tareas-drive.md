@@ -1,6 +1,6 @@
 # Tareas a mano en el Drive (antes de completar los datos de las canciones)
 
-**Generado:** 27-11-2026, con los datos de la iglesia de prueba (292 Word importados, 0 con error). Solo es una lista: no se modificó, borró ni movió nada del Drive.
+**Generado:** 28-11-2026, con los Word actuales de la iglesia de prueba (299 importados, después de tus correcciones y la reimportación de hoy). Solo es una lista: no se modificó, borró ni movió nada del Drive.
 
 **Cómo leerla:**
 - Cada Word tiene un link. "r3" es el tercer renglón de esa parte, sin contar los renglones vacíos. "(antes del primer título)" es lo que está arriba del primer título de parte.
@@ -14,10 +14,7 @@
 - **Los Word se corrigen una sola vez, en la carpeta [Letra y Acordes de IBSI](https://drive.google.com/drive/folders/1CMc8T2cZBVZsdJ21zfPXOS-NwP06qFuh).**
   - La copia de PRUEBA ([Cancionero PRUEBA](https://drive.google.com/drive/folders/1BjV_7ZrAKoO0IW6F92YGLj8bGyMfjDnc)) no tiene Word propios: lee los de esa carpeta de IBSI sin copiarlos ni modificarlos.
   - No hay que corregir en dos lados. Todos los links de esta lista apuntan a esa carpeta.
-- **Intérpretes (sección 1.1): no van en el Word.** Salen de la pestaña Canciones de la planilla, columna Intérprete.
-  - PRUEBA lee su propia copia de la planilla (la de la carpeta Cancionero PRUEBA), no la de IBSI.
-  - Para verlos ya en la app de prueba: completalos en la copia de PRUEBA.
-  - Para que queden para cuando IBSI pase al motor: completalos también en la [planilla de IBSI](https://docs.google.com/spreadsheets/d/1ocmmf1kmCtG7QJgUsnsxgl97w0ZECOJirydW1BuiwCU). Son 12, así que conviene hacerlo en las dos.
+- **Intérpretes, tono original y BPM: no van en el Word.** Se completan en la app, en la ficha de cada canción ("Datos de la canción"): si están vacíos los completa cualquiera; si ya tienen valor, solo el admin.
 - **Cómo corregir un Word sin romper nada:** editalo en su lugar, conservando el mismo archivo. Dos formas:
   - abrirlo desde Drive con Word / Google Docs (modo Office), sin "Guardar como";
   - en Drive, "Administrar versiones → Subir versión nueva".
@@ -34,145 +31,55 @@
 
 ## 1. Corregir Word
 
-> **Ojo:** 1.1, 1.2, 1.3, 1.5, 1.6 y 1.7 son de antes de tus 60 correcciones del 27-11 y no los regeneré: pueden tener cosas ya resueltas. Los intérpretes de 1.1 ya están cargados en PRUEBA desde la ficha de cada canción (no hace falta la planilla). 1.4 sí está regenerada con la reimportación.
+### 1.1 Archivos nuevos con el nombre en un tono y el Word en otro — 3
 
-### 1.1 Intérprete sin confirmar — 12 Word (en la planilla, no en el Word)
-El nombre del archivo tiene un paréntesis que la importación no reconoce como intérprete, y la planilla no tiene intérprete para esa canción.
-- **Cómo debería quedar:**
-  - Si el paréntesis es el intérprete, escribilo en la columna Intérprete.
-  - Si es un subtítulo o un nombre de la iglesia, no hace falta nada; ponele `-` en Intérprete para que no vuelva a aparecer el aviso.
-- **Mi lectura** (para que decidas):
-  - parecen subtítulos: Gloria y honor, Son of God, Una cosa, Abba Padre y YAHWEH;
-  - parecen nombres de persona: Edgar, Paz, Andrea, Evan, Julio y Lowsan.
+Al reimportar aparecieron estos tres. La primera línea del Word dice otro tono que el nombre del archivo, y el contenido es el de otro Word que ya existe:
+- [ ] [Qué sería de mi [F#].docx](https://drive.google.com/file/d/1oTAKm9svTvdlgzjor97KyU2NIyOHCkYw/view): el Word dice **[G]** y es igual a [Qué sería de mi [G].docx](https://drive.google.com/file/d/1aNRApnLqW9JKAoRrWkqN-wrT-Or_6uAb/view) pero con tus correcciones. Tus arreglos de "Qué sería de mí [G]" (los caracteres invisibles) quedaron en este archivo, no en el [G].
+- [ ] [Tu amor por mi [D].docx](https://drive.google.com/file/d/1JFgGTaxZrzzNCo9xQTQACqo9pF0nQIFX/view): el Word dice **[B]** y es igual a [Tu amor por mi [B].docx](https://drive.google.com/file/d/1gq1Xv2g2euBPQCgiumOQI-Iv9QkcfMQl/view) pero con tus correcciones (incluido el "[Estrofa]" en su renglón). Tus arreglos de "Tu amor por mí [B]" quedaron en este archivo, no en el [B].
+- [ ] [Eres fiel [E].docx](https://drive.google.com/file/d/14H4-8lGTvxsRVnf9A1QoIroI58VVkuC8/view): el Word dice **[D]** (el archivo dice [E]).
 
-- [ ] [Al que está sentado en el trono (Edgar) [F].docx](https://drive.google.com/file/d/1L5YOe94JALbgq7J9CWwA-YDChDR2X_eb/view) — "(Edgar)"
-- [ ] [Anciano de dias [D] (Gloria y honor).docx](https://drive.google.com/file/d/1qhdK-jy575UPOlptM2mWC2DnpyTFYl-1/view) — "(Gloria y honor)"
-- [ ] [Anclado en la roca (YAHWEH) [B].docx](https://drive.google.com/file/d/1lfvIYX64ypPEWvW-CJReDIZfRR00wumb/view) — "(YAHWEH)"
-- [ ] [Anclado en la roca (YAHWEH) [C].docx](https://drive.google.com/file/d/1oMiPRUWomV8e5ekbjmqFewUjmQsPtNEX/view) — "(YAHWEH)"
-- [ ] [En el nombre de Jesus (Paz) [D].docx](https://drive.google.com/file/d/1gcMpOxL7PvRg1DFPl54zQXyXWrDcq_O7/view) — "(Paz)"
-- [ ] [Este es mi deseo (Andrea) [E].docx](https://drive.google.com/file/d/1u4YzHPhBVEtFgH_VJeletGnWWcE4OVwT/view) — "(Andrea)"
-- [ ] [Hijo de Dios (Son of God) [C].docx](https://drive.google.com/file/d/1YqqeFP1SVgc3OzbQMZcMhpDYq_cAPzYX/view) — "(Son of God)"
-- [ ] [Oceanos (Evan) [D].docx](https://drive.google.com/file/d/1zzA3wG3vWcx_Uk5oW7kjJGeH6YrCbZEq/view) — "(Evan)"
-- [ ] [Santo (Una cosa) [A].docx](https://drive.google.com/file/d/1J_FNlauPvt_sQ34qF-gBWnl-lqBK0OpH/view) — "(Una cosa)"
-- [ ] [Soy tu hijo (Abba Padre) [C].docx](https://drive.google.com/file/d/19FG5O4XcloOrl9W--8kCWBEUwqjvjYC6/view) — "(Abba Padre)"
-- [ ] [Tus cuerdas de amor [F] (Julio).docx](https://drive.google.com/file/d/1MEzxLMbN6ZMJ7m2Fzu0TouGAUBuUiUaw/view) — "(Julio)"
-- [ ] [Tus cuerdas de amor [F] (Lowsan).docx](https://drive.google.com/file/d/1vwU3vylxT5Bu2g37xnx_UVPXhmmR_U5K/view) — "(Lowsan)"
+Decidí vos si son versiones en otro tono (y entonces hay que transportar el Word) o si se subieron con otro nombre por error. No toqué nada.
 
-(El de "Anclado en la roca" vale para los dos Word, así que son 11 decisiones.)
+**Los caracteres invisibles** del [G] y del [B] ya no molestan: desde hoy el motor los saca solo al convertir (entra con la próxima reimportación).
 
-### 1.2 Tono: el nombre del archivo y la primera línea del Word no coinciden — 6, más 1 duda
-La app toma el tono de la **primera línea del Word** (el `[Tono]` del título), no del nombre del archivo. En estos seis dicen cosas distintas. Al lado de cada uno va lo que sugieren los acordes, para que decidas cuál corregir.
-- [ ] [Al que es digno [D].docx](https://drive.google.com/file/d/1abQCchqr3PdexWZ93CbBST6K0VGyxn3P/view) — el archivo dice [G]; el Word dice [D]. Los acordes terminan en D, y A y D son los más usados: parece D. Si es D, renombrá el archivo a `[D]`.
-- [ ] [Because He lives [E].docx](https://drive.google.com/file/d/1Nx6-fxpEyD2I_rx5CoDlwGQ6edxdpVP1/view) — el archivo dice [E]; el Word dice [A], y todas sus partes quedaron en A. Los acordes están en E. **Cambiá la primera línea del Word a `[E]`.**
-- [ ] [Eres fiel [D].docx](https://drive.google.com/file/d/1XKUDNQalXFMN7lIFpU2cS4dM7W_HMRxP/view) — el archivo dice [E]; el Word dice [D]. Los acordes están en D (D, C y G). Si es D, renombrá el archivo a `[D]`.
-- [ ] [La sangre de Jesus [E].docx](https://drive.google.com/file/d/19hkbzkU3_lymCF5qEAhfnf2DM1HbQ6Zu/view) — el archivo dice [A]; el Word dice [E]. Los acordes son E, E/G# y A, y la parte "Inter" dice (E): puede ser E o A. Decidí cuál y corregí el otro.
-- [ ] [Qué sería de mi [G].docx](https://drive.google.com/file/d/1aNRApnLqW9JKAoRrWkqN-wrT-Or_6uAb/view) — el archivo dice [F#]; el Word dice [G]. Los acordes están en G (C, D y G). Si es G, renombrá el archivo a `[G]`.
-- [ ] [Tu amor por mi [B].docx](https://drive.google.com/file/d/1gq1Xv2g2euBPQCgiumOQI-Iv9QkcfMQl/view) — el archivo dice [D]; el Word dice [B]. Los acordes están en B (B, F#/B, E…). Si es B, renombrá el archivo a `[B]`.
-- [ ] [Digno (Marcos Brunet) [E-A].docx](https://drive.google.com/file/d/1dcWMYX3CW3CwyqgGj9UwGWnos1IT9tWZ/view) — duda de la importación: el **Pre-Coro** podría estar en A en vez de E. Si está en A, poné `(Sube a A)` en ese título (como en "Al estar aquí"). Si está en E, no hace falta nada.
+### 1.2 Tono: el nombre del archivo tiene la secuencia de tonos — 14 (bien)
 
-(Los Word con varios tonos en el nombre, como "Hay poder [E-F-F#-G-A]", toman el primero. Está bien, no son errores.)
+En estos el nombre lista los tonos y la primera línea del Word el de inicio: está bien, no hay que hacer nada. Al estar aquí, Awesome God, Celebrad a Cristo [E-F], Con mis manos levantadas [G-F], Con tu sangre, Digno (Marcos Brunet), For the Lord is good, Hay poder (x2), He decidido, No hay otro nombre [C-D], Quiero llenar, Suenen dulces himnos, Te alabaré.
 
-### 1.3 Canciones sin títulos de parte (o con títulos que no se leen) — 7
-- [ ] [En el monte Calvario [C].docx](https://drive.google.com/file/d/1-uCoxd5rSCgsSYbkAzZuTY5FbkKi3E2T/view) — no tiene ningún título, y casi todo el Word tiene los acordes en el mismo renglón que la letra. Ejemplo de r1: `En el monte calvario estaba una cruz G Dm C Emblema de afrenta y dolor`.
-  - **Debería quedar:** cada verso en su renglón, con sus acordes en el renglón de arriba.
-  - Títulos sugeridos:
-    - `[Estrofa 1]` antes de r1 ("En el monte calvario…");
-    - `[Coro]` antes de r3 ("Oh, yo siempre amaré esa cruz");
-    - `[Estrofa 2]` antes de r7 ("Y aunque el mundo desprecie…");
-    - `[Coro]` antes de r9;
-    - `[Interludio]` antes de r13 (`C B A F C B A F`);
-    - `[Coro]` antes de r14;
-    - `[Final]` antes de r18 (`C Bb F/A Fm/Ab G C`).
-- [ ] [Nos unimos al cielo [G].docx](https://drive.google.com/file/d/1BoNBaUst498b5hKqErbPQSYrJogTAgcr/view) — 4 renglones sin título ("Nos unimos al cielo…" ×3 y "Su nombre es Jesús…"). **Debería quedar:** `[Coro]` arriba de r1. Revisá también si el Word está completo.
-- [ ] [Ven ante Su trono [A].docx](https://drive.google.com/file/d/1x-MoUw9wWTAwnaB2ECPStiA1RLvajL7x/view) — sin títulos. **Debería quedar:**
-  - `[Intro]` antes de r1 (`A D A D`);
-  - `[Estrofa 1]` antes de r2 ("Si abatido…");
-  - `[Coro]` antes de r6 ("Ven ante su trono…");
-  - `[Interludio]` antes de r8;
-  - `[Estrofa 2]` antes de r9 ("Deja atrás…");
-  - `[Coro x2]` antes de r13 (y sacá el "(X2)" del final de r14);
-  - `[Interludio]` antes de r15;
-  - `[Puente x2]` antes de r16 ("Oh cuán hermoso…", y sacá el "[X2]" de r19);
-  - `[Coro x2]` antes de r20 (sacá el "(X2)" de r21);
-  - `[Interludio]` antes de r22;
-  - `[Final]` antes de r25 ("Hasta un día llegar…").
-- [ ] [Ven ante Su trono [Eb].docx](https://drive.google.com/file/d/17nJXK4AWIISGzLaFuI0V9Y7hZ2h2Gy-4/view) — igual que el de [A]: mismos renglones, más un renglón final r28.
-- [ ] [El Dios que adoramos [F#].docx](https://drive.google.com/file/d/186L3iKE6siBM-zN8XEhHV4Qly3TGjGth/view) — solo tiene el título `Intro x2`, así que toda la canción queda dentro del Intro hasta "Pre-coro". **Debería quedar** (como en el [G]):
-  - `[Estrofa 1]` antes de "El Dios que hizo los cielos…" (r2);
-  - en r6, `PRE-CORO Nadie es como El…`: sacá "PRE-CORO" del renglón y ponelo arriba como `[PreCoro]`;
-  - `[Coro]` antes de "Tú eres el Dios que adoramos…" (r7);
-  - `[Midtro]` en su propio renglón (ver 1.4);
-  - `[Estrofa 2]` antes de "El Dios que descendió…" (r12).
-- [ ] [Abre mis ojos [E].docx](https://drive.google.com/file/d/19wgMS44yzMM2mOY6tJWI7EW8Rg8Z42QR/view) — el título `[Intro]` y los renglones de acordes tienen un carácter invisible al principio. Por eso no se lee ningún título y los acordes quedan como letra (detalle en 1.4).
-- [ ] [Alaba [G].docx](https://drive.google.com/file/d/1bC9tkxcqc-GczySQ0B-bOvsKH08H0NPM/view) — la primera parte no tiene título: arranca directo en "Pre-Coro". **Debería quedar:** `[Estrofa]` (como en [A]) o `[Verso 1]` (como en [F]) arriba del primer renglón.
+- **Te alabaré [C-D - Eb]:** hoy se lee C → D (el "Coro en Eb" quedaba en D). Ya lo corregí: un título "… en Eb" fija el tono de esa parte, y queda C → D → Eb con la próxima reimportación.
 
-### 1.4 Renglones de acordes que se leen como letra — 20 renglones en 9 Word
-Estos renglones tienen acordes, pero algo hace que la app los muestre como texto: **no se transportan ni se ven como acordes**. Al lado de cada uno va la causa exacta y cómo tiene que quedar.
+### 1.3 Canciones sin títulos de parte (o con uno solo) — 4
 
-- [ ] [El Dios que adoramos [F].docx](https://drive.google.com/file/d/1ch8PHLrKOnvMMddbdlG6U19gLlqujcWG/view)
-  - Intro r1: `F - C - Dm - Bb – F - C x2` — la repetición está en el renglón de acordes. Debería quedar: título `[Intro x2]` y abajo `F - C - Dm - Bb – F - C`.
-- [ ] [El Dios que adoramos [F#].docx](https://drive.google.com/file/d/186L3iKE6siBM-zN8XEhHV4Qly3TGjGth/view)
-  - Intro r1: `F# - C# - D#m-B – F#-C# x2` — la repetición está en el renglón de acordes. Debería quedar: título `[Intro x2]` y abajo `F# - C# - D#m-B – F#-C#`.
+- [ ] [En el monte Calvario [C].docx](https://drive.google.com/file/d/1-uCoxd5rSCgsSYbkAzZuTY5FbkKi3E2T/view): no tiene ningún título.
+- [ ] [Ven ante Su trono [Eb].docx](https://drive.google.com/file/d/17nJXK4AWIISGzLaFuI0V9Y7hZ2h2Gy-4/view): no tiene ningún título.
+- [ ] [Atráeme a ti [A].docx](https://drive.google.com/file/d/1KvCNMbdydrn79VT_aIXRHtq28DgqIK57/view): un solo título, «Coro».
+- [ ] [Nos unimos al cielo [G].docx](https://drive.google.com/file/d/1BoNBaUst498b5hKqErbPQSYrJogTAgcr/view): un solo título, «Coro».
+
+### 1.4 Renglones de acordes que se leen como letra — 14 renglones en 4 Word
+
+Tus correcciones de El Dios que adoramos [F] y [F#], Este es mi deseo (Andrea), No soy yo, sino Cristo en mí y Exáltale entraron bien.
+
 - [ ] [Eres fiel [D].docx](https://drive.google.com/file/d/1XKUDNQalXFMN7lIFpU2cS4dM7W_HMRxP/view)
-  - Coro r9: `D A C *A F G D F G A C B G G F*` — tiene "*". Debería quedar: `D A C A F G D F G A C B G G F`.
-- [ ] [Este es mi deseo (Andrea) [E].docx](https://drive.google.com/file/d/1u4YzHPhBVEtFgH_VJeletGnWWcE4OVwT/view)
-  - Intro r1: `: A – B/A – B/G# - C#m-B | A – B/A – B/G# - B` — empieza con ":". Debería quedar: `A – B/A – B/G# - C#m-B | A – B/A – B/G# - B`.
-- [ ] [Exáltale [F].docx](https://drive.google.com/file/d/1_yYeIvTu1WUZEpy42O686VybbNsahkKs/view)
-  - Inter r1: `Gm C Gm-F Am-Dm [Estrofa] [Coro]` — acordes y letra en el mismo renglón. Debería quedar: los acordes en un renglón y la letra en el de abajo, cada acorde sobre su sílaba.
+  - Coro r9: `D A C *A F G D F G A C B G G F*` — tiene "*". Debería quedar: `D A C A F G D F G A C B G G F`. *(Dijiste que ya estaba bien: la app lo sigue leyendo como letra por los "*". Si te sirve así, no hace falta tocarlo.)*
 - [ ] [Levanto un aleluya [D] (New).docx](https://drive.google.com/file/d/1SmSuF14pS0Z4Z40tIdjXQJTvYmTw7SsD/view)
-  - Estrofa 1 r1: `(Solo D)` — "(Solo D)" es una aclaración, no se transporta. Debería quedar: pasalo al título: `[Estrofa 1] (Solo D)` — o dejalo así si no importa.
-- [ ] [No soy yo, sino Cristo en mí [C].docx](https://drive.google.com/file/d/1sd9hUHDlUET1cnYl0H5GSPishLDBqPRW/view)
-  - Intro r1: `: C - F/D - C/E – F-Fm` — empieza con ":". Debería quedar: `C - F/D - C/E – F-Fm`.
-  - Interludio r1: `: C - F/D - C/E – F-Fm` — empieza con ":". Debería quedar: `C - F/D - C/E – F-Fm`.
+  - Estrofa 1 r1: `(Solo D)` — "(Solo D)" es una aclaración, no se transporta. Debería quedar: pasalo al título: `[Estrofa 1] (Solo D)` — o dejalo así si no importa. *(Queda así, decidido.)*
 - [ ] [Qué sería de mi [G].docx](https://drive.google.com/file/d/1aNRApnLqW9JKAoRrWkqN-wrT-Or_6uAb/view)
   - 4 renglones (Estrofa r5, Coro r1, Coro r3, Final r5): carácter invisible (espacio de ancho cero) al principio. Ejemplo: `⟨invisible⟩ G D/F#` → `G D/F#`. Lo mismo en los demás.
 - [ ] [Tu amor por mi [B].docx](https://drive.google.com/file/d/1gq1Xv2g2euBPQCgiumOQI-Iv9QkcfMQl/view)
   - 7 renglones (Estrofa r1, Estrofa r3, Coro r1, Coro r3, Coro r5, Coro r7, Final r1): carácter invisible (espacio de ancho cero) al principio. Ejemplo: `⟨invisible⟩ B F#/B F#/Eb F#/G# F#/Eb` → `B F#/B F#/Eb F#/G# F#/Eb`. Lo mismo en los demás.
   - Coro r9: `(F#/Eb – F#) [Estrofa]` — el título "[Estrofa]" quedó al final del renglón de acordes. Debería quedar: `(F#/Eb – F#)` y en el renglón de abajo `[Estrofa]`.
 
-### 1.5 Títulos de parte mal escritos — 13 Word
-- [ ] [Clamo a Cristo [C].docx](https://drive.google.com/file/d/1SCJEqjSUvbRy4MikAJJ_HpE99uDs1WBz/view) — `PUETE 3` → `[Puente 3]`.
-- [ ] [El mismo poder [Bb].docx](https://drive.google.com/file/d/1eelIdAJ3_fKlVh8icDBG--RGDKIGp9QV/view) — `Ponte 2` → `[Puente 2]` (si es Puente).
-- [ ] [Él nos ama [A].docx](https://drive.google.com/file/d/1MozrciYkhXi_rz3LATUrhbboTD79jR30/view) y [Él nos ama [C].docx](https://drive.google.com/file/d/1Bxd2rTEt9GNWISys4poydLihKB3RNN4g/view) — `Estofa 2` → `[Estrofa 2]`.
-- [ ] [No es con fuerza [Dm].docx](https://drive.google.com/file/d/1q3rLFM4nj8qJyP1gG5Hc4_WJ6IJWHRZ5/view) — `Estofa` → `[Estrofa]`.
-- [ ] [Mírenlo [C].docx](https://drive.google.com/file/d/1tfnLkvpuYfSVn3w5iGpdckZXQtW_DYVa/view) y [Padre nuestro [G].docx](https://drive.google.com/file/d/1q8wrW5QWoUs57XbIj_BSjOa9uKokdbiC/view) — `Intrumental` → `[Instrumental]`.
-- [ ] [Socorro [D].docx](https://drive.google.com/file/d/1mc2A8zSL8PQpWiMXI-1LFR5nQJ2ZGbDh/view) — `Precoro|` → `[Precoro]`.
-- [ ] [Con mis manos levantadas [G-F].docx](https://drive.google.com/file/d/1DJwvV84qZ4HFDS_9CsRAVCLjEmIMhSly/view) — `PartCoro` → `[Coro]` (o el nombre que corresponda).
-- [ ] [Inagotable [C#].docx](https://drive.google.com/file/d/1e9u4wHZ6ByYK9nNNjPVrvamrSmcCqb3-/view) — `Intro:` y `Puente:` → `[Intro]` y `[Puente]`, sin los dos puntos.
-- [ ] [Tal como soy [D].docx](https://drive.google.com/file/d/19QfI7WafW8HxeB5CPJnvtALHMK7GIFTs/view) — `Tag:`, `Puente:` y `Coro (solo teclado):` → sin los dos puntos al final.
-- [ ] [Todo se lo debo a Él [C#].docx](https://drive.google.com/file/d/1-mH6raOD8jqlNMsrueivyCWDIZ9pjR6b/view) — el título es `Intro C#-F#/X3/-G#-F#`. **Debería quedar:** `[Intro x3]` y abajo `C# F# G# F#` (o los acordes que correspondan).
+### 1.5 Otros renglones raros — 1
 
-### 1.6 Renglones sueltos con solo "]" — 13 renglones en 10 Word
-Queda un `]` suelto como letra, o pegado a los acordes. Probablemente sobra de un título mal cerrado. **Debería quedar:** borrar el `]`, y si era parte de un título, cerrarlo bien.
-- [ ] [Aquí estoy (Jaime Murrel) [A].docx](https://drive.google.com/file/d/1_sgAl_Xd9kNNEChy1MypZiCH9GsrBlt3/view) — PreCoro r1.
-- [ ] [Con tu sangre [D].docx](https://drive.google.com/file/d/1NeToinjWxkd31IHJJc7irz1KyO_rGKUy/view) — Final r1.
-- [ ] [Deseo Eterno [A].docx](https://drive.google.com/file/d/18FteAlMlwgh9wTihL6VWz89rao7qqizj/view) y [Deseo Eterno [E].docx](https://drive.google.com/file/d/1cb2NpaSNe7B2244JCvy3_Nb1rCNTAM5y/view) — Estrofa 2 r1 (en los dos).
-- [ ] [El Dios que adoramos [F].docx](https://drive.google.com/file/d/1ch8PHLrKOnvMMddbdlG6U19gLlqujcWG/view) — Estrofa 2 r1: `]F - C - Dm - Bb - F - C`, con el `]` pegado al primer acorde. **Debería quedar:** `F - C - Dm - Bb - F - C`.
-- [ ] [En la cruz [E].docx](https://drive.google.com/file/d/1xE9dHLuBB-hHuT45xFd2oz8xN44w_s12/view) — Coro r1.
-- [ ] [Hijo de Dios (Son of God) [C].docx](https://drive.google.com/file/d/1YqqeFP1SVgc3OzbQMZcMhpDYq_cAPzYX/view) — Estrofa 1 r1 y Coro r1.
-- [ ] [Lavado [B].docx](https://drive.google.com/file/d/1Cr4RcdsUzDEs2n8hXzkhcoYdW6dn13wA/view) — Puente r1, y Coro r1: `](B F# B)`. **Debería quedar:** `(B F# B)`.
-- [ ] [Por siempre [Ab].docx](https://drive.google.com/file/d/1xBja-kfVc76xv1KvqaWOgAJRqVJ49hwn/view) — Coro r1.
-- [ ] [Ven es hora de adorarle [E].docx](https://drive.google.com/file/d/1k3n0gVvgRIAh4iO2mKFJPI9AmraNURrh/view) — Estrofa r1: `[E]] E2 E4`. **Debería quedar:** `E E2 E4`.
+- [ ] [Completo en ti [C].docx](https://drive.google.com/file/d/1CfVFoQ4ii2ZlMqQwswxgIvPWDQIZONFa/view), Puente r2: `(G|Am` — el paréntesis y la barra quedan pegados; probablemente `(G | Am Em)`.
 
-### 1.7 Lo que ya estaba en PENDIENTES → Revisar
-- [ ] [Aquí estoy [D].docx](https://drive.google.com/file/d/1c1rkGv0qFcDZUNLA8M_GLTyUm5d_iTJh/view) — le falta el **PreCoro 2** que sí tiene el [A] (PreCoro 2 r1–r2: "¿Qué puedo hacer, qué puedo decir? / Te ofrezco mi corazón completamente a ti", con el puente `(D)` al final). Agregalo con los acordes transportados a D. Más detalle en la sección 3.
-- [ ] [El Dios que adoramos [F].docx](https://drive.google.com/file/d/1ch8PHLrKOnvMMddbdlG6U19gLlqujcWG/view) — PreCoro r1: `Nadie es como Tu, oh gran Yo Soy` → `Nadie es como Él, oh gran Yo Soy` (como en [F#] y [G]).
-- [ ] [El Dios que adoramos [F#].docx](https://drive.google.com/file/d/186L3iKE6siBM-zN8XEhHV4Qly3TGjGth/view) — "pre coro" escrito como letra: ya está en 1.3.
-- [ ] [Él nos ama [C].docx](https://drive.google.com/file/d/1Bxd2rTEt9GNWISys4poydLihKB3RNN4g/view) — Estofa 2 r3: `el cielo y la tierra se unan un par` → `se unen` (como en [A]).
-- [ ] [No voy a caer [C].docx](https://drive.google.com/file/d/1zJ3WsNH60WgjeRe5GnI50FVT5SlVsPDM/view) — Coro r4: el "Jesús, Jesús, Jesús" quedó en el mismo renglón que sus acordes (ver 1.4). Como en [A]: `Je[A]sus, [Em/G]Jesus, [D/F#]Jesus`, en C sería `Je[C]sús, [Gm/Bb]Jesús, [F/A]Jesús`.
-- [ ] [Por siempre [G].docx](https://drive.google.com/file/d/1IAAxpuF4kfxLAO5Bs4Vpc6rFOZQVKJOM/view) — le falta el **Puente 1** que tiene el [Ab] (Puente 1 r1–r4: "La tierra retumbó, la piedra Él quitó / Su amor perfecto siempre vencerá / El rey resucitó, la muerte derrotó / Ganando la victoria"). Agregalo con los acordes en G.
-- [ ] [El victorioso [Am].docx](https://drive.google.com/file/d/1A8F4H0PUryXA8gZbi_En23XPdOjygWhP/view) y [El victorioso [Dm].docx](https://drive.google.com/file/d/10xpeFMtRdnmwnUYchmlPWkTVj9ZOJ5Lo/view) — el "c am" / "f dm" que aparecía en la letra es Coro r3 (`Esus C/Am` / `Asus F/Dm`), que se lee como letra porque el bajo lleva "m". Con el arreglo de 1.4 (`Esus C/A` / `Asus F/D`), las dos versiones quedan iguales salvo el punto final de "Es del Señor." (Final r3 del [Dm]). La decisión de agruparlas está en la sección 3.
-- [ ] [Temprano yo te buscaré [G].docx](https://drive.google.com/file/d/1qosalrwKiLHU_hU9JAG6atDbLwkLL9jm/view) — acordes corridos en el Coro:
-  - r4: `Porque tu diestra,[C][Am] me ha soste[D]nido` → `Porque tu [C]diestra, [Am]me ha soste[D]nido`;
-  - r5: `[G/E][C/A][G/B]Oh! tu diestra me ha soste[C][D4]nido` → `[G/E]Oh! tu [C/A]diestra [G/B]me ha soste[C]ni[D4]do`.
+### 1.6 Renglones sueltos con solo "]" — ninguno
 
-  Es como en el [F]: `Porque tu [Bb]diestra, [Gm]me ha soste[C]nido` y `[F/D]Oh! tu [Bb/G]diestra [F/A]me ha soste[Bb]ni[C4]do`. El resto de los corridos está en la sección 2b.
-- [ ] [Anclado en la roca (YAHWEH) [B].docx](https://drive.google.com/file/d/1lfvIYX64ypPEWvW-CJReDIZfRR00wumb/view) — PreCoro r2 (`Mi paz y mi [D#/B]sustento`) y r5 (`Mi segu[D#/B]ridad`): el acorde está al revés. En el [C] es `C/E`, que en B es **`B/D#`**: cambiá `D#/B` por `B/D#`. (El `-2` no es un duplicado: es el Word [C], un archivo distinto.)
-- [ ] [Al que está sentado en el trono [B].docx](https://drive.google.com/file/d/18ofUGmRypHTH0jeTmIHDjkQArd99fn_G/view) — el título `Inter (E  B/G#m  B)(E/C#m  B/G#m  B/D#m7)` no se lee como título con acordes, porque los bajos llevan "m". **Debería quedar:** el renglón `[Inter]` y abajo `(E B/G# B) (E/C# B/G# B/D#)`. Revisá si el último era `B/D#` o `D#m7`. Además hay otros 5 renglones con el mismo error, en 1.4.
-- [ ] "Because He Lives" ([Because He lives [A].docx](https://drive.google.com/file/d/1-szPU5ZYVxR9DI_CT8WTTNUrvtx0FHKf/view) y [Because He lives [E].docx](https://drive.google.com/file/d/1Nx6-fxpEyD2I_rx5CoDlwGQ6edxdpVP1/view)) "Interlude 2" + "(Chorus)", y [Jesucristo basta [G].docx](https://drive.google.com/file/d/1eBGHXjibpwEdH2g4y6S_-1UMf8f8BPlk/view) "Coro 2" + "(final)": hoy el paréntesis queda como aclaración del título de arriba, no como parte nueva. Solo **confirmar** que es lo que querés; si no, el Word no necesita cambios.
-- [ ] [Al estar aqui [F# - A].docx](https://drive.google.com/file/d/1D-kXq9CZRQHEz3bSla1Nt_oXWUnnEF4B/view) — el segundo "Verso 1" trae "(Baja a F#)" y el último renglón tiene otros acordes. Ya está decidido que lo corregís vos en el Word.
-- [ ] Agrupación, 9 pares con la misma letra y más de 3 acordes distintos (no se agruparon), con el detalle en `referencia/agrupacion-por-tono.md`: Aquí te esperaré [A]/[C], Digno (Elevation) [C]/[Eb], El Cordero y el León [A]/[C], Más el Dios de toda gracia, Más que vencedor, No hay otro nombre [C-D]/[C], Por su gracia, Santo [B]/[C] y Solo Cristo [A]/[B]. Decidir si son arreglos distintos o errores del Word.
-- (La comprobación de impresión sin encabezado ni pie que figura en Revisar no es del Drive: queda en PENDIENTES.)
+Los 13 que había ya no están (incluido El Dios que adoramos [F#]).
+
+### 1.7 Lo que sigue en PENDIENTES → Revisar
+
+Ver `PENDIENTES.md`, sección "Revisar". Ya saqué lo que resolviste (los grupos decididos y El victorioso).
 
 ---
 
@@ -351,13 +258,13 @@ Cada Word se compara contra el que se conserva del grupo (el que dijiste; si no,
   | Final, r1 | renglón de acordes: D | — | está solo en Con tu sangre [D-Eb].docx |
 
   </details>
-- [ ] [El Dios que adoramos [F].docx](https://drive.google.com/file/d/1ch8PHLrKOnvMMddbdlG6U19gLlqujcWG/view) contra [El Dios que adoramos [F#].docx](https://drive.google.com/file/d/186L3iKE6siBM-zN8XEhHV4Qly3TGjGth/view): **9 diferencia(s)** — letra ×1, distinto tipo de renglón (solo letra / letra con acordes) ×1, letra + acordes ×3, renglones que están en uno solo ×1, letra (solo signos/mayúsculas/acentos) ×1, acordes/nota ×1, distinto tipo de renglón (título de parte / renglón de acordes) ×1.
+- [ ] [El Dios que adoramos [F].docx](https://drive.google.com/file/d/1ch8PHLrKOnvMMddbdlG6U19gLlqujcWG/view) contra [El Dios que adoramos [F#].docx](https://drive.google.com/file/d/186L3iKE6siBM-zN8XEhHV4Qly3TGjGth/view): **9 diferencia(s)** — renglones que están en uno solo ×2, letra + acordes ×4, letra (solo signos/mayúsculas/acentos) ×1, acordes/nota ×1, distinto tipo de renglón (título de parte / renglón de acordes) ×1. Uso: Registro: 5 fila(s).
   <details><summary>Ver diferencias</summary>
 
   | Dónde | El Dios que adoramos [F#].docx | El Dios que adoramos [F].docx | Qué cambia |
   |---|---|---|---|
-  | Intro, r1 | letra: F# - C# - D#m-B – F#-C# x2 | letra: F - C - Dm - Bb – F - C x2 | letra |
-  | Estrofa 1, r1 | letra: ] | El [F]Dios que hizo los cielos [C]y la tierra, | distinto tipo de renglón (solo letra / letra con acordes) |
+  | Intro x2, r1 | — | renglón de acordes: F - C - Dm - Bb – F - C | está solo en El Dios que adoramos [F].docx |
+  | Estrofa 1, r1 | [F#][-][C#][-][D#m][B]][–][F#][C#] | El [F]Dios que hizo los cielos [C]y la tierra, | letra + acordes |
   | Estrofa 1, r2 | El [F#]Dios que hizo los cielos y la [C#]tierra, | Con el po[Dm]der de Su palabra, reina [Bb]con autoridad | letra + acordes |
   | Estrofa 1, r3 | Con el poder de Su [D#m]palabra, [B]reina con autoridad | El [F]Dios que aun los vientos [C]le obedecen | letra + acordes |
   | Estrofa 1, r4 | El [F#]Dios que aun los vientos le o[C#]bedecen | Una palabra es su[Dm]ficiente, para los muertos le[Bb]vantar | letra + acordes |
@@ -367,13 +274,13 @@ Cada Word se compara contra el que se conserva del grupo (el que dijiste; si no,
   | título de parte / PUENTE, r2 | título «Puente» (tono F#) | renglón de acordes: Bb - C - Bb/D - C/E | distinto tipo de renglón (título de parte / renglón de acordes) |
 
   </details>
-- [ ] [El Dios que adoramos [G].docx](https://drive.google.com/file/d/1U__YOOVe2OyjrujWnrvbonXyTh0ExTFC/view) contra [El Dios que adoramos [F#].docx](https://drive.google.com/file/d/186L3iKE6siBM-zN8XEhHV4Qly3TGjGth/view): **10 diferencia(s)** — distinto tipo de renglón (solo letra / renglón de acordes) ×1, distinto tipo de renglón (solo letra / letra con acordes) ×1, letra + acordes ×3, renglones que están en uno solo ×4, acordes/nota ×1.
+- [ ] [El Dios que adoramos [G].docx](https://drive.google.com/file/d/1U__YOOVe2OyjrujWnrvbonXyTh0ExTFC/view) contra [El Dios que adoramos [F#].docx](https://drive.google.com/file/d/186L3iKE6siBM-zN8XEhHV4Qly3TGjGth/view): **10 diferencia(s)** — renglones que están en uno solo ×5, letra + acordes ×4, acordes/nota ×1.
   <details><summary>Ver diferencias</summary>
 
   | Dónde | El Dios que adoramos [F#].docx | El Dios que adoramos [G].docx | Qué cambia |
   |---|---|---|---|
-  | Intro, r1 | letra: F# - C# - D#m-B – F#-C# x2 | renglón de acordes: G - D - Em-C – G-D// | distinto tipo de renglón (solo letra / renglón de acordes) |
-  | Estrofa 1, r1 | letra: ] | El [G]Dios que hizo los cielos y la tie[D]rra, | distinto tipo de renglón (solo letra / letra con acordes) |
+  | Intro, r1 | — | renglón de acordes: G - D - Em-C – G-D// | está solo en El Dios que adoramos [G].docx |
+  | Estrofa 1, r1 | [F#][-][C#][-][D#m][B]][–][F#][C#] | El [G]Dios que hizo los cielos y la tie[D]rra, | letra + acordes |
   | Estrofa 1, r2 | El [F#]Dios que hizo los cielos y la [C#]tierra, | Con el poder de [Em]Su palabra, reina con au[C]toridad | letra + acordes |
   | Estrofa 1, r3 | Con el poder de Su [D#m]palabra, [B]reina con autoridad | El [G]Dios que aun los vientos le obe[D]decen | letra + acordes |
   | Estrofa 1, r4 | El [F#]Dios que aun los vientos le o[C#]bedecen | Una palabra es su[Em]ficiente, para los muertos [C]levantar | letra + acordes |
@@ -726,15 +633,14 @@ Cada Word se compara contra el que se conserva del grupo (el que dijiste; si no,
 
 | Grupo | Cantidad |
 |---|---|
-| 1.1 Intérpretes sin confirmar (planilla) | 12 Word (11 decisiones) |
-| 1.2 Tono del archivo distinto del Word | 6 (+1 duda de tono por parte) |
-| 1.3 Sin títulos de parte o con títulos que no se leen | 7 Word |
-| 1.4 Renglones de acordes leídos como letra | 20 renglones en 9 Word |
-| 1.5 Títulos mal escritos | 13 Word |
-| 1.6 Renglones sueltos con "]" | 13 renglones en 10 Word |
-| 1.7 Lo que ya estaba en Revisar | 13 tareas |
+| 1.1 Archivos con el nombre en un tono y el Word en otro | 3 Word |
+| 1.2 Tono con secuencia en el nombre | 14, bien (Te alabaré corregido en el motor) |
+| 1.3 Sin títulos de parte o con uno solo | 4 Word |
+| 1.4 Renglones de acordes leídos como letra | 14 renglones en 4 Word (2 los dejás así) |
+| 1.5 Otros renglones raros | 1 |
+| 1.6 Renglones sueltos con "]" | ninguno |
 | 2a. Word que se pueden borrar | 46 (ninguno usado en reuniones ni en el Registro) |
 | 2b. Word repetidos que NO se borran (tienen diferencias) | 34 Word, 139 diferencias para revisar |
 | 3. Grupos dudosos | ninguno: 6 grupos nuevos + Aquí estoy [D] sumado a su grupo |
 
-**Orden recomendado:** 1.4 y lo que quede de 1.x → reimportar → 2b (decidís qué diferencias son adrede; las que sean error se corrigen en el Word y el par pasa a 2a) → 2a (borrar, al final; avisame antes para sacar esos ids de `js/grupos.js`).
+**Orden recomendado:** 1.1, 1.3 y 1.4 → reimportar → 2b (decidís qué diferencias son adrede; las que sean error se corrigen en el Word y el par pasa a 2a) → 2a (borrar, al final; avisame antes para sacar esos ids de `js/grupos.js`).

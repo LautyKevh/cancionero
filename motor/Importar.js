@@ -48,7 +48,7 @@ function nombreArchivo_(n, conocidos) {
 const TANDA_MS = 4.5 * 60 * 1000;
 // Subir cuando cambia Convertir.js o Tonos.js. Los Word sin cambios se reconvierten desde la copia de sus
 // párrafos (Datos/import-parrafos.json, sin volver a bajarlos) y solo se reescriben las canciones cuyo resultado cambia.
-const CONV_V = 10; // 10: "C/D - Eb" en el título son tres tonos
+const CONV_V = 11; // 11: "Coro en Eb" en el título fija el tono de la parte; sin caracteres invisibles
 // Subir cuando cambia leerDocx_ (lo que se guarda de cada Word): descarta la copia de los párrafos.
 const LECTOR_V = 1;
 
@@ -109,6 +109,8 @@ function importarCanciones_(ig, desdeCero) {
       else { ps = compactar_(leerDocx_(f.getBlob())); parrafos.archivos[fid] = { upd, ps }; parrafosCambian = true; }
       // id estable: se conserva el de una importación anterior del mismo archivo
       let id = prev && prev.id;
+      // Caracteres invisibles (espacio de ancho cero, BOM) pegados desde la web: se sacan antes de convertir.
+      ps = ps.map(p => ({ runs: p.runs.map(x => Object.assign({}, x, { text: String(x.text).replace(/[\u200B-\u200D\u2060\uFEFF]/g, '') })) }));
       const r = cancionDe_(nombre, ps, id || 'x', cat, conocidos);
       if (!id) {
         id = r.idPlanilla || slug_(r.titulo);

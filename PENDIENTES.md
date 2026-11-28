@@ -36,14 +36,13 @@ Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesi
 9. **Planilla:** desplegable de B1 ("Ver tonos de:") con validación desde `Personas!A2:A`, creado por el motor. Intérpretes: "Roca firme" → Eric Bustamante; medley "Hermoso nombre" → Evangelina Crubinca (en la iglesia de prueba). En IBSI, B1 e intérpretes al pasar a estable.
 
 ## Revisar (a mano, en los Word; nada de esto frena lo próximo)
-- Agrupación, para que los grupos decididos muestren la letra elegida: Aquí estoy [D] (agregar "Que puedo hacer, que puedo decir…" como en [A]); El Dios que adoramos [F] ("Tú" → "Él") y [F#] ("pre coro" escrito como letra → título); Él nos ama [C] ("unan" → "unen"); No voy a caer [C] (falta un "Jesús, Jesús, Jesús"); Por siempre [G] (falta la estrofa "la tierra retumbó…").
-- "El victorioso" [Am] y [Dm]: verificar si son la misma canción (en la letra quedaron acordes metidos: "c am" en una y "f dm" en la otra). Hasta entonces siguen separadas.
 - Agrupación: los Word del tipo "acorde distinto por error del Word" (Agnus Dei, Alabaré al Señor, Anclado en la roca, Because He lives, Digno (Elevation), Digno es el Señor, Hermoso - No volveré atrás, No hay lugar más alto, Oh tu fidelidad (Majo Solis), Roca firme, Solo hay uno, Toma tu lugar, Tu mirada + Temprano, Una vez, Ven ante Su trono) ya están agrupados; el acorde exacto está en `referencia/agrupacion-por-tono.md`. Algunos pueden ser lecturas del conversor: mirarlos antes de tocar el Word.
 - Agrupación: 9 pares con la misma letra y más de 3 acordes distintos siguen separados (Aquí te esperaré, Digno (Elevation) C/Eb, El Cordero y el León, Más el Dios de toda gracia, Más que vencedor, No hay otro nombre, Por su gracia, Santo, Solo Cristo): decidir si son arreglos distintos o errores del Word. Los de distinto paréntesis (intérprete/arreglo) son versiones distintas y no se comparan.
 - `temprano-yo-te-buscare-2`: en el Word los acordes no caen sobre la sílaba (por ejemplo, "Oh! tu diestra me ha sostenido" con G/E y C/A al principio, y "Porque tu diestra" con C y Am corridos). En la versión 1 están bien.
 - `anclado-en-la-roca-yahweh-2`: revisar de qué archivo sale el -2 (posible duplicado). Hoy figuran "Anclado en la roca (YAHWEH) [B]" y "[C]".
 - "Inter (E B/G#m B)(…)": el bajo "G#m" no es un acorde válido, así que esa línea no se toma como título con acordes. Probable error de tipeo en el archivo.
-- "En el monte calvario", "Nos unimos al cielo" y "Ven ante su trono" (x2) no tienen títulos de parte visibles: Lautaro los corrige en el Word.
+- Sin títulos de parte (o con uno solo): En el monte Calvario, Ven ante Su trono [Eb], Atráeme a ti y Nos unimos al cielo. Lautaro los corrige en el Word.
+- Qué sería de mí [F#], Tu amor por mí [D] y Eres fiel [E]: el Word dice otro tono que el nombre ([G], [B] y [D]); los dos primeros son copias corregidas del [G] y del [B]. Decide Lautaro (ver referencia/tareas-drive.md, 1.1).
 - "Interlude 2" + "(Chorus)" en "Because He Lives" y "Coro 2" + "(final)" en "Jesucristo basta": el paréntesis queda como aclaración del título de arriba, no como parte nueva. Confirmar que es lo que se quiere.
 - "Al estar aquí": el segundo "Verso 1" trae "(Baja a F#)" y además el último renglón con otros acordes; se muestra tal cual. Decidido: Lautaro lo corrige en el Word más adelante; la app no tiene una regla especial.
 - Confirmar en el diálogo real de impresión (compu y celular) que no salen encabezado ni pie del navegador.
@@ -88,8 +87,8 @@ Detalle en `referencia/SPEC.md`: §4 (roles), §5 (modelo de datos), §6 (conver
 - **Ya hecho (Fase 2):** ítems medley guardados y validados en el motor; el registro y el historial los expanden canción por canción (hoy con un solo tono por canción, no la secuencia).
 
 ## Fase 2 (motor)
-- Después de la próxima reimportación (por "Te alabaré"): lista de los ( ) que hacían de puente o se ocultaban; revisar No voy a caer [C] y que los 60 Word corregidos entraron bien; regenerar `referencia/tareas-drive.md` completo (sección 1 incluida).
-- Borrar del Drive (lo hace Lautaro) A ti me rindo [F], Al único que es digno [D] y Hermoso nombre [D]: las reuniones ya usan el que se conserva (`Datos/reemplazos-word.json`). Después, sacar esos ids de `js/grupos.js`.
+- Reimportar en PRUEBA (conversor 11): Te alabaré queda C → D → Eb y se van los caracteres invisibles de Qué sería de mí [G] y Tu amor por mí [B].
+- Decidir (Lautaro): los ( ) al final de una parte que están justo antes de un cambio de tono y funcionan como puente (Al estar aquí, Awesome God, Hay poder x2, Quiero llenar, Suenen dulces himnos). Hoy se ven siempre, tal cual, transportados con su parte.
 - Anclar notas sueltas a una palabra (`at`), como en la referencia de "Quién más".
 - Conservar los saltos de línea dentro de un párrafo del Word (`<w:br/>`), como en "Jesucristo basta".
 - Pasar a estable con los datos reales de IBSI (`registrarIBSI()`), con aprobación.
