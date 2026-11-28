@@ -79,11 +79,13 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - **Canción base:** es el Word de la iglesia (la versión de la casa, no la original del intérprete).
   - Todo bloque del Word es válido aunque no exista en la original. Por ejemplo, el [Final] en F# de "Al estar aquí" lo agregó la iglesia y es parte de la base.
   - Cambiar el arreglo de una reunión nunca modifica la canción base.
+- **Word locales:** Lautaro tiene los Word en su PC y sube a Drive solo los que elige; las cantidades no tienen por qué coincidir. No se compara el local contra Drive salvo que lo pida.
+- **Nombres de archivo en Drive:** no se renombran (sirven para identificarlos fuera de la app). El paréntesis del nombre queda donde y como está; si Lautaro lo borra, se borra también en la app.
 - **Paréntesis en el nombre del archivo:** si es un intérprete conocido (nombre completo, o uno que ya figura en la planilla), pasa al campo Intérprete. Si es una versión ("(Simple)", "(New)", "(Con subida)") o un subtítulo, queda en el título. Si es un nombre abreviado ("(Evan)"), el conversor no adivina: lo deja en el título y lo marca en el registro de importación para que el admin complete el intérprete como corrección.
 - Tono original de una canción modulante: la secuencia de tonos, como en el título del Word (`G-Ab-A-Bb-C`). El primero es el tono de inicio.
 - En el JSON de cada canción (`Datos/canciones/<id>.json`):
   - cada parte guarda su **tono escrito** y si es **de transición**;
-  - se marcan los **acordes puente**;
+  - se marcan los acordes entre paréntesis del final de la parte (`puente`), pero solo como dato: se muestran siempre (ver 6);
   - la canción guarda si es **Modulante** y su secuencia de tonos (ver 6).
 - **Correcciones de la base (`Datos/correcciones.json`):** solo las hace el admin, desde Ajustes → Canciones, con Google. Cubren:
   - tonos detectados por parte;
@@ -157,9 +159,9 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
     - las indicaciones `(Sube a X)` y `(Baja a X)`.
   - El admin puede corregirlo.
 - **Modulante:** la canción es Modulante si sus partes no están todas en el mismo tono. El conversor la marca sola y el admin puede cambiarlo.
-- **Acordes puente:** son los acordes entre paréntesis al final de una parte que preparan la siguiente (`(Eb)`, `(E)`, `(D/F# - E/Ab)`). Se marcan como puente; no son los acordes de paso entre paréntesis dentro de una línea, como `(C - G)`.
+- **Paréntesis `( )` en los Word = "opcional / a veces se hace / en la segunda vuelta".** Se muestran SIEMPRE, tal cual, y se transportan con su parte si son acordes. Nunca se ocultan ni dependen del tono de la parte siguiente. Ejemplos: `Eb (Eb/G)` al final de un renglón; `[Coro 1] (Primera vez menos acordes)` en un título; `(Eb)` al final de un coro de "Hay poder". El conversor todavía marca `puente` en la última línea de una parte que termina con `( )`, pero la app no lo usa para ocultar nada. Las únicas excepciones son las indicaciones de tono `(Sube a X)` / `(Baja a X)` y `(SUBE)` / `(BAJA)` antes de un título, que se reemplazan por el indicador de cambio de tono.
 - **Acordes `[ ]` y `{ }` al final de una parte** (convención de la iglesia). Ambos son acordes y se transportan. Van en la misma línea de acordes que la letra, así que la línea de letra queda pegada a sus acordes.
-  - `[ ]` = acordes puente para **modular**.
+  - `[ ]` = acordes puente para **modular**. Son, junto con `{ }`, los únicos que se ocultan o se muestran según el tono de la parte siguiente.
   - `{ }` = cierre para **repetir en el mismo tono**.
   - Ejemplo de "Quiero llenar": `A/B  B  E  [B/C#-E/C# A/F#] {A Am E}` sobre "Y proclamarte Señor".
   - No cuentan para decidir el tono de la parte.
@@ -269,7 +271,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - En la configuración de cada canción de la reunión (Editar, con clave → Editar partes) hay un interruptor **"Modulante"**, con la ayuda "Permite cambiar de tono entre partes", y el **tono de inicio**.
 - **Apagado:** toda la canción en un solo tono.
   - Todas las partes se transportan al tono elegido.
-  - Los acordes puente y las partes de transición se ocultan.
+  - Las partes de transición y los `[ ]` se ocultan. Los `( )` se ven siempre.
 - **Encendido:** se desbloquea el tono por parte.
   1. Se elige el tono de inicio. Por defecto se conservan los intervalos originales entre partes.
   2. En cada parte hay botones `=` / `+½` / `+1` / `−½` respecto de la parte anterior, o se elige un tono absoluto. Se marca el botón que corresponde al tono actual. "Original" vuelve al tono calculado desde el Word (manteniendo el intervalo con la parte anterior). La primera parte va en el tono de inicio; las transiciones toman el tono de la parte siguiente.
@@ -280,11 +282,11 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - Una copia (⧉ o "+ Agregar sección") va sin `pid`: el motor le da uno nuevo.
 - **Parte nueva:** el director puede crear en la reunión una parte que no existe en la base (por ejemplo, un interludio) con acordes escritos a mano.
 - Las canciones marcadas como Modulante arrancan con el interruptor encendido y los tonos originales.
-- **Acordes puente y partes de transición:**
-  - No se reemplazan por otro acorde: se transportan según el tono de la parte **siguiente**, así conservan su función respecto del destino. Por ejemplo, "(Eb)" antes de Ab queda "(F#)" si el destino pasa a B.
-  - Las transiciones (interludios como "Inter para subir a A") siguen la misma regla: todos sus acordes se transportan según el tono de destino, sin importar su largo.
-  - Si la parte siguiente queda en el mismo tono que la actual, el puente y la transición se ocultan por defecto. Hay una opción **"Mostrar igual"**, para quien quiera tocar el interludio aunque no module. En el editor aparece en las transiciones y en las partes con acordes puente o `[ ]` cuando la parte siguiente queda en el mismo tono (también con Modulante apagado).
-  - **`[ ]` (modular):** se muestran solo si la parte siguiente cambia de tono, transportados según el tono de destino, igual que los puentes entre paréntesis.
+- **Paréntesis, `[ ]`, `{ }` y partes de transición:**
+  - **`( )`:** se ven siempre y se transportan con su propia parte, como cualquier acorde (ver 6).
+  - Las transiciones (interludios como "Inter para subir a A") no se reemplazan por otro acorde: todos sus acordes se transportan según el tono de la parte **siguiente**, así conservan su función respecto del destino.
+  - Si la parte siguiente queda en el mismo tono que la actual, la transición se oculta por defecto. Hay una opción **"Mostrar igual"**, para quien quiera tocar el interludio aunque no module. En el editor aparece en las transiciones y en las partes con `[ ]` cuando la parte siguiente queda en el mismo tono (también con Modulante apagado).
+  - **`[ ]` (modular):** se muestran solo si la parte siguiente cambia de tono, transportados según el tono de destino.
   - **`{ }` (repetir):** se muestran solo si la parte siguiente queda en el mismo tono.
   - **Última parte de la canción:** con Modulante encendido, si tiene `[ ]`, se muestran siempre, transportados al tono de esa parte (es un tag o cierre final).
   - Las dos marcas conviven con "Mostrar igual" y con el modo Modulante. Con Modulante apagado no hay cambios de tono, así que se ven los `{ }` y los `[ ]` se ocultan siempre, también en la última parte.
@@ -329,18 +331,14 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
 - En un medley, cada canción se registra por separado, con su propia secuencia y quién dirigió.
 
 **Casos de prueba esperados:**
-- **"Hay poder [G-Ab-A-Bb-C]".** Partes: Coro 1ª G · Estrofa 1 Ab · Coro 2ª A · Estrofa 2 Bb · Coro 3ª Bb · Coro 4ª C. Puentes escritos: (Eb), (E), (F), (G).
-  - *Modulante, original:* G→Ab→A→Bb→Bb→C. Puentes visibles tal como están escritos: (Eb), (E), (F), (G). No hay puente entre Estrofa 2 y Coro 3ª porque quedan en el mismo tono. Registro: `G→Ab→A→Bb→C`.
-  - *Modulante con solo 2 subidas* (G, `=`, `=`, `+½`, `=`, `+½`): G→G→G→Ab→Ab→A.
-    - Los puentes de Coro 1ª y Estrofa 1 se ocultan (con "Mostrar igual" disponible).
-    - El puente de Coro 2ª, escrito (F) para ir a Bb, se transporta al nuevo destino Ab y queda (Eb).
-    - El de Coro 3ª, escrito (G) para ir a C, se transporta al destino A y queda (E).
-    - Registro: `G→Ab→A`.
-  - *Un solo tono (G):* todas las partes en G, puentes ocultos. Registro: `G`.
+- **"Hay poder [G-Ab-A-Bb-C]".** Partes: Coro 1ª G · Estrofa 1 Ab · Coro 2ª A · Estrofa 2 Bb · Coro 3ª Bb · Coro 4ª C. Paréntesis escritos al final: (Eb), (E), (F), (G).
+  - *Modulante, original:* G→Ab→A→Bb→Bb→C. Los ( ) se ven tal como están escritos: (Eb), (E), (F), (G). Registro: `G→Ab→A→Bb→C`.
+  - *Modulante con solo 2 subidas* (G, `=`, `=`, `+½`, `=`, `+½`): G→G→G→Ab→Ab→A. Los ( ) se ven siempre, transportados con su parte: Coro 1ª (Eb), Estrofa 1 (Eb), Coro 2ª (Eb), Coro 3ª (F). Registro: `G→Ab→A`.
+  - *Un solo tono (G):* todas las partes en G; los ( ) se ven en G: (Eb), (Eb), (Eb), (E). Registro: `G`.
 - **"Al estar aquí [F# - A]".** Partes: Intro y Verso 1 en F#; Verso 2 "(Sube a A)" y Coro 1 en A; Verso 1 "(Baja a F#)" y Coro 2 en F#; "Inter para subir a A" (transición); Coro 1 Final en A; Final en F# (lo agregó la iglesia; es parte de la base). Puente escrito al final de Verso 1: (D/F# - E/Ab).
-  - *Modulante, original:* F#→A→F#→A→F#. El puente del Verso 1 se muestra tal como está escrito, (D/F# - E/Ab), porque el destino sigue siendo A. La transición "Inter para subir a A" se muestra con sus acordes originales. Las indicaciones "(Sube a A)" y "(Baja a F#)" se reemplazan por el indicador de cambio de tono. El indicador marca "↓ F# (−1½)" al entrar al Final. Registro: `F#→A→F#→A→F#`.
-  - *Un solo tono (F#):* todo en F#. "Inter para subir a A" y el puente quedan ocultos, con "Mostrar igual" disponible. Registro: `F#`.
-  - *Modulante, inicio en G* (+½ sobre el original): G→Bb→G→Bb→G. El puente del Verso 1 se transporta al destino Bb y queda (Eb/G - F/A). "Inter para subir a A" se transporta al destino Bb.
+  - *Modulante, original:* F#→A→F#→A→F#. El ( ) del Verso 1 se muestra tal como está escrito, (D/F# - E/Ab). La transición "Inter para subir a A" se muestra con sus acordes originales. Las indicaciones "(Sube a A)" y "(Baja a F#)" se reemplazan por el indicador de cambio de tono. El indicador marca "↓ F# (−1½)" al entrar al Final. Registro: `F#→A→F#→A→F#`.
+  - *Un solo tono (F#):* todo en F#. "Inter para subir a A" queda oculta, con "Mostrar igual" disponible; el ( ) del Verso 1 se ve: (D/F# - E/Ab). Registro: `F#`.
+  - *Modulante, inicio en G* (+½ sobre el original): G→Bb→G→Bb→G. El ( ) del Verso 1 se transporta con su parte (F# → G) y queda (Eb/G - F/A). "Inter para subir a A" se transporta al destino Bb.
 
 ## 8. Sin conexión y actualización
 

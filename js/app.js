@@ -1159,11 +1159,12 @@ function parts(r, i, abrirTono) {
     return `<button type="button" class="k${d > 0 ? ' up' : d < 0 ? ' dn' : ''}" data-k="${j}" aria-haspopup="dialog" aria-label="Tono ${esc(o.tono)}${d ? (d > 0 ? ', sube' : ', baja') : ''}. Cambiar el tono de ${esc(nom(c.arr[j]))}">${fl}${esc(o.tono)}</button>`;
   };
   const nota = j => { const o = PT[j]; return o.transicion && modul ? `<div class="x">Toma el tono de la parte siguiente${o.ver ? ` · <i>${esc(o.tono)}</i>` : ''}</div>` : ''; };
-  // "Mostrar igual": en las transiciones y en las partes con acordes puente o [ ], cuando la siguiente queda en el mismo tono.
-  const conPuente = e => { const b = blq(e); return !!(b && b.lines.some(l => l.puente || l.modula)); };
+  // "Mostrar igual": en las transiciones y en las partes con [ ], cuando la siguiente queda en el mismo tono
+  // (los ( ) se ven siempre).
+  const conPuente = e => { const b = blq(e); return !!(b && b.lines.some(l => l.modula)); };
   const mostrarDe = (e, j) => {
     const o = PT[j]; if (!sig(j) || !(o.transicion || conPuente(e)) || (o.cambia && !e.mostrar)) return '';
-    return `<label><input type="checkbox" data-mi="${j}"${e.mostrar ? ' checked' : ''}> Mostrar igual ${o.transicion ? 'esta transición' : 'los acordes puente'}</label>`;
+    return `<label><input type="checkbox" data-mi="${j}"${e.mostrar ? ' checked' : ''}> Mostrar igual ${o.transicion ? 'esta transición' : 'los acordes [ ]'}</label>`;
   };
   const secciones = c.arr.map((e, j) => [e, j]).filter(([e, j]) => !PT[j].transicion && blq(e))
     .filter(([e], k, a) => a.findIndex(([x]) => x.src === e.src && idDe(x) === idDe(e)) === k);

@@ -137,8 +137,8 @@ const mismo = (a, b) => intervalo(a, b) === 0 && /m$/.test(a || '') === /m$/.tes
  *      { i, cancion, src, escrito, tono, sh, transicion, ver, cambia, indicador,
  *        puente: { ver, sh, tono, escrito }, modula: { ver, sh, tono, escrito }, repite: { ver } }
  *    tono = tono en que se toca; sh = semitonos para llevar sus líneas del tono escrito al tocado;
- *    ver = false solo en transiciones ocultas; puente/modula/repite = acordes puente, [ ] y { } del final de la parte
- *    (puente y modula se transportan sh desde el tono escrito de la parte siguiente: escrito → tono);
+ *    ver = false solo en transiciones ocultas; puente/modula/repite = acordes ( ), [ ] y { } del final de la parte
+ *    (los ( ) se ven siempre y van con su parte; modula se transporta sh desde el tono escrito de la parte siguiente);
  *  - modulante; arr (el arreglo usado: el del ítem o el base); secuencias: [{ id, quien, tonos }] (igual que tonosTocados_ del motor, para el Registro).
  */
 export function tonosDelItem(item, songs) {
@@ -189,7 +189,8 @@ export function tonosDelItem(item, songs) {
     o.cambia = !!(n && !mismo(n.tono, o.tono));
     const shSig = n ? intervalo(n.escrito, n.tono) : o.sh;  // escritos para ir al tono escrito de la siguiente
     const dest = n ? { tono: n.tono, escrito: n.escrito, cancion: n.cancion } : { tono: o.tono, escrito: o.escrito, cancion: o.cancion };
-    o.puente = { ver: !!n && (o.cambia || o.mostrar), sh: shSig, ...dest };
+    // Acordes entre ( ) al final de la parte: se ven siempre, tal cual, transportados con su parte (no son puente).
+    o.puente = { ver: true, sh: o.sh, tono: o.tono, escrito: o.escrito, cancion: o.cancion };
     // [ ] = modular: solo si la siguiente cambia de tono; en la última parte, siempre (tag o cierre final).
     // Con Modulante apagado se ocultan siempre, también en la última parte.
     o.modula = { ver: modul && (n ? (o.cambia || o.mostrar) : true), sh: n ? shSig : o.sh, ...dest };

@@ -44,24 +44,24 @@ const puente = (r, s, re) => {
   igual(r.secuencias[0].tonos, ['G', 'Ab', 'A', 'Bb', 'C'], 'Hay poder original: registro');
   igual(motor(item, songs), [r.secuencias[0].tonos], 'Hay poder original: igual que el motor');
   igual([/1er/, /ESTROFA 1/, /2da/, /3ra/].map(re => puente(r, s, re)), ['(Eb)', '(E)', '(F)', '(G)'], 'Hay poder original: puentes tal como están escritos');
-  igual(parte(r, s, /ESTROFA 2/).puente.ver, false, 'Hay poder original: sin puente entre Estrofa 2 y Coro 3ª');
+  igual(r.partes.every(p => p.puente.ver), true, 'Hay poder original: los ( ) se ven siempre');
   igual(r.partes.map(p => p.indicador && p.indicador.texto).filter(Boolean), ['↑ Ab (+½)', '↑ A (+½)', '↑ Bb (+½)', '↑ C (+1)'], 'Hay poder original: indicadores');
 
   // Modulante con solo 2 subidas: G, =, =, +½, =, +½
   item = { ...base, tono: 'G', arr: conTonos(s, ['G', 'G', 'G', 'Ab', 'Ab', 'A']) }; r = tonosDelItem(item, songs);
   igual(tonosPartes(r), ['G', 'G', 'G', 'Ab', 'Ab', 'A'], 'Hay poder 2 subidas: tonos por parte');
-  igual([parte(r, s, /1er/).puente.ver, parte(r, s, /ESTROFA 1/).puente.ver], [false, false], 'Hay poder 2 subidas: puentes de Coro 1ª y Estrofa 1 ocultos');
-  igual(puente(r, s, /2da/), '(Eb)', 'Hay poder 2 subidas: puente de Coro 2ª (F) → (Eb)');
-  igual(puente(r, s, /3ra/), '(E)', 'Hay poder 2 subidas: puente de Coro 3ª (G) → (E)');
+  igual([/1er/, /ESTROFA 1/].map(re => puente(r, s, re)), ['(Eb)', '(Eb)'], 'Hay poder 2 subidas: los ( ) de Coro 1ª y Estrofa 1 se ven, transportados con su parte');
+  igual(puente(r, s, /2da/), '(Eb)', 'Hay poder 2 subidas: (F) de Coro 2ª, que pasa de A a G → (Eb)');
+  igual(puente(r, s, /3ra/), '(F)', 'Hay poder 2 subidas: (G) de Coro 3ª, que pasa de Bb a Ab → (F)');
   igual(r.secuencias[0].tonos, ['G', 'Ab', 'A'], 'Hay poder 2 subidas: registro');
   igual(motor(item, songs), [r.secuencias[0].tonos], 'Hay poder 2 subidas: igual que el motor');
   item.arr = item.arr.map((e, i) => i === 0 ? { ...e, mostrar: true } : e); r = tonosDelItem(item, songs);
-  igual(puente(r, s, /1er/), '(D)', 'Hay poder 2 subidas: "Mostrar igual" muestra el puente de Coro 1ª, (Eb) para ir a G → (D)');
+  igual(puente(r, s, /1er/), '(Eb)', 'Hay poder 2 subidas: "Mostrar igual" no cambia los ( )');
 
   // Un solo tono (G)
   item = { ...base, tono: 'G', modulante: false, arr: defArr(s) }; r = tonosDelItem(item, songs);
   igual(tonosPartes(r), ['G', 'G', 'G', 'G', 'G', 'G'], 'Hay poder un solo tono: todo en G');
-  igual(r.partes.some(p => p.puente.ver), false, 'Hay poder un solo tono: puentes ocultos');
+  igual([/1er/, /ESTROFA 1/, /2da/, /3ra/].map(re => puente(r, s, re)), ['(Eb)', '(Eb)', '(Eb)', '(E)'], 'Hay poder un solo tono: los ( ) se ven, en G');
   igual(r.partes.map(p => p.sh), [0, -1, -2, -3, -3, -5], 'Hay poder un solo tono: transporte de cada parte a G');
   igual(r.secuencias[0].tonos, ['G'], 'Hay poder un solo tono: registro');
   igual(motor(item, songs), [r.secuencias[0].tonos], 'Hay poder un solo tono: igual que el motor');
@@ -83,7 +83,7 @@ const puente = (r, s, re) => {
   // Un solo tono (F#)
   item = { ...base, tono: 'F#', modulante: false, arr: defArr(s) }; r = tonosDelItem(item, songs);
   igual([...new Set(tonosPartes(r))], ['F#'], 'Al estar aquí un solo tono: todo en F#');
-  igual([inter(r).ver, puente(r, s, /^Verso 1$/)], [false, null], 'Al estar aquí un solo tono: Inter y puente ocultos');
+  igual([inter(r).ver, puente(r, s, /^Verso 1$/)], [false, '(D/F# - E/Ab)'], 'Al estar aquí un solo tono: Inter oculta; el ( ) del Verso 1 se ve');
   igual(r.secuencias[0].tonos, ['F#'], 'Al estar aquí un solo tono: registro');
   igual(motor(item, songs), [r.secuencias[0].tonos], 'Al estar aquí un solo tono: igual que el motor');
   item.arr = item.arr.map(e => (blocksOf(s)[e.src].sec || {}).transicion ? { ...e, mostrar: true } : e); r = tonosDelItem(item, songs);
