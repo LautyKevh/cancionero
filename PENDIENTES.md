@@ -1,6 +1,6 @@
 # Pendientes
 
-Estado al 28-11-2026 (rama `desarrollo`, app v53; motor de PRUEBA: implementación @38, conversor 11; última importación de PRUEBA: 28-11 01:06, 296 canciones). Nada en `main` ni en IBSI.
+Estado al 28-11-2026 (rama `desarrollo`, app v54; motor de PRUEBA: implementación @38, conversor 11; última importación de PRUEBA: 28-11 01:06, 296 canciones). Nada en `main` ni en IBSI.
 
 ## Hecho 27/28-11 (en desarrollo)
 - Paréntesis `( )`: se ven siempre, tal cual, transportados con su parte (también los que funcionan como puente). Solo `[ ]` y `{ }` se ocultan según la parte siguiente.
@@ -28,6 +28,7 @@ Estado al 28-11-2026 (rama `desarrollo`, app v53; motor de PRUEBA: implementaci�
 ## Próximo, en orden
 Detalle en `referencia/SPEC.md` (§4, §5, §7 y §9). Todo primero en la iglesia de prueba; la planilla real de IBSI no se toca sin OK.
 1. **Probar (Lautaro):**
+- **Arranque en la pantalla principal (v54):** como PWA instalada en el celular, cerrar la app del todo y volver a abrirla → tiene que abrir en Canciones; deslizar para actualizar en una subpantalla → se queda ahí. En el navegador ya está probado.
    - **Ingreso con Google** desde el botón propio "Iniciar sesión" de Ajustes, y con la sesión iniciada el **✎ de admin en datos que ya tienen valor** (intérprete, tono original, BPM). Sin probar con una sesión real (Claude no puede ingresar con Google).
    - Acordes de los músicos: en una reunión, modo Músico, un solo ✎ al lado del nombre de la canción → modo edición → hoja con los acordes encima de la letra, sin nombre, "Guardar acordes", "Restaurar acordes" e "Historial de esta parte".
    - Al agregar una canción que ya se tocó sola: hoja "Como la última vez" (copia partes, orden, tonos y acordes editados de la última reunión anterior) o "Versión base". Si nunca se tocó, se agrega directo.

@@ -114,9 +114,20 @@ const go = (hash, dir) => {
   if (t === NIVEL) { NAVDIR = dir || 'fwd'; history.replaceState(st(t), '', hash); return render(); }
   NAVDIR = 'back'; DESTINO = hash; history.go(t - NIVEL);     // vuelve; popstate dibuja
 };
-const replaceHash = hash => { history.replaceState(st(NIVEL), '', hash); };
+const replaceHash = hash => { history.replaceState(st(NIVEL), '', hash); guardarRuta(); };
 const atras = () => { if (NIVEL > 0) { NAVDIR = 'back'; history.back(); } else go(location.hash || '#/canciones', 'back'); };
+// Al abrir la app (también la PWA instalada que el sistema "restaura" con la última URL) se arranca siempre en
+// la pantalla principal. Solo una recarga dentro de la app (recargar o deslizar para actualizar) se queda donde
+// estaba: la última pantalla va en sessionStorage, que dura en una recarga pero no cuando se cierra la app.
+const RUTA_KEY = 'cancionero:ruta';
+const guardarRuta = () => { try { sessionStorage.setItem(RUTA_KEY, location.hash || '#/canciones'); } catch (e) {} };
+function esRecarga() {
+  let tipo = ''; try { tipo = (performance.getEntriesByType('navigation')[0] || {}).type || ''; } catch (e) {}
+  let ruta = null; try { ruta = sessionStorage.getItem(RUTA_KEY); } catch (e) {}
+  return tipo === 'reload' && ruta != null;
+}
 function navInit() {
+  if (!esRecarga()) history.replaceState(null, '', location.pathname + location.search + '#/canciones');
   const h = location.hash || '#/canciones';
   if (history.state && history.state.nav) { NIVEL = history.state.d; return; }   // recarga: el historial ya está armado
   const cadena = []; for (let x = h; x; x = padre(x)) cadena.unshift(x);
@@ -161,6 +172,7 @@ function transition(fn) {
 
 
 function render() {
+  guardarRuta();
   if (nivel(location.hash) === 0) ULTIMO0 = location.hash || '#/canciones';
   const h = decodeURIComponent(location.hash.slice(1) || '/');
   const p = h.split('/').filter(Boolean);

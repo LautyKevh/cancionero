@@ -349,6 +349,7 @@ Es multi-iglesia: cada iglesia conecta su propio Google Drive. Es gratis y sin f
   - *Modulante, inicio en G* (+½ sobre el original): G→Bb→G→Bb→G. El ( ) del Verso 1 se transporta con su parte (F# → G) y queda (Eb/G - F/A). "Inter para subir a A" se transporta al destino Bb.
 
 ## 8. Sin conexión y actualización
+- **Al abrir la app:** siempre arranca en la pantalla principal (Canciones). Solo al recargar dentro de la app (recargar o deslizar para actualizar) se queda en la pantalla donde estaba. La última pantalla se guarda en sessionStorage, que dura en una recarga pero no al cerrar la app.
 
 - La PWA (service worker) cachea la app y el `cancionero.json`. Al abrir con internet, pide los cambios y actualiza.
 - Línea de estado: "Actualizado hoy 10:32" / "Sin conexión · datos del 22-11", más un botón "Actualizar". Aparece **solo en Ajustes**. "Actualizar" solo vuelve a pedir los datos al motor; los cambios de la carpeta entran con la importación (Ajustes, admin).
